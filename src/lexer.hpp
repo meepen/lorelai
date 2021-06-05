@@ -71,6 +71,7 @@ namespace lorelai {
 				return _lookahead;
 			}
 
+			lookahead_posdata = posdata;
 			skipwhite();
 
 			if (islookaheadeof()) {
@@ -82,12 +83,14 @@ namespace lorelai {
 			string::value_type chr = data[lookahead_posdata.position];
 
 			if (chr == '=') {
-				if (data.size() > lookahead_posdata.position + 1) {
-					auto nextchr = data[lookahead_posdata.position + 1];
-					if (nextchr == '=') {
-						next_data = "==";
+				size_t endpos;
+				for (endpos = lookahead_posdata.position; endpos < data.size(); endpos++) {
+					if (data[endpos] != '=') {
+						break;
 					}
 				}
+
+				next_data = data.substr(lookahead_posdata.position, endpos - lookahead_posdata.position);
 			}
 			else if (isalpha(chr)) {
 				auto curpos = lookahead_posdata.position;
@@ -118,17 +121,51 @@ namespace lorelai {
 			return _lookahead;
 		}
 
+		const string::value_type *futuredata() {
+			return data.data() + posdata.position;
+		}
+
 		string read() {
 			auto ret = lookahead();
 			posdata = lookahead_posdata;
 			_lookahead = {};
+			// do we need to do this here?
+			// read_newline_r = false;
 			
 			return ret.value_or("");
+		}
+
+		string::value_type peekchar() {
+			return data[posdata.position];
+		}
+
+		string::value_type readchar() {
+			// since we aren't using lookahead anymore, invalidate
+			_lookahead = {};
+
+			auto chr = data[posdata.position];
+			if (chr == '\r') {
+				read_newline_r = true;
+			}
+			else {
+				if (chr == '\n' && !read_newline_r) {
+					posdata.linenumber++;
+					posdata.linecolumn = 0;
+				}
+				read_newline_r = false;
+			}
+
+			posdata.linecolumn++;
+			posdata.position++;
+
+			return chr;
 		}
 
 	private:
 		string_or_null _lookahead;
 		_posdata lookahead_posdata;
+
+		bool read_newline_r = false;
 
 	public:
 		string data;

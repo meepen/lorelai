@@ -24,6 +24,13 @@ class visitor_printer : public visitor {
 	LORELAI_VISIT_NAME_MACRO(BASIC_TEST)
 };
 
+class string_printer_visitor : public visitor {
+	bool visit(expressions::stringexpression &node, std::shared_ptr<lorelai::astgen::node> &container) override {
+		std::cout << "STRING: " << node.data << std::endl;
+		return false;
+	}
+};
+
 class number_to_false_visitor : public visitor {
 	bool visit(expressions::numberexpression &node, std::shared_ptr<lorelai::astgen::node> &container) override {
 		container = std::make_shared<expressions::falseexpression>();
@@ -91,6 +98,10 @@ int main(int argc, char *argv[]) {
 		std::shared_ptr<node> main = std::make_shared<mainchunk>(input_string);
 		visitor_printer printer;
 		main->accept(printer, main);
+		print_branch(0, *main);
+
+		string_printer_visitor string_printer;
+		main->accept(string_printer, main);
 		print_branch(0, *main);
 
 		number_to_false_visitor replacer;
