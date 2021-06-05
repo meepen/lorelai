@@ -22,6 +22,12 @@ namespace lorelai {
 		namespace expressions {
 			class nilexpression : public node, public expression {
 			public:
+				nilexpression() { }
+				nilexpression(lexer &lex) {
+					// consume nil
+					lex.read();
+				}
+
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
 			};
 
@@ -38,6 +44,12 @@ namespace lorelai {
 
 			class trueexpression : public node, public expression {
 			public:
+				trueexpression() { }
+				trueexpression(lexer &lex) {
+					// consume true
+					lex.read();
+				}
+
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
 			};
 
@@ -64,6 +76,12 @@ namespace lorelai {
 
 			class varargexpression : public node, public expression {
 			public:
+				varargexpression() { }
+				varargexpression(lexer &lex) {
+					// consume vararg
+					lex.read();
+				}
+
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
 			};
 		}

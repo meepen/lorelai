@@ -17,6 +17,8 @@ statements::returnstatement::returnstatement(lexer &lex) {
 		if (lex.lookahead().value_or("") != ",") {
 			break;
 		}
+		// consume ','
+		lex.read();
 	}
 }
 

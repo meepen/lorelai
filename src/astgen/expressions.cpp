@@ -21,6 +21,15 @@ std::shared_ptr<node> expression::read(lexer &lex) {
 	if (word == "false") {
 		expr = std::make_shared<falseexpression>(lex);
 	}
+	else if (word == "true") {
+		expr = std::make_shared<trueexpression>(lex);
+	}
+	else if (word == "nil") {
+		expr = std::make_shared<nilexpression>(lex);
+	}
+	else if (word == "...") {
+		expr = std::make_shared<varargexpression>(lex);
+	}
 	else if (lexer::isnumberstart(word[0]) && word != ".") {
 		expr = std::make_shared<numberexpression>(lex);
 	}
