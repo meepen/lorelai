@@ -12,11 +12,32 @@ statements::returnstatement::returnstatement(lexer &lex) {
 	lex.read();
 
 	// try to read explist
-	while (std::shared_ptr<expression> exp = expression::read(lex)) {
+	while (std::shared_ptr<node> exp = expression::read(lex)) {
 		children.push_back(exp);
 		if (lex.lookahead().value_or("") != ",") {
 			break;
 		}
+	}
+}
+
+statements::dostatement::dostatement(lexer &lex) {
+	// consume do
+	lex.read();
+
+	// try to read statement list
+	while (lex.lookahead() && lex.lookahead().value() != "end") {
+		auto stmt = statement::read(lex);
+		if (!stmt) {
+			throw error::expected_for("statement", "do ... end", lex.lookahead().value_or("no value"));
+		}
+
+		children.push_back(stmt);
+	}
+
+	auto ensure_end = lex.read();
+
+	if (ensure_end != "end") {
+		throw error::expected_for("end", "do .. end", lex.lookahead().value_or("no value"));
 	}
 }
 
@@ -47,6 +68,9 @@ std::shared_ptr<node> statement::read(lexer &lex) {
 	if (word == "return") {
 		stmt = std::make_shared<statements::returnstatement>(lex);
 	}
+	else if (word == "do") {
+		stmt = std::make_shared<statements::dostatement>(lex);
+	}
 
 	if (stmt && lex.lookahead().value_or("") == ";") {
 		lex.read();
@@ -64,17 +88,19 @@ bool statements::returnstatement::accept(visitor &visit, std::shared_ptr<node> &
 		return true;
 	}
 
-	std::vector<std::shared_ptr<node>> deleted;
+	visitchildren(visit);
 
-	for (auto &child : children) {
-		if (child->accept(visit, child)) {
-			deleted.push_back(child);
-		}
+	return false;
+}
+
+
+bool statements::dostatement::accept(visitor &visit, std::shared_ptr<node> &container) {
+	bool ret = visit.visit(*this, container);
+	if (ret) { // if we delete who cares, return early
+		return true;
 	}
 
-	for (auto &del : deleted) {
-		children.erase(std::find(children.cbegin(), children.cend(), del));
-	}
+	visitchildren(visit);
 
 	return false;
 }

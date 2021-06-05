@@ -15,38 +15,45 @@
 
 namespace lorelai {
 	namespace astgen {
-		class expression : public node {
+		class expression {
 		public:
-			static std::shared_ptr<expression> read(lexer &lex);
+			static std::shared_ptr<node> read(lexer &lex);
 		};
 		namespace expressions {
-			class nilexpression : public expression {
+			class nilexpression : public node, public expression {
 			public:
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
 			};
 
-			class falseexpression : public expression {
+			class falseexpression : public node, public expression {
+			public:
+				falseexpression() { }
+				falseexpression(lexer &lex) {
+					// consume false
+					lex.read();
+				}
+
+				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+			};
+
+			class trueexpression : public node, public expression {
 			public:
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
 			};
 
-			class trueexpression : public expression {
+			class numberexpression : public node, public expression {
 			public:
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
-			};
-
-			class numberexpression : public expression {
-			private:
-				numberexpression() { }
-			public:
+				numberexpression(lexer &lex) : data(std::stod(lex.read(), nullptr)) {
+				}
 				numberexpression(number num) : data(num) { }
 
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+
 			public:
 				number data;
 			};
 
-			class stringexpression : public expression {
+			class stringexpression : public node, public expression {
 			public:
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
 			public:
@@ -55,10 +62,9 @@ namespace lorelai {
 				string data;
 			};
 
-			class varargexpression : public expression {
+			class varargexpression : public node, public expression {
 			public:
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
-
 			};
 		}
 	}

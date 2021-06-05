@@ -14,6 +14,9 @@ namespace lorelai {
 		};
 
 		class branch : public node {
+		protected:
+			void visitchildren(visitor &visit);
+
 		public:
 			branch() : children() { }
 		public:

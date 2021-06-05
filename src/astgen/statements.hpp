@@ -2,7 +2,8 @@
 #define STATEMENTS_HPP_
 
 #define LORELAI_STATEMENT_CLASS_MACRO(fn) \
-	fn(lorelai::astgen::statements::returnstatement)
+	fn(lorelai::astgen::statements::returnstatement) \
+	fn(lorelai::astgen::statements::dostatement)
 
 #include <vector>
 #include <memory>
@@ -22,6 +23,13 @@ namespace lorelai {
 			class returnstatement : public branch, public statement {
 			public:
 				returnstatement(lexer &lex);
+
+				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+			};
+			
+			class dostatement : public branch, public statement {
+			public:
+				dostatement(lexer &lex);
 
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
 			};
