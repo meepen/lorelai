@@ -94,7 +94,7 @@ namespace lorelai {
 					}
 					std::vector<unsigned char> utf8;
 					unsigned char stoppoint = 0b01000000;
-					while (codepoint > stoppoint) {
+					while (codepoint > stoppoint && stoppoint != 0) {
 						utf8.push_back(0b10000000 | (codepoint & 0b00111111) & 0xff);
 						stoppoint >>= 1;
 						codepoint >>= 6;
