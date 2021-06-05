@@ -137,9 +137,10 @@ namespace lorelai {
 						return codepointtounicode(codepoint);
 					}
 					else if (next_chr == 'x') {
-						char hex[2];
+						char hex[3];
 						hex[0] = lex.readchar();
 						hex[1] = lex.readchar();
+						hex[2] = 0;
 						return string(1, std::stol(hex, nullptr, 16));
 					}
 					else if (lexer::isnumeric(next_chr)) {
