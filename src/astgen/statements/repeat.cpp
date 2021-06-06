@@ -11,12 +11,7 @@ repeatstatement::repeatstatement(lexer &lex) {
 	lex.read();
 
 	// try to read statement list
-	while (lex.lookahead() && lex.lookahead().value() != "until") {
-		auto stmt = statement::read(lex);
-		if (!stmt) {
-			throw error::expected_for("statement", "repeat .. until ..", lex.lookahead().value_or("no value"));
-		}
-
+	while (auto stmt = statement::read(lex)) {
 		statements.push_back(stmt);
 		children.push_back(stmt);
 	}

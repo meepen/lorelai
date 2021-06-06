@@ -17,13 +17,7 @@ whilestatement::whilestatement(lexer &lex) {
 		throw error::expected_for("do", "while .. do .. end", word);
 	}
 
-	// try to read statement list
-	while (lex.lookahead() && lex.lookahead().value() != "end") {
-		auto stmt = statement::read(lex);
-		if (!stmt) {
-			throw error::expected_for("statement", "while .. do .. end", lex.lookahead().value_or("no value"));
-		}
-
+	while (auto stmt = statement::read(lex)) {
 		statements.push_back(stmt);
 		children.push_back(stmt);
 	}
