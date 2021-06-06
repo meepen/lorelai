@@ -2,6 +2,11 @@ while false do
 	return
 end
 
+repeat
+	do
+	end
+until true
+
 do
 	do 
 		return

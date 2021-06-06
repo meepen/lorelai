@@ -28,8 +28,8 @@ std::shared_ptr<node> statement::read(lexer &lex) {
 	stat ::=  varlist `=´ explist | 
 		 functioncall | 
 !		 do block end | 
-		 while exp do block end | 
-		 repeat block until exp | 
+!		 while exp do block end | 
+!		 repeat block until exp | 
 		 if exp then block {elseif exp then block} [else block] end | 
 		 for Name `=´ exp `,´ exp [`,´ exp] do block end | 
 		 for namelist in explist do block end | 
@@ -55,6 +55,9 @@ std::shared_ptr<node> statement::read(lexer &lex) {
 	}
 	else if (word == "while") {
 		stmt = std::make_shared<statements::whilestatement>(lex);
+	}
+	else if (word == "repeat") {
+		stmt = std::make_shared<statements::repeatstatement>(lex);
 	}
 
 	if (stmt && lex.lookahead().value_or("") == ";") {

@@ -1,5 +1,5 @@
-#include "astgen/expressions.hpp"
-#include "astgen/errors.hpp"
+#include "expressions.hpp"
+#include "errors.hpp"
 #include "visitor.hpp"
 
 using namespace lorelai;

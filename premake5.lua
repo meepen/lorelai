@@ -60,6 +60,7 @@ workspace "lorelai"
 		includeast()
 		linklexer()
 
+		includedirs "src/astgen"
 		files "src/astgen/**.cpp"
 
 	project "test-astgen"

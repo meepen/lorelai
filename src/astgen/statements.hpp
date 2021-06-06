@@ -4,7 +4,8 @@
 #define LORELAI_STATEMENT_CLASS_MACRO(fn) \
 	fn(lorelai::astgen::statements::returnstatement) \
 	fn(lorelai::astgen::statements::dostatement) \
-	fn(lorelai::astgen::statements::whilestatement)
+	fn(lorelai::astgen::statements::whilestatement) \
+	fn(lorelai::astgen::statements::repeatstatement)
 
 #include <vector>
 #include <memory>
@@ -39,60 +40,21 @@ namespace lorelai {
 			protected:
 				dostatement() { }
 			public:
-				dostatement(lexer &lex) {
-					// consume do
-					lex.read();
-
-					// try to read statement list
-					while (lex.lookahead() && lex.lookahead().value() != "end") {
-						auto stmt = statement::read(lex);
-						if (!stmt) {
-							throw error::expected_for("statement", "do .. end", lex.lookahead().value_or("no value"));
-						}
-
-						statements.push_back(stmt);
-						children.push_back(stmt);
-					}
-
-					auto ensure_end = lex.read();
-
-					if (ensure_end != "end") {
-						throw error::expected_for("end", "do .. end", lex.lookahead().value_or("no value"));
-					}
-				}
+				dostatement(lexer &lex);
 
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
 			};
 
 			class whilestatement : public blockstatement {
 			public:
-				whilestatement(lexer &lex) {
-					// consume while
-					lex.read();
-					conditional = expression::read(lex);
-					children.push_back(conditional);
+				whilestatement(lexer &lex);
 
-					auto word = lex.read();
-					if (word != "do") {
-						throw error::expected_for("do", "while .. do .. end", word);
-					}
+				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+			};
 
-					// try to read statement list
-					while (lex.lookahead() && lex.lookahead().value() != "end") {
-						auto stmt = statement::read(lex);
-						if (!stmt) {
-							throw error::expected_for("statement", "while .. do .. end", lex.lookahead().value_or("no value"));
-						}
-
-						statements.push_back(stmt);
-						children.push_back(stmt);
-					}
-
-					word = lex.read();
-					if (word != "end") {
-						throw error::expected_for("end", "while .. do .. end", word);
-					}
-				}
+			class repeatstatement : public blockstatement {
+			public:
+				repeatstatement(lexer &lex);
 
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
 			};

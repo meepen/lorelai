@@ -1,4 +1,4 @@
-#include "astgen/expressions.hpp"
+#include "expressions.hpp"
 
 using namespace lorelai;
 using namespace lorelai::astgen;
