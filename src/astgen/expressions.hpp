@@ -85,7 +85,7 @@ namespace lorelai {
 
 			class stringexpression : public node, public expression {
 			private:
-				string codepointtounicode(long codepoint) {
+				string unicodecodepointtoutf8(long codepoint) {
 					std::vector<string::value_type> unicodechar;
 					if (codepoint < 0) {
 						throw error::unexpected_for("invalid codepoint", "unicode codepoint");
@@ -135,7 +135,7 @@ namespace lorelai {
 							throw error::expected_for("}", "string unicode escape", string(1, next_chr));
 						}
 
-						return codepointtounicode(codepoint);
+						return unicodecodepointtoutf8(codepoint);
 					}
 					else if (next_chr == 'x') {
 						char hex[3];
