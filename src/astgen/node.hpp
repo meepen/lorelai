@@ -3,7 +3,6 @@
 
 #include <vector>
 #include <memory>
-#include "scope.hpp"
 
 namespace lorelai {
 	namespace astgen {
@@ -21,7 +20,6 @@ namespace lorelai {
 			branch() : children() { }
 		public:
 			std::vector<std::shared_ptr<node>> children;
-			std::shared_ptr<scope> current_scope = nullptr;
 		};
 	}
 }

@@ -8,7 +8,6 @@
 
 #include "astgen/expressions.hpp"
 #include "astgen/errors.hpp"
-#include "astgen/scope.hpp"
 #include "astgen/node.hpp"
 #include "astgen/statements.hpp"
 #include "lexer.hpp"

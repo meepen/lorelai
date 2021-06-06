@@ -14,7 +14,8 @@ statements::returnstatement::returnstatement(lexer &lex) {
 	// try to read explist
 	while (std::shared_ptr<node> exp = expression::read(lex)) {
 		children.push_back(exp);
-		if (lex.lookahead().value_or("") != ",") {
+		auto next = lex.lookahead().value_or("");
+		if (next != ",") {
 			break;
 		}
 		// consume ','
@@ -85,24 +86,20 @@ std::shared_ptr<node> statement::read(lexer &lex) {
 // visitor acceptors
 
 bool statements::returnstatement::accept(visitor &visit, std::shared_ptr<node> &container) {
-	bool ret = visit.visit(*this, container);
-	if (ret) { // if we delete who cares, return early
+	if (visit.visit(*this, container)) { // if we delete who cares, return early
 		return true;
 	}
 
 	visitchildren(visit);
-
 	return false;
 }
 
 
 bool statements::dostatement::accept(visitor &visit, std::shared_ptr<node> &container) {
-	bool ret = visit.visit(*this, container);
-	if (ret) { // if we delete who cares, return early
+	if (visit.visit(*this, container)) { // if we delete who cares, return early
 		return true;
 	}
 
 	visitchildren(visit);
-
 	return false;
 }

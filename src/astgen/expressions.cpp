@@ -6,37 +6,7 @@ using namespace lorelai::astgen;
 using namespace lorelai::astgen::expressions;
 
 #define acceptmacro(name) bool name ::accept(visitor &visit, std::shared_ptr<node> &container) { visit.visit(*this, container); }
-LORELAI_EXPRESSION_LITERAL_CLASS_MACRO(acceptmacro);
-
-numberexpression::numberexpression(lexer &lex) {
-	size_t size;
-	auto word = lex.read();
-	if (word.size() >= 2 && word[0] == '0') {
-		char typ = word[1];
-		if (typ == 'x') {
-			char *endptr;
-			data = std::strtod(word.c_str(), &endptr);
-			if ((endptr - word.c_str()) != word.size()) {
-				throw error::expected_for("<number>", "number", word.substr(endptr - word.c_str()));
-			}
-			size = word.size();
-		}
-		else if (typ == 'b') {
-			data = static_cast<number>(std::stol(word.substr(2), &size, 2));
-			size += 2;
-		}
-		else {
-			throw error::expected_for("<number>", "number", word);
-		}
-	}
-	else {
-		data = std::stod(word, &size);
-	}
-
-	if (size != word.size()) {
-		throw error::expected_for("<number>", "number", word);
-	}
-}
+LORELAI_EXPRESSION_NODES_CLASS_MACRO(acceptmacro);
 
 std::shared_ptr<node> expression::read(lexer &lex) {
 	/*
@@ -96,6 +66,20 @@ std::shared_ptr<node> expression::read(lexer &lex) {
 	}
 	else if (lexer::isnumberstart(word[0]) && word != ".") {
 		expr = std::make_shared<numberexpression>(lex);
+	}
+	else if (word == "{") {
+		expr = std::make_shared<tableexpression>(lex);
+	}
+	else {
+		if (word == "(") {
+			// todo
+		}
+		else {
+			if (lexer::isname(word)) {
+				expr = std::make_shared<nameexpression>(lex);
+			}
+		}
+		// it begins... anything besides literal expressions here
 	}
 
 	return expr;

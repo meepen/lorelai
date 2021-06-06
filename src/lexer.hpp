@@ -3,10 +3,37 @@
 
 #include <memory>
 #include <experimental/optional>
+#include <algorithm>
+#include <unordered_set>
 #include "types/types.hpp"
 
 
 namespace lorelai {
+	const static std::unordered_set<string> keywords = {
+		"and",
+		"break",
+		"do",
+		"else",
+		"elseif",
+		"end",
+		"false",
+		"for",
+		"function",
+		"goto",
+		"if",
+		"in",
+		"local",
+		"nil",
+		"not",
+		"or",
+		"repeat",
+		"return",
+		"then",
+		"true",
+		"until",
+		"while"
+	};
+
 	using string_or_null = std::experimental::optional<string>;
 	class lexer {
 	private:
@@ -30,6 +57,10 @@ namespace lorelai {
 		static bool isnumberstart(string::value_type chr) {
 			return isnumeric(chr) || chr == '.';
 		}
+
+		static bool isnamestart(string::value_type chr) {
+			return isalpha(chr) || (unsigned)(chr) >= 0x80;
+		}
 		
 		static bool ispartofname(string::value_type chr) {
 			return isalpha(chr) || chr > 0x80 || isnumeric(chr);
@@ -37,6 +68,25 @@ namespace lorelai {
 
 		static bool ishexachar(string::value_type chr) {
 			return isnumeric(chr) || (chr >= 'a' && chr <= 'f') || (chr >= 'A' && chr <= 'F');
+		}
+
+		static bool iskeyword(string word) {
+			return keywords.find(word) != keywords.end();
+		}
+
+		static bool isname(string word) {
+			if (word.size() == 0 || iskeyword(word) || !isnamestart(word[0])) {
+				return false;
+			}
+			bool good = true;
+			for (size_t i = 1; i < word.size(); i++) {
+				if (!lexer::ispartofname(word[i])) {
+					good = false;
+					break;
+				}
+			}
+
+			return good;
 		}
 
 	public:

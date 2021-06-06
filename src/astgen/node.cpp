@@ -13,6 +13,6 @@ void branch::visitchildren(visitor &visit) {
 	}
 
 	for (auto &del : deleted) {
-		children.erase(std::find(children.cbegin(), children.cend(), del));
+		children.erase(std::find(children.begin(), children.end(), del));
 	}
 }

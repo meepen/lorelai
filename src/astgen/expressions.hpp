@@ -1,7 +1,8 @@
 #ifndef EXPRESSIONS_HPP_
 #define EXPRESSIONS_HPP_
 
-#define LORELAI_EXPRESSION_LITERAL_CLASS_MACRO(fn) \
+
+#define LORELAI_EXPRESSION_NODES_CLASS_MACRO(fn) \
 	fn(lorelai::astgen::expressions::nilexpression) \
 	fn(lorelai::astgen::expressions::falseexpression) \
 	fn(lorelai::astgen::expressions::trueexpression) \
@@ -9,6 +10,16 @@
 	fn(lorelai::astgen::expressions::stringexpression) \
 	fn(lorelai::astgen::expressions::varargexpression) \
 	fn(lorelai::astgen::expressions::nameexpression)
+
+#define LORELAI_EXPRESSION_LITERAL_CLASS_MACRO(fn) \
+	fn(lorelai::astgen::expressions::nilexpression) \
+	fn(lorelai::astgen::expressions::falseexpression) \
+	fn(lorelai::astgen::expressions::trueexpression) \
+	fn(lorelai::astgen::expressions::numberexpression) \
+	fn(lorelai::astgen::expressions::stringexpression) \
+	fn(lorelai::astgen::expressions::varargexpression) \
+	fn(lorelai::astgen::expressions::nameexpression) \
+	fn(lorelai::astgen::expressions::tableexpression)
 
 #include "types/types.hpp"
 #include "node.hpp"
@@ -227,14 +238,17 @@ namespace lorelai {
 					}
 				}
 
+				stringexpression(string _data) : data(_data) { }
+
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
 			public:
 				using type = enum {
 					SINGLE_QUOTE,
 					DOUBLE_QUOTE,
-					LITERAL
+					LITERAL,
+					UNKNOWN
 				};
-				type string_type = LITERAL;
+				type string_type = UNKNOWN;
 				size_t long_string_depth = 0;
 				string data;
 			};
@@ -255,11 +269,29 @@ namespace lorelai {
 				nameexpression(string data) : name(data) { }
 				nameexpression(lexer &lex) {
 					name = lex.read();
+					if (name.size() == 0 || !lexer::isnamestart(name[0])) {
+						throw error::unexpected_for(name, "name");
+					}
+					
+					for (size_t i = 1; i < name.size(); i++) {
+						if (!lexer::ispartofname(name[i])) {
+							throw error::unexpected_for(name, "name");
+						}
+					}
 				}
 
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
 			public:
 				string name;
+			};
+
+			class tableexpression : public branch, public expression {
+			public:
+				tableexpression(lexer &lex);
+
+				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+			public:
+				std::vector<std::pair<std::shared_ptr<node>, std::shared_ptr<node>>> tabledata;
 			};
 		}
 	}
