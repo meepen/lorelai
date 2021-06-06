@@ -8,7 +8,7 @@
 			"name": "(gdb) test-astgen",
 			"type": "cppdbg",
 			"request": "launch",
-			"program": "${workspaceFolder}/bin/debug/x86-64/test-visitor",
+			"program": "${workspaceFolder}/bin/debug/x86-64/test-astgen",
 			"args": ["${workspaceFolder}/tests/astgen/input.json"],
 			"stopAtEntry": false,
 			"cwd": "${fileDirname}",

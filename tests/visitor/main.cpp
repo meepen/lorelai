@@ -24,9 +24,13 @@ class visitor_printer : public visitor {
 	LORELAI_VISIT_NAME_MACRO(BASIC_TEST)
 };
 
-class string_printer_visitor : public visitor {
+class printer_visitor : public visitor {
 	bool visit(expressions::stringexpression &node, std::shared_ptr<lorelai::astgen::node> &container) override {
 		std::cout << "STRING: " << node.data << std::endl;
+		return false;
+	}
+	bool visit(expressions::numberexpression &node, std::shared_ptr<lorelai::astgen::node> &container) override {
+		std::cout << "NUMBER: " << node.data << std::endl;
 		return false;
 	}
 };
@@ -100,7 +104,7 @@ int main(int argc, char *argv[]) {
 		main->accept(printer, main);
 		print_branch(0, *main);
 
-		string_printer_visitor string_printer;
+		printer_visitor string_printer;
 		main->accept(string_printer, main);
 		print_branch(0, *main);
 

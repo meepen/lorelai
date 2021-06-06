@@ -35,6 +35,10 @@ namespace lorelai {
 			return isalpha(chr) || chr > 0x80 || isnumeric(chr);
 		}
 
+		static bool ishexachar(string::value_type chr) {
+			return isnumeric(chr) || (chr >= 'a' && chr <= 'f') || (chr >= 'A' && chr <= 'F');
+		}
+
 	public:
 		lexer(string _data) : data(_data) {
 
@@ -66,60 +70,7 @@ namespace lorelai {
 			return lookahead_posdata.position - begin;
 		}
 
-		string_or_null &lookahead() {
-			if (_lookahead || islookaheadeof()) {
-				return _lookahead;
-			}
-
-			lookahead_posdata = posdata;
-			skipwhite();
-
-			if (islookaheadeof()) {
-				return _lookahead;
-			}
-			
-			// sometimes the data is just one character, if it's not we update it later
-			string next_data = string(1, data[lookahead_posdata.position]);
-			string::value_type chr = data[lookahead_posdata.position];
-
-			if (chr == '=') {
-				size_t endpos;
-				for (endpos = lookahead_posdata.position; endpos < data.size(); endpos++) {
-					if (data[endpos] != '=') {
-						break;
-					}
-				}
-
-				next_data = data.substr(lookahead_posdata.position, endpos - lookahead_posdata.position);
-			}
-			else if (isalpha(chr)) {
-				auto curpos = lookahead_posdata.position;
-				while (data.size() > curpos && ispartofname(data[curpos])) {
-					curpos++;
-				}
-				next_data = data.substr(lookahead_posdata.position, curpos - lookahead_posdata.position);
-			}
-			else if (isnumberstart(chr)) {
-				try {
-					size_t size;
-					std::stod(&data[lookahead_posdata.position], &size);
-					next_data = data.substr(lookahead_posdata.position, size);
-				}
-				catch (std::exception &e) {
-					if (chr == '.') {
-						next_data = chr;
-					}
-					else {
-						throw e;
-					}
-				}
-			}
-
-			lookahead_posdata.position += next_data.size();
-			_lookahead = next_data;
-
-			return _lookahead;
-		}
+		string_or_null &lookahead();
 
 		const string::value_type *futuredata() {
 			return data.data() + posdata.position;

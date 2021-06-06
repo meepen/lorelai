@@ -17,6 +17,8 @@
 #include <unordered_map>
 #include <vector>
 #include <algorithm>
+#include <sstream>
+#include <ios>
 
 namespace lorelai {
 	namespace astgen {
@@ -60,8 +62,7 @@ namespace lorelai {
 
 			class numberexpression : public node, public expression {
 			public:
-				numberexpression(lexer &lex) : data(std::stod(lex.read(), nullptr)) {
-				}
+				numberexpression(lexer &lex);
 				numberexpression(number num) : data(num) { }
 
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;

@@ -7,10 +7,24 @@ local function includeast()
 		"src/**.hpp"
 	}
 end
+local function includelexer()
+	includedirs {
+		"src"
+	}
+	files {
+		"src/lexer.hpp"
+	}
+end
+
+local function linklexer()
+	links "lexer"
+	includelexer()
+end
 
 local function linkast()
 	links "astgen"
 	includeast()
+	linklexer()
 end
 
 workspace "lorelai"
@@ -35,9 +49,16 @@ workspace "lorelai"
 	filter "platforms:x86-64"
 		architecture "x86_64"
 
+	project "lexer"
+		kind "StaticLib"
+		includelexer()
+
+		files "src/lexer/**.cpp"
+
 	project "astgen"
 		kind "StaticLib"
 		includeast()
+		linklexer()
 
 		files "src/astgen/**.cpp"
 
