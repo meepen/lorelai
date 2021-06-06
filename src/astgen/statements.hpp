@@ -8,7 +8,7 @@
 #include <vector>
 #include <memory>
 #include "lexer.hpp"
-#include "types/types.hpp"
+#include "types.hpp"
 #include "node.hpp"
 #include "expressions.hpp"
 

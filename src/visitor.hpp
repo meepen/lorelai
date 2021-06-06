@@ -6,7 +6,7 @@
 
 #define LORELAI_VISIT_MACRO(name) virtual bool visit(name &_node, std::shared_ptr<node> &container) { return false; }
 #define LORELAI_VISIT_NAME_MACRO(fn) \
-	LORELAI_EXPRESSION_LITERAL_CLASS_MACRO(fn) \
+	LORELAI_EXPRESSION_CLASS_MACRO(fn) \
 	LORELAI_STATEMENT_CLASS_MACRO(fn) \
 	fn(lorelai::astgen::chunk)
 

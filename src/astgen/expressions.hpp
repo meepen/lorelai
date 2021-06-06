@@ -11,7 +11,7 @@
 	fn(lorelai::astgen::expressions::varargexpression) \
 	fn(lorelai::astgen::expressions::nameexpression)
 
-#define LORELAI_EXPRESSION_LITERAL_CLASS_MACRO(fn) \
+#define LORELAI_EXPRESSION_CLASS_MACRO(fn) \
 	fn(lorelai::astgen::expressions::nilexpression) \
 	fn(lorelai::astgen::expressions::falseexpression) \
 	fn(lorelai::astgen::expressions::trueexpression) \
@@ -19,9 +19,10 @@
 	fn(lorelai::astgen::expressions::stringexpression) \
 	fn(lorelai::astgen::expressions::varargexpression) \
 	fn(lorelai::astgen::expressions::nameexpression) \
-	fn(lorelai::astgen::expressions::tableexpression)
+	fn(lorelai::astgen::expressions::tableexpression) \
+	fn(lorelai::astgen::expressions::enclosedexpression)
 
-#include "types/types.hpp"
+#include "types.hpp"
 #include "node.hpp"
 #include "errors.hpp"
 #include "lexer.hpp"
@@ -37,6 +38,12 @@ namespace lorelai {
 		public:
 			static std::shared_ptr<node> read(lexer &lex);
 		};
+
+		class prefixexpression : public expression {
+		public:
+			static std::shared_ptr<node> read(lexer &lex);
+		};
+
 		namespace expressions {
 			class nilexpression : public node, public expression {
 			public:
@@ -292,6 +299,24 @@ namespace lorelai {
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
 			public:
 				std::vector<std::pair<std::shared_ptr<node>, std::shared_ptr<node>>> tabledata;
+			};
+
+
+			// prefix expressions
+			class enclosedexpression : public branch, public prefixexpression {
+			public:
+				enclosedexpression(lexer &lex) {
+					// consume '('
+					lex.read();
+					children.push_back(expression::read(lex));
+
+					auto word = lex.read();
+					if (word != ")") {
+						throw error::expected_for(")", "enclosed expression", word);
+					}
+				}
+
+				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
 			};
 		}
 	}

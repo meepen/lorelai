@@ -5,7 +5,7 @@
 #include <experimental/optional>
 #include <algorithm>
 #include <unordered_set>
-#include "types/types.hpp"
+#include "types.hpp"
 
 
 namespace lorelai {
@@ -43,7 +43,7 @@ namespace lorelai {
 
 	public:
 		static bool iswhite(string::value_type chr) {
-			return chr == ' ' || chr == '\t' || chr == '\r' || chr == '\n' || chr == '\v';
+			return chr == ' ' || chr == '\t' || chr == '\r' || chr == '\n' || chr == '\v' || chr == '\b';
 		}
 
 		static bool isalpha(string::value_type chr) {

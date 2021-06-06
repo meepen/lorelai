@@ -1,6 +1,7 @@
 #include "expressions.hpp"
 #include "visitor.hpp"
 #include "errors.hpp"
+#include "visitor.hpp"
 
 using namespace lorelai::astgen;
 using namespace lorelai::astgen::expressions;
@@ -8,8 +9,19 @@ using namespace lorelai::astgen::expressions;
 #define acceptmacro(name) bool name ::accept(visitor &visit, std::shared_ptr<node> &container) { visit.visit(*this, container); }
 LORELAI_EXPRESSION_NODES_CLASS_MACRO(acceptmacro);
 
+bool enclosedexpression::accept(visitor &visit, std::shared_ptr<node> &container) {
+	if (visit.visit(*this, container)) {
+		return true;
+	}
+
+	visitchildren(visit);
+
+	return false;
+}
+
 std::shared_ptr<node> expression::read(lexer &lex) {
 	/*
+
 	exp ::=  nil | false | true | Number | String | `...´ | function | 
 		 prefixexp | tableconstructor | exp binop exp | unop exp 
 
@@ -70,17 +82,14 @@ std::shared_ptr<node> expression::read(lexer &lex) {
 	else if (word == "{") {
 		expr = std::make_shared<tableexpression>(lex);
 	}
-	else {
-		if (word == "(") {
-			// todo
-		}
-		else {
-			if (lexer::isname(word)) {
-				expr = std::make_shared<nameexpression>(lex);
-			}
-		}
-		// it begins... anything besides literal expressions here
+	else if (word == "(") {
+		expr = std::make_shared<enclosedexpression>(lex);
 	}
+	else if (lexer::isname(word)) {
+		expr = std::make_shared<nameexpression>(lex);
+	}
+
+	// binop
 
 	return expr;
 }
