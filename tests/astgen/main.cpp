@@ -4,11 +4,14 @@
 #include <exception>
 #include <iostream>
 #include <typeinfo>
-
-#include "json.hpp"
 #include "astgen.hpp"
 
+
+// uncomment later on when we add tests
+/*
+#include "json.hpp"
 using json = nlohmann::json;
+*/
 
 #ifdef __linux__
 #include <cxxabi.h>
@@ -49,18 +52,17 @@ int main(int argc, char *argv[]) {
 	if (argc != 2) {
 		std::cerr << "Error: no argument for file" << std::endl;
 		return 1;
-	} 
+	}
 
-	std::ifstream t(argv[1]);
-	std::string results((std::istreambuf_iterator<char>(t)),
-		std::istreambuf_iterator<char>());
+	std::ifstream luafile(argv[1]);
+	auto luacode = std::string(
+		std::istreambuf_iterator<char>(luafile),
+		std::istreambuf_iterator<char>()
+	);
 
 	try {
-		auto data = json::parse(results);
-		auto input_string = data["input"].get<std::string>();
-
-		lorelai::astgen::mainchunk main(input_string);
-		print_branch(0, main);
+		lorelai::astgen::mainchunk loadedast(luacode);
+		print_branch(0, loadedast);
 
 		std::cout << "success" << std::endl;
 	}

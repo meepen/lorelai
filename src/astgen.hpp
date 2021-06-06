@@ -24,6 +24,7 @@ namespace lorelai {
 		class mainchunk : public chunk {
 		public:
 			mainchunk(lexer data) : chunk(data) { }
+			mainchunk(std::string data) : mainchunk(lexer(data)) { }
 		};
 	}
 }

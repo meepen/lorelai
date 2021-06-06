@@ -23,27 +23,6 @@ statements::returnstatement::returnstatement(lexer &lex) {
 	}
 }
 
-statements::dostatement::dostatement(lexer &lex) {
-	// consume do
-	lex.read();
-
-	// try to read statement list
-	while (lex.lookahead() && lex.lookahead().value() != "end") {
-		auto stmt = statement::read(lex);
-		if (!stmt) {
-			throw error::expected_for("statement", "do ... end", lex.lookahead().value_or("no value"));
-		}
-
-		children.push_back(stmt);
-	}
-
-	auto ensure_end = lex.read();
-
-	if (ensure_end != "end") {
-		throw error::expected_for("end", "do .. end", lex.lookahead().value_or("no value"));
-	}
-}
-
 std::shared_ptr<node> statement::read(lexer &lex) {
 	/*
 	stat ::=  varlist `=´ explist | 
@@ -74,6 +53,9 @@ std::shared_ptr<node> statement::read(lexer &lex) {
 	else if (word == "do") {
 		stmt = std::make_shared<statements::dostatement>(lex);
 	}
+	else if (word == "while") {
+		stmt = std::make_shared<statements::whilestatement>(lex);
+	}
 
 	if (stmt && lex.lookahead().value_or("") == ";") {
 		lex.read();
@@ -83,23 +65,14 @@ std::shared_ptr<node> statement::read(lexer &lex) {
 }
 
 
-// visitor acceptors
-
-bool statements::returnstatement::accept(visitor &visit, std::shared_ptr<node> &container) {
-	if (visit.visit(*this, container)) { // if we delete who cares, return early
-		return true;
-	}
-
-	visitchildren(visit);
-	return false;
+#define LORELAI_ACCEPTOR(name) \
+bool name ::accept(visitor &visit, std::shared_ptr<node> &container) { \
+	if (visit.visit(*this, container)) { \
+		return true; \
+	} \
+	\
+	visitchildren(visit); \
+	return false; \
 }
 
-
-bool statements::dostatement::accept(visitor &visit, std::shared_ptr<node> &container) {
-	if (visit.visit(*this, container)) { // if we delete who cares, return early
-		return true;
-	}
-
-	visitchildren(visit);
-	return false;
-}
+LORELAI_STATEMENT_CLASS_MACRO(LORELAI_ACCEPTOR)

@@ -4,14 +4,16 @@
 #include <exception>
 #include <iostream>
 #include <typeinfo>
-
-#include "json.hpp"
 #include "astgen.hpp"
 #include "astgen/statements.hpp"
 #include "astgen/node.hpp"
 #include "visitor.hpp"
 
+/*
+#include "json.hpp"
 using json = nlohmann::json;
+*/
+
 using namespace lorelai;
 using namespace lorelai::astgen;
 
@@ -91,15 +93,14 @@ int main(int argc, char *argv[]) {
 		return 1;
 	} 
 
-	std::ifstream t(argv[1]);
-	std::string results((std::istreambuf_iterator<char>(t)),
-		std::istreambuf_iterator<char>());
+	std::ifstream luafile(argv[1]);
+	auto luacode = std::string(
+		std::istreambuf_iterator<char>(luafile),
+		std::istreambuf_iterator<char>()
+	);
 
 	try {
-		auto data = json::parse(results);
-		auto input_string = data["input"].get<std::string>();
-
-		std::shared_ptr<node> main = std::make_shared<mainchunk>(input_string);
+		std::shared_ptr<node> main = std::make_shared<mainchunk>(luacode);
 		visitor_printer printer;
 		main->accept(printer, main);
 		print_branch(0, *main);
