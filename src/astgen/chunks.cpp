@@ -9,10 +9,14 @@ using namespace lorelai::astgen;
 
 chunk::chunk(string data) {
 	lexer lex(data);
-	new (this) chunk(lex);
+	initialize(lex);
 }
 
 chunk::chunk(lexer &lex) {
+	initialize(lex);
+}
+
+void chunk::initialize(lexer &lex) {
 	while (auto statement = statement::read(lex)) {
 		children.push_back(statement);
 		lex.skipwhite();

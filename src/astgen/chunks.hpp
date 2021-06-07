@@ -8,8 +8,8 @@ namespace lorelai {
 	class lexer;
 	namespace astgen {
 		class chunk : public branch {
-		protected:
-			chunk() { }
+		private:
+			void initialize(lexer &lex);
 
 		public:
 			chunk(lexer &lex);

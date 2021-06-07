@@ -2,6 +2,9 @@
 #include "visitor.hpp"
 #include "lexer.hpp"
 
+#include <unordered_map>
+
+using namespace lorelai;
 using namespace lorelai::astgen;
 using namespace lorelai::astgen::expressions;
 
@@ -17,6 +20,18 @@ bool enclosedexpression::accept(visitor &visit, std::shared_ptr<node> &container
 
 	return false;
 }
+
+const static std::unordered_map<string, std::shared_ptr<node>(*)(lexer &lex)> lookupmap = {
+	{ "false", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<falseexpression>(lex); } },
+	{ "true", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<trueexpression>(lex); } },
+	{ "nil", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<nilexpression>(lex); } },
+	{ "...", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<varargexpression>(lex); } },
+	{ "\"", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<stringexpression>(lex); } },
+	{ "[", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<stringexpression>(lex); } },
+	{ "'", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<stringexpression>(lex); } },
+	{ "{", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<tableexpression>(lex); } },
+	{ "(", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<enclosedexpression>(lex); } }
+};
 
 std::shared_ptr<node> expression::read(lexer &lex) {
 	/*
@@ -58,35 +73,20 @@ std::shared_ptr<node> expression::read(lexer &lex) {
 
 	auto word = lex.lookahead().value();
 
-	if (word == "false") {
-		expr = std::make_shared<falseexpression>(lex);
+	auto has_initializer = lookupmap.find(word);
+	if (has_initializer != lookupmap.end()) {
+		expr = has_initializer->second(lex);
 	}
-	else if (word == "true") {
-		expr = std::make_shared<trueexpression>(lex);
-	}
-	else if (word == "nil") {
-		expr = std::make_shared<nilexpression>(lex);
-	}
-	else if (word == "...") {
-		expr = std::make_shared<varargexpression>(lex);
-	}
-	else if (word == "'" || word == "\"" || word == "[") {
-		expr = std::make_shared<stringexpression>(lex);
-	}
-	else if (lexer::isnumberstart(word[0]) && word != ".") {
+	else if (word.size() > 0 && lexer::isnumberstart(word[0])) {
 		expr = std::make_shared<numberexpression>(lex);
-	}
-	else if (word == "{") {
-		expr = std::make_shared<tableexpression>(lex);
-	}
-	else if (word == "(") {
-		expr = std::make_shared<enclosedexpression>(lex);
 	}
 	else if (lexer::isname(word)) {
 		expr = std::make_shared<nameexpression>(lex);
 	}
 
-	// binop
+	if (expr) {
+		// binop
+	}
 
 	return expr;
 }
