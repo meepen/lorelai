@@ -9,13 +9,11 @@
 
 #include <vector>
 #include <memory>
-#include "lexer.hpp"
 #include "types.hpp"
 #include "node.hpp"
-#include "expressions.hpp"
-#include "errors.hpp"
 
 namespace lorelai {
+	class lexer;
 	namespace astgen {
 		class statement {
 		public:

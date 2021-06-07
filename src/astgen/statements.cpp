@@ -1,7 +1,7 @@
 #include "statements.hpp"
 #include "expressions.hpp"
-#include "errors.hpp"
 #include "visitor.hpp"
+#include "lexer.hpp"
 #include <algorithm>
 
 using namespace lorelai;

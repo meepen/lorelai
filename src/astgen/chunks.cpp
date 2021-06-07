@@ -1,11 +1,16 @@
+#include "chunks.hpp"
 #include <algorithm>
-#include "astgen.hpp"
+#include "statements.hpp"
 #include "visitor.hpp"
+#include "lexer.hpp"
 
 using namespace lorelai;
 using namespace lorelai::astgen;
 
-
+chunk::chunk(string data) {
+	lexer lex(data);
+	new (this) chunk(lex);
+}
 
 chunk::chunk(lexer &lex) {
 	while (auto statement = statement::read(lex)) {
@@ -14,14 +19,9 @@ chunk::chunk(lexer &lex) {
 	}
 
 	lex.skipwhite();
-
-	if (!lex.iseof()) {
-		throw error::expected_for("EOF", "Chunk", lex.lookahead().value());
-	}
 }
 
 // visitor acceptors
-
 bool chunk::accept(visitor &visit, std::shared_ptr<node> &container) {
 	bool ret = visit.visit(*this, container);
 	if (ret) { // if we delete who cares, return early

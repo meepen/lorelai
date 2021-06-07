@@ -61,7 +61,7 @@ int main(int argc, char *argv[]) {
 	);
 
 	try {
-		lorelai::astgen::mainchunk loadedast(luacode);
+		lorelai::astgen::chunk loadedast(luacode);
 		print_branch(0, loadedast);
 
 		std::cout << "success" << std::endl;

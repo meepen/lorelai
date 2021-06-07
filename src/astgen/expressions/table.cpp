@@ -1,5 +1,4 @@
 #include "expressions.hpp"
-#include "errors.hpp"
 #include "visitor.hpp"
 #include "lexer.hpp"
 #include <algorithm>
@@ -36,15 +35,8 @@ tableexpression::tableexpression(lexer &lex) {
 				lex.read();
 				auto key = expression::read(lex);
 
-				word = lex.read();
-				if (word != "]") {
-					throw error::expected_for("]", "[<key>]", word);
-				}
-
-				word = lex.read();
-				if (word != "=") {
-					throw error::expected_for("=", "[<key>] = ", word);
-				}
+				lex.expect("]", "table");
+				lex.expect("=", "table");
 
 				auto value = expression::read(lex);
 

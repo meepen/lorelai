@@ -129,6 +129,7 @@ namespace lorelai {
 		}
 
 		void expect(string what, string from);
+		void wasexpected(string what, string from);
 
 		bool read(string readcondition);
 

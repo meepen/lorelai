@@ -100,7 +100,7 @@ int main(int argc, char *argv[]) {
 	);
 
 	try {
-		std::shared_ptr<node> main = std::make_shared<mainchunk>(luacode);
+		std::shared_ptr<node> main = std::make_shared<chunk>(luacode);
 		visitor_printer printer;
 		main->accept(printer, main);
 		print_branch(0, *main);

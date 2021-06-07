@@ -3,6 +3,9 @@
 
 #include <memory>
 #include "astgen.hpp"
+#include "astgen/chunks.hpp"
+#include "astgen/statements.hpp"
+#include "astgen/expressions.hpp"
 
 #define LORELAI_VISIT_MACRO(name) virtual bool visit(name &_node, std::shared_ptr<node> &container) { return false; }
 #define LORELAI_VISIT_NAME_MACRO(fn) \

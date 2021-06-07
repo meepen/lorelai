@@ -1,5 +1,4 @@
 #include "expressions.hpp"
-#include "errors.hpp"
 #include "lexer.hpp"
 
 using namespace lorelai;
@@ -15,7 +14,7 @@ numberexpression::numberexpression(lexer &lex) {
 			char *endptr;
 			data = std::strtod(word.c_str(), &endptr);
 			if ((endptr - word.c_str()) != word.size()) {
-				throw error::expected_for("<number>", "number", word.substr(endptr - word.c_str()));
+				lex.wasexpected("<number>", "number");
 			}
 			size = word.size();
 		}
@@ -24,7 +23,7 @@ numberexpression::numberexpression(lexer &lex) {
 			size += 2;
 		}
 		else {
-			throw error::expected_for("<number>", "number", word);
+			lex.wasexpected("<number>", "number");
 		}
 	}
 	else {
@@ -32,6 +31,6 @@ numberexpression::numberexpression(lexer &lex) {
 	}
 
 	if (size != word.size()) {
-		throw error::expected_for("<number>", "number", word);
+		lex.wasexpected("<number>", "number");
 	}
 }

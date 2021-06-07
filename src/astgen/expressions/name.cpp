@@ -1,6 +1,5 @@
 #include "expressions.hpp"
 #include "lexer.hpp"
-#include "errors.hpp"
 
 using namespace lorelai;
 using namespace lorelai::astgen;
@@ -11,6 +10,6 @@ nameexpression::nameexpression(lexer &lex) {
 	name = lex.read();
 
 	if (!lexer::isname(name)) {
-		throw error::unexpected_for(name, "name");
+		lex.wasexpected("<name>", "name");
 	}
 }

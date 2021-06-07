@@ -1,7 +1,6 @@
 #include "expressions.hpp"
 #include "visitor.hpp"
-#include "errors.hpp"
-#include "visitor.hpp"
+#include "lexer.hpp"
 
 using namespace lorelai::astgen;
 using namespace lorelai::astgen::expressions;
@@ -51,15 +50,13 @@ std::shared_ptr<node> expression::read(lexer &lex) {
 
 	unop ::= `-´ | not | `#´
 	*/
+	std::shared_ptr<node> expr;
 
-	auto word_or_null = lex.lookahead();
-	if (!word_or_null) {
-		throw error::expected_for("value", "expression", "no value");
+	if (!lex.lookahead()) {
+		return expr;
 	}
 
-	auto word = word_or_null.value();
-
-	std::shared_ptr<node> expr;
+	auto word = lex.lookahead().value();
 
 	if (word == "false") {
 		expr = std::make_shared<falseexpression>(lex);

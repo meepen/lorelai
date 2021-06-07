@@ -95,6 +95,9 @@ public:
 	unexpected_token(lexer &lex, std::string from) {
 		error = string(":") + std::to_string(lex.posdata.linenumber) + ": unexpected '" + lex.lookahead().value_or("<no value>") + "' while parsing from " + from;
 	}
+	unexpected_token(lexer &lex, std::string what, std::string from) {
+		error = string(":") + std::to_string(lex.posdata.linenumber) + ": unexpected '" + what + "' while parsing from " + from;
+	}
 	const char *what() const noexcept override {
 		return error.c_str();
 	}
@@ -118,4 +121,8 @@ void lexer::expect(string what, string from) {
 	}
 
 	read();
+}
+
+void lexer::wasexpected(string what, string from) {
+	throw unexpected_token(*this, what, from);
 }

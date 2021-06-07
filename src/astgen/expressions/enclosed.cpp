@@ -1,6 +1,5 @@
 #include "expressions.hpp"
 #include "lexer.hpp"
-#include "errors.hpp"
 
 using namespace lorelai;
 using namespace lorelai::astgen;
