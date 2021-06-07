@@ -3,11 +3,21 @@
 #include "visitor.hpp"
 #include "lexer.hpp"
 #include <algorithm>
+#include <unordered_map>
 
 using namespace lorelai;
 using namespace lorelai::astgen;
+using namespace lorelai::astgen::statements;
 
-statements::returnstatement::returnstatement(lexer &lex) {
+
+const static std::unordered_map<string, std::shared_ptr<node>(*)(lexer &lex)> lookupmap = {
+	{ "return", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<returnstatement>(lex); } },
+	{ "while", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<whilestatement>(lex); } },
+	{ "do", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<dostatement>(lex); } },
+	{ "repeat", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<repeatstatement>(lex); } }
+};
+
+returnstatement::returnstatement(lexer &lex) {
 	// consume return
 	lex.read();
 
@@ -47,17 +57,9 @@ std::shared_ptr<node> statement::read(lexer &lex) {
 
 	std::shared_ptr<node> stmt;
 
-	if (word == "return") {
-		stmt = std::make_shared<statements::returnstatement>(lex);
-	}
-	else if (word == "do") {
-		stmt = std::make_shared<statements::dostatement>(lex);
-	}
-	else if (word == "while") {
-		stmt = std::make_shared<statements::whilestatement>(lex);
-	}
-	else if (word == "repeat") {
-		stmt = std::make_shared<statements::repeatstatement>(lex);
+	auto lookup = lookupmap.find(word);
+	if (lookup != lookupmap.end()) {
+		stmt = lookup->second(lex);
 	}
 
 	if (stmt && lex.lookahead().value_or("") == ";") {
