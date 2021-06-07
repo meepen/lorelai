@@ -7,23 +7,17 @@ using namespace lorelai::astgen;
 using namespace lorelai::astgen::statements;
 
 whilestatement::whilestatement(lexer &lex) {
-	// consume while
-	lex.read();
+	lex.expect("while", "while .. do .. end");
+
 	conditional = expression::read(lex);
 	children.push_back(conditional);
 
-	auto word = lex.read();
-	if (word != "do") {
-		throw error::expected_for("do", "while .. do .. end", word);
-	}
+	lex.expect("do", "while .. do .. end");
 
 	while (auto stmt = statement::read(lex)) {
 		statements.push_back(stmt);
 		children.push_back(stmt);
 	}
 
-	word = lex.read();
-	if (word != "end") {
-		throw error::expected_for("end", "while .. do .. end", word);
-	}
+	lex.expect("end", "while .. do .. end");
 }

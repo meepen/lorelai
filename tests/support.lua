@@ -5,7 +5,7 @@ end
 repeat
 	do
 	end
-until true
+until true;
 
 do
 	do 

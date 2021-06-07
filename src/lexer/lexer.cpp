@@ -1,8 +1,11 @@
 #include "lexer.hpp"
+#include <algorithm>
+#include <unordered_set>
+#include <exception>
 
 using namespace lorelai;
 
-string_or_null &lexer::lookahead() {
+optional<string> &lexer::lookahead() {
 	if (_lookahead || islookaheadeof()) {
 		return _lookahead;
 	}
@@ -54,4 +57,65 @@ string_or_null &lexer::lookahead() {
 	_lookahead = next_data;
 
 	return _lookahead;
+}
+
+
+const std::unordered_set<string> keywords = {
+	"and",
+	"break",
+	"do",
+	"else",
+	"elseif",
+	"end",
+	"false",
+	"for",
+	"function",
+	"goto",
+	"if",
+	"in",
+	"local",
+	"nil",
+	"not",
+	"or",
+	"repeat",
+	"return",
+	"then",
+	"true",
+	"until",
+	"while"
+};
+
+bool lexer::iskeyword(string word) {
+	return keywords.find(word) != keywords.end();
+}
+
+
+class unexpected_token : public std::exception {
+public:
+	unexpected_token(lexer &lex, std::string from) {
+		error = string(":") + std::to_string(lex.posdata.linenumber) + ": unexpected '" + lex.lookahead().value_or("<no value>") + "' while parsing from " + from;
+	}
+	const char *what() const noexcept override {
+		return error.c_str();
+	}
+
+public:
+	std::string error;
+};
+
+bool lexer::read(string readcondition) {
+	if (!lookahead() || lookahead().value() != readcondition) {
+		return false;
+	}
+
+	read();
+	return true;
+}
+
+void lexer::expect(string what, string from) {
+	if (!lookahead() || lookahead().value() != what) {
+		throw unexpected_token(*this, from);
+	}
+
+	read();
 }

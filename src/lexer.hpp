@@ -2,39 +2,9 @@
 #define LEXER_HPP_
 
 #include <memory>
-#include <experimental/optional>
-#include <algorithm>
-#include <unordered_set>
 #include "types.hpp"
 
-
 namespace lorelai {
-	const static std::unordered_set<string> keywords = {
-		"and",
-		"break",
-		"do",
-		"else",
-		"elseif",
-		"end",
-		"false",
-		"for",
-		"function",
-		"goto",
-		"if",
-		"in",
-		"local",
-		"nil",
-		"not",
-		"or",
-		"repeat",
-		"return",
-		"then",
-		"true",
-		"until",
-		"while"
-	};
-
-	using string_or_null = std::experimental::optional<string>;
 	class lexer {
 	private:
 		using _posdata = struct {
@@ -70,9 +40,7 @@ namespace lorelai {
 			return isnumeric(chr) || (chr >= 'a' && chr <= 'f') || (chr >= 'A' && chr <= 'F');
 		}
 
-		static bool iskeyword(string word) {
-			return keywords.find(word) != keywords.end();
-		}
+		static bool iskeyword(string word);
 
 		static bool isname(string word) {
 			if (word.size() == 0 || iskeyword(word) || !isnamestart(word[0])) {
@@ -90,9 +58,7 @@ namespace lorelai {
 		}
 
 	public:
-		lexer(string _data) : data(_data) {
-
-		}
+		lexer(string _data) : data(_data) { }
 
 		bool iseof() {
 			return posdata.position == data.size();
@@ -120,7 +86,7 @@ namespace lorelai {
 			return lookahead_posdata.position - begin;
 		}
 
-		string_or_null &lookahead();
+		optional<string> &lookahead();
 
 		const string::value_type *futuredata() {
 			return data.data() + posdata.position;
@@ -162,8 +128,12 @@ namespace lorelai {
 			return chr;
 		}
 
+		void expect(string what, string from);
+
+		bool read(string readcondition);
+
 	private:
-		string_or_null _lookahead;
+		optional<string> _lookahead;
 		_posdata lookahead_posdata;
 
 		bool read_newline_r = false;

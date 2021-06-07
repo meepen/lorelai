@@ -7,17 +7,13 @@ using namespace lorelai::astgen;
 using namespace lorelai::astgen::statements;
 
 returnstatement::returnstatement(lexer &lex) {
-	// consume return
-	lex.read();
+	lex.expect("return", "return ..");
 
 	// try to read explist
 	while (std::shared_ptr<node> exp = expression::read(lex)) {
 		children.push_back(exp);
-		auto next = lex.lookahead().value_or("");
-		if (next != ",") {
+		if (!lex.read(",")) {
 			break;
 		}
-		// consume ','
-		lex.read();
 	}
 }

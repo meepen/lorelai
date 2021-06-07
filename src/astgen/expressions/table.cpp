@@ -1,6 +1,8 @@
 #include "expressions.hpp"
 #include "errors.hpp"
 #include "visitor.hpp"
+#include "lexer.hpp"
+#include <algorithm>
 
 using namespace lorelai;
 using namespace lorelai::astgen;
@@ -80,11 +82,7 @@ tableexpression::tableexpression(lexer &lex) {
 	}
 
 	// consume `}`
-	word = lex.read();
-
-	if (word != "}") {
-		throw error::expected_for("}", "table constructor", word);
-	}
+	lex.expect("}", "table constructor");
 }
 
 bool tableexpression::accept(visitor &visit, std::shared_ptr<node> &container) {

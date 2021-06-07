@@ -7,8 +7,7 @@ using namespace lorelai::astgen;
 using namespace lorelai::astgen::statements;
 
 repeatstatement::repeatstatement(lexer &lex) {
-	// consume repeat
-	lex.read();
+	lex.expect("repeat", "repeat .. until ..");
 
 	// try to read statement list
 	while (auto stmt = statement::read(lex)) {
@@ -16,10 +15,7 @@ repeatstatement::repeatstatement(lexer &lex) {
 		children.push_back(stmt);
 	}
 
-	auto ensure_until = lex.read();
-	if (ensure_until != "until") {
-		throw error::expected_for("end", "repeat .. until ..", lex.lookahead().value_or("no value"));
-	}
+	lex.expect("until", "repeat .. until ..");
 
 	conditional = expression::read(lex);
 	children.push_back(conditional);

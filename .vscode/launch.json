@@ -9,7 +9,7 @@
 			"type": "cppdbg",
 			"request": "launch",
 			"program": "${workspaceFolder}/bin/debug/x86-64/test-astgen",
-			"args": ["${workspaceFolder}/tests/astgen/input.json"],
+			"args": ["${workspaceFolder}/tests/support.lua"],
 			"stopAtEntry": false,
 			"cwd": "${fileDirname}",
 			"environment": [],

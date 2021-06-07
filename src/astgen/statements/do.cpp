@@ -7,17 +7,12 @@ using namespace lorelai::astgen;
 using namespace lorelai::astgen::statements;
 
 dostatement::dostatement(lexer &lex) {
-	// consume do
-	lex.read();
+	lex.expect("do", "do .. end");
 
 	while (auto stmt = statement::read(lex)) {
 		statements.push_back(stmt);
 		children.push_back(stmt);
 	}
 
-	auto ensure_end = lex.read();
-
-	if (ensure_end != "end") {
-		throw error::expected_for("end", "do .. end", lex.lookahead().value_or("no value"));
-	}
+	lex.expect("end", "do .. end");
 }
