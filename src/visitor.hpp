@@ -6,12 +6,14 @@
 #include "astgen/chunks.hpp"
 #include "astgen/statements.hpp"
 #include "astgen/expressions.hpp"
+#include "astgen/funcbody.hpp"
 
 #define LORELAI_VISIT_MACRO(name) virtual bool visit(name &_node, std::shared_ptr<node> &container) { return false; }
 #define LORELAI_VISIT_NAME_MACRO(fn) \
 	LORELAI_EXPRESSION_CLASS_MACRO(fn) \
 	LORELAI_STATEMENT_CLASS_MACRO(fn) \
-	fn(lorelai::astgen::chunk)
+	fn(lorelai::astgen::chunk) \
+	fn(lorelai::astgen::funcbody)
 
 namespace lorelai {
 	namespace astgen {

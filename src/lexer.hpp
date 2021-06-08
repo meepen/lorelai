@@ -43,10 +43,10 @@ namespace lorelai {
 		*/
 
 		static bool isnamestart(string::value_type chr) {
-			return isalpha(chr) || (unsigned)(chr) >= 0x80;
+			return isalpha(chr) || (unsigned)(chr) >= 0x80 || chr == '_';
 		}
 		static bool ispartofname(string::value_type chr) {
-			return isalpha(chr) || chr > 0x80 || isnumeric(chr) || chr == '_';
+			return isnamestart(chr) || isnumeric(chr);
 		}
 
 		static bool isname(string word) {

@@ -20,7 +20,7 @@ const static std::unordered_map<string, std::shared_ptr<node>(*)(lexer &lex)> lo
 		auto ahead = lex.lookahead();
 		if (ahead) {
 			if (ahead.value() == "function") {
-				
+				return std::make_shared<localfunctionstatement>(lex);
 			}
 			else {
 				return std::make_shared<localsstatement>(lex);

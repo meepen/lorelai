@@ -15,16 +15,21 @@ local A , B, C =
 		[nil] = 1
 	})
 
+local function test()
+	local D
+	return D;
+end;
+
 do
 	do 
 		return
-			'♏\\u{1F389}\\x33\\531',
+			'♏\u{1F389}\x33\531',
 			true,
 			false,
 			nil,
 			1.23,
 			0x2.2, 
-			b10,
+			0b10,
 			...
 		;
 	end;

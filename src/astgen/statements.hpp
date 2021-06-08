@@ -6,7 +6,8 @@
 	fn(lorelai::astgen::statements::dostatement) \
 	fn(lorelai::astgen::statements::whilestatement) \
 	fn(lorelai::astgen::statements::repeatstatement) \
-	fn(lorelai::astgen::statements::localsstatement)
+	fn(lorelai::astgen::statements::localsstatement) \
+	fn(lorelai::astgen::statements::localfunctionstatement)
 
 #include <vector>
 #include <memory>
@@ -69,6 +70,17 @@ namespace lorelai {
 			public:
 				std::vector<std::shared_ptr<node>> names;
 				std::vector<std::shared_ptr<node>> initializers;
+			};
+
+			class localfunctionstatement : public branch, public statement {
+			public:
+				localfunctionstatement(lexer &lex);
+
+				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+
+			public:
+				std::shared_ptr<node> name;
+				std::shared_ptr<node> body;
 			};
 		}
 	}
