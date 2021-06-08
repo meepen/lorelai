@@ -5,7 +5,8 @@
 	fn(lorelai::astgen::statements::returnstatement) \
 	fn(lorelai::astgen::statements::dostatement) \
 	fn(lorelai::astgen::statements::whilestatement) \
-	fn(lorelai::astgen::statements::repeatstatement)
+	fn(lorelai::astgen::statements::repeatstatement) \
+	fn(lorelai::astgen::statements::localsstatement)
 
 #include <vector>
 #include <memory>
@@ -15,6 +16,8 @@
 namespace lorelai {
 	class lexer;
 	namespace astgen {
+		class chunk;
+
 		class statement {
 		public:
 			static std::shared_ptr<node> read(lexer &lex);
@@ -23,7 +26,7 @@ namespace lorelai {
 		class blockstatement : public branch, public statement {
 		public:
 			std::shared_ptr<node> conditional;
-			std::vector<std::shared_ptr<node>> statements;
+			std::shared_ptr<node> block;
 		};
 
 		namespace statements {
@@ -55,6 +58,17 @@ namespace lorelai {
 				repeatstatement(lexer &lex);
 
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+			};
+
+			class localsstatement : public branch, public statement {
+			public:
+				localsstatement(lexer &lex);
+
+				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+
+			public:
+				std::vector<std::shared_ptr<node>> names;
+				std::vector<std::shared_ptr<node>> initializers;
 			};
 		}
 	}

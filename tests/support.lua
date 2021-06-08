@@ -7,14 +7,17 @@ repeat
 	end
 until true;
 
+local A , B, C =
+	1,
+	({
+		false,
+		Test = true,
+		[nil] = 1
+	})
+
 do
 	do 
 		return
-			{
-				false,
-				Test = true,
-				[nil] = 1
-			},
 			'♏\\u{1F389}\\x33\\531',
 			true,
 			false,

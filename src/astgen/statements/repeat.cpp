@@ -1,5 +1,6 @@
 #include "statements.hpp"
 #include "expressions.hpp"
+#include "chunks.hpp"
 #include "lexer.hpp"
 
 using namespace lorelai;
@@ -9,11 +10,8 @@ using namespace lorelai::astgen::statements;
 repeatstatement::repeatstatement(lexer &lex) {
 	lex.expect("repeat", "repeat .. until ..");
 
-	// try to read statement list
-	while (auto stmt = statement::read(lex)) {
-		statements.push_back(stmt);
-		children.push_back(stmt);
-	}
+	block = std::make_shared<chunk>(lex);
+	children.push_back(block);
 
 	lex.expect("until", "repeat .. until ..");
 

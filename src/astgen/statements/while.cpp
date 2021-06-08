@@ -1,5 +1,6 @@
 #include "statements.hpp"
 #include "expressions.hpp"
+#include "chunks.hpp"
 #include "lexer.hpp"
 
 using namespace lorelai;
@@ -14,10 +15,8 @@ whilestatement::whilestatement(lexer &lex) {
 
 	lex.expect("do", "while .. do .. end");
 
-	while (auto stmt = statement::read(lex)) {
-		statements.push_back(stmt);
-		children.push_back(stmt);
-	}
+	block = std::make_shared<chunk>(lex);
+	children.push_back(block);
 
 	lex.expect("end", "while .. do .. end");
 }

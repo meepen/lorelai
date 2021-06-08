@@ -14,7 +14,21 @@ const static std::unordered_map<string, std::shared_ptr<node>(*)(lexer &lex)> lo
 	{ "return", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<returnstatement>(lex); } },
 	{ "while", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<whilestatement>(lex); } },
 	{ "do", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<dostatement>(lex); } },
-	{ "repeat", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<repeatstatement>(lex); } }
+	{ "repeat", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<repeatstatement>(lex); } },
+	{ "local", [](lexer &lex) -> std::shared_ptr<node> {
+		lex.expect("local", "local deducer");
+		auto ahead = lex.lookahead();
+		if (ahead) {
+			if (ahead.value() == "function") {
+				
+			}
+			else {
+				return std::make_shared<localsstatement>(lex);
+			}
+		}
+
+		return nullptr;
+	} }
 };
 
 returnstatement::returnstatement(lexer &lex) {
@@ -45,7 +59,7 @@ std::shared_ptr<node> statement::read(lexer &lex) {
 		 for namelist in explist do block end | 
 		 function funcname funcbody | 
 		 local function Name funcbody | 
-		 local namelist [`=´ explist] 
+!		 local namelist [`=´ explist] 
 
 	+ optional ;
 	*/

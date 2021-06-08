@@ -28,19 +28,26 @@ namespace lorelai {
 			return isnumeric(chr) || chr == '.';
 		}
 
-		static bool isnamestart(string::value_type chr) {
-			return isalpha(chr) || (unsigned)(chr) >= 0x80;
-		}
-		
-		static bool ispartofname(string::value_type chr) {
-			return isalpha(chr) || chr > 0x80 || isnumeric(chr);
-		}
-
 		static bool ishexachar(string::value_type chr) {
 			return isnumeric(chr) || (chr >= 'a' && chr <= 'f') || (chr >= 'A' && chr <= 'F');
 		}
 
 		static bool iskeyword(string word);
+
+		/*
+		Names (also called identifiers) in Lua can be any string of letters, digits, and underscores,
+		not beginning with a digit. This coincides with the definition of names in most languages.
+		(The definition of letter depends on the current locale: any character considered alphabetic
+		by the current locale can be used in an identifier.) Identifiers are used to name variables
+		and table fields. 
+		*/
+
+		static bool isnamestart(string::value_type chr) {
+			return isalpha(chr) || (unsigned)(chr) >= 0x80;
+		}
+		static bool ispartofname(string::value_type chr) {
+			return isalpha(chr) || chr > 0x80 || isnumeric(chr) || chr == '_';
+		}
 
 		static bool isname(string word) {
 			if (word.size() == 0 || iskeyword(word) || !isnamestart(word[0])) {
