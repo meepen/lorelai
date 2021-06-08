@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+      - uses: abel0b/setup-premake@v1
+
+      - name: Build
+        run: |
+          cd $GITHUB_WORKSPACE
+          premake5 gmake
+          cd proj
+          export config=debug_x86-64
+          make clean
+          make
