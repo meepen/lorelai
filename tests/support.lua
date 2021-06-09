@@ -7,17 +7,14 @@ repeat
 	end
 until true;
 
-local A , B, C =
-	1,
-	({
-		false,
-		Test = true,
-		[nil] = 1
-	})
-
-local function test()
-	local D
-	return D;
+local function test(param1, param2)
+	local var1
+	local function func2(param3)
+		local var2
+		return param2, param3, var1, var2, 2, glob1
+	end
+	local var2
+	return var2;
 end;
 
 do
@@ -36,3 +33,11 @@ do
 
 	return;
 end;
+
+local A , B, C =
+	-1,
+	({
+		false,
+		Test = true,
+		[nil] = 1
+	})

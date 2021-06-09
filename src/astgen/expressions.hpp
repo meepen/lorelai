@@ -20,7 +20,9 @@
 	fn(lorelai::astgen::expressions::varargexpression) \
 	fn(lorelai::astgen::expressions::nameexpression) \
 	fn(lorelai::astgen::expressions::tableexpression) \
-	fn(lorelai::astgen::expressions::enclosedexpression)
+	fn(lorelai::astgen::expressions::enclosedexpression) \
+	fn(lorelai::astgen::expressions::binopexpression) \
+	fn(lorelai::astgen::expressions::unopexpression)
 
 #include "types.hpp"
 #include "node.hpp"
@@ -32,7 +34,7 @@ namespace lorelai {
 	namespace astgen {
 		class expression {
 		public:
-			static std::shared_ptr<node> read(lexer &lex);
+			static std::shared_ptr<node> read(lexer &lex, bool postexp = true);
 		};
 
 		class prefixexpression : public expression {
@@ -135,13 +137,45 @@ namespace lorelai {
 			};
 
 
-			// prefix expressions
 			class enclosedexpression : public branch, public prefixexpression {
 			public:
 				enclosedexpression(lexer &lex);
 
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
 			};
+
+
+			class binopexpression : public branch, public expression {
+			public:
+				const static std::vector<std::pair<bool, std::vector<string>>> priorities;
+				const static std::unordered_map<string, int> prioritymap;
+
+				binopexpression(std::shared_ptr<node> _lhs, string _op, std::shared_ptr<node> _rhs) : lhs(_lhs), op(_op), rhs(_rhs) {
+					children.push_back(lhs);
+					children.push_back(rhs);
+				}
+
+				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+
+			public:
+				std::shared_ptr<node> lhs, rhs;
+				string op;
+			};
+
+			class unopexpression : public branch, public expression {
+			public:
+				unopexpression(string _op, std::shared_ptr<node> _expr) : op(_op), expr(_expr) {
+					children.push_back(expr);
+				}
+
+				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+
+			public:
+				std::shared_ptr<node> expr;
+				string op;
+			};
+
+			
 		}
 	}
 }

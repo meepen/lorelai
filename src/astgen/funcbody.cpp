@@ -15,10 +15,16 @@ funcbody::funcbody(lexer &lex) {
 
 	lex.expect("(", "funcbody");
 
+	bool first = true;
 	while (true) {
 		auto param = expression::read(lex);
 		if (!param) {
-			break;
+			if (first) {
+				break;
+			}
+			else {
+				lex.wasexpected("<name or vararg>", "funcbody");
+			}
 		}
 
 		params.push_back(param);
@@ -29,6 +35,10 @@ funcbody::funcbody(lexer &lex) {
 		}
 		else if (!dynamic_cast<expressions::nameexpression *>(param.get())) {
 			lex.wasexpected("<name or vararg>", "funcbody");
+		}
+
+		if (!lex.read(",")) {
+			break;
 		}
 	}
 

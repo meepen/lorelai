@@ -93,10 +93,10 @@ bool lexer::iskeyword(string word) {
 class unexpected_token : public std::exception {
 public:
 	unexpected_token(lexer &lex, std::string from) {
-		error = string(":") + std::to_string(lex.posdata.linenumber) + ": unexpected '" + lex.lookahead().value_or("<no value>") + "' while parsing from " + from;
+		error = string(":") + std::to_string(lex.posdata.linenumber) + ":" + std::to_string(lex.posdata.linecolumn) +": unexpected '" + lex.lookahead().value_or("<no value>") + "' while parsing from " + from;
 	}
 	unexpected_token(lexer &lex, std::string what, std::string from) {
-		error = string(":") + std::to_string(lex.posdata.linenumber) + ": unexpected '" + what + "' while parsing from " + from;
+		error = string(":") + std::to_string(lex.posdata.linenumber) + ":" + std::to_string(lex.posdata.linecolumn) + ": expected '" + what + + "' while parsing from " + from;
 	}
 	const char *what() const noexcept override {
 		return error.c_str();

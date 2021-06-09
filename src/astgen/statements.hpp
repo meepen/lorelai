@@ -82,6 +82,17 @@ namespace lorelai {
 				std::shared_ptr<node> name;
 				std::shared_ptr<node> body;
 			};
+
+			class functionstatement : public branch, public statement {
+			public:
+				functionstatement(lexer &lex);
+
+				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+
+			public:
+				std::shared_ptr<node> name;
+				std::shared_ptr<node> body;
+			};
 		}
 	}
 }

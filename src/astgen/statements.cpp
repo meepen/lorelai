@@ -28,7 +28,10 @@ const static std::unordered_map<string, std::shared_ptr<node>(*)(lexer &lex)> lo
 		}
 
 		return nullptr;
-	} }
+	} },
+	/* { "function", [](lexer &lex) -> std::shared_ptr<node> {
+		return std::make_shared<functionstatement>(lex);
+	} } */
 };
 
 returnstatement::returnstatement(lexer &lex) {
@@ -58,7 +61,7 @@ std::shared_ptr<node> statement::read(lexer &lex) {
 		 for Name `=´ exp `,´ exp [`,´ exp] do block end | 
 		 for namelist in explist do block end | 
 		 function funcname funcbody | 
-		 local function Name funcbody | 
+!		 local function Name funcbody | 
 !		 local namelist [`=´ explist] 
 
 	+ optional ;

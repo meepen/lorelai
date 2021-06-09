@@ -16,11 +16,9 @@ localsstatement::localsstatement(lexer &lex) {
 		names.push_back(name);
 		children.push_back(name);
 
-		if (!lex.lookahead() || lex.lookahead().value() != ",") {
+		if (!lex.read(",")) {
 			break;
 		}
-
-		lex.expect(",", "locals statement");
 	}
 
 	if (lex.lookahead() && lex.lookahead().value() == "=") {
@@ -36,11 +34,9 @@ localsstatement::localsstatement(lexer &lex) {
 			initializers.push_back(expr);
 			children.push_back(expr);
 
-			if (!lex.lookahead() || lex.lookahead().value() != ",") {
+			if (!lex.read(",")) {
 				break;
 			}
-
-			lex.expect(",", "locals statement");
 		}
 	}
 }

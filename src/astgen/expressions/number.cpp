@@ -8,6 +8,7 @@ using namespace lorelai::astgen::expressions;
 numberexpression::numberexpression(lexer &lex) {
 	size_t size;
 	auto word = lex.read();
+
 	if (word.size() >= 2 && word[0] == '0') {
 		char typ = word[1];
 		if (typ == 'x') {

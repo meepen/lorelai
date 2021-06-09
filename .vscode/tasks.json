@@ -13,14 +13,6 @@
 				"command": ".\\scripts\\build.bat"
 			},
 			"group": "build"
-		},
-		{
-			"label": "Test",
-			"type": "shell",
-			"linux": {
-				"command": "./scripts/test.sh"
-			},
-			"group": "test"
 		}
 	]
 }
