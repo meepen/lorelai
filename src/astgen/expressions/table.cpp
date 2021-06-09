@@ -18,15 +18,13 @@ tableexpression::tableexpression(lexer &lex) {
 
 	fieldsep ::= `,´ | `;´
 	*/
+	lex.expect("{", "table expression");
 
 	size_t arraysize = 0;
 
 	auto word = lex.lookahead().value_or("");
 	if (word != "" && word != "}") {
 		do {
-			// consume '{' or ','
-			lex.read();
-
 			word = lex.lookahead().value_or("");
 
 			if (word == "[") {
@@ -34,11 +32,17 @@ tableexpression::tableexpression(lexer &lex) {
 				// consume `[`
 				lex.read();
 				auto key = expression::read(lex);
+				if (!key) {
+					lex.wasexpected("<expression>", "table constructor");
+				}
 
 				lex.expect("]", "table");
 				lex.expect("=", "table");
 
 				auto value = expression::read(lex);
+				if (!value) {
+					lex.wasexpected("<expression>", "table constructor");
+				}
 
 				tabledata.push_back(std::make_pair(key, value));
 				children.push_back(key);
@@ -48,6 +52,9 @@ tableexpression::tableexpression(lexer &lex) {
 				// Name `=` exp | exp
 				std::shared_ptr<node> key;
 				auto value = expression::read(lex);
+				if (!value) {
+					break;
+				}
 
 				word = lex.lookahead().value_or("");
 				
@@ -67,10 +74,8 @@ tableexpression::tableexpression(lexer &lex) {
 				children.push_back(value);
 				tabledata.push_back(std::make_pair(key, value));
 			}
-
-			word = lex.lookahead().value_or("");
 		}
-		while (word == ",");
+		while (lex.read(",") || lex.read(";"));
 	}
 
 	// consume `}`
@@ -90,7 +95,9 @@ bool tableexpression::accept(visitor &visit, std::shared_ptr<node> &container) {
 	std::vector<std::pair<std::shared_ptr<node>, std::shared_ptr<node>>> keys;
 
 	for (auto &child : children) {
-		deleted.push_back(child);
+		if (child->accept(visit, child)) {
+			deleted.push_back(child);
+		}
 	}
 
 	for (auto &pair : tabledata) {

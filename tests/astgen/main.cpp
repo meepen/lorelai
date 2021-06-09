@@ -18,8 +18,15 @@ using json = nlohmann::json;
 #include <cxxabi.h>
 template <typename T>
 std::string gettypename(T &data) {
+	auto name = typeid(data).name();
+	auto demangled = abi::__cxa_demangle(name, nullptr, nullptr, nullptr);
+
+	if (!demangled) {
+		throw;
+	}
+
     auto ptr = std::unique_ptr<char, decltype(& std::free)>{
-        abi::__cxa_demangle(typeid(data).name(), nullptr, nullptr, nullptr),
+        demangled,
         std::free
     };
     return {ptr.get()};

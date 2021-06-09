@@ -8,7 +8,10 @@ using namespace lorelai::astgen;
 using namespace lorelai::astgen::expressions;
 
 bool functioncallexpression::applicable(lexer &lex) {
-	return args::applicable(lex);
+	if (!lex.lookahead()) {
+		return false;
+	}
+	return lex.lookahead().value() == ":" || args::applicable(lex);
 }
 
 // functioncall ::=  prefixexp args | prefixexp `:´ Name args 

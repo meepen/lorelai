@@ -1,3 +1,9 @@
+local empty = {}
+local trailing = {1,}
+local keytrailing = {[1] = -1^3,}
+local samekeys = {[1] = 2, [1] = 3}
+local semi = {1;2;3}
+
 while false do
 	return
 end
@@ -48,4 +54,6 @@ for x = 1, 3, 0.1 do
 	local A, y = -(1 + 1)^2 / 2
 end
 
-local a = b(c(0, ...))
+local b = b()
+
+local a = (false).b(c(0, ...)).c[[ ]] {1 }()(3):d().e().f
