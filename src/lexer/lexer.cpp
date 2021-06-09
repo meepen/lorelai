@@ -14,6 +14,7 @@ optional<string> &lexer::lookahead() {
 	skipwhite();
 
 	if (islookaheadeof()) {
+		posdata = lookahead_posdata;
 		return _lookahead;
 	}
 	

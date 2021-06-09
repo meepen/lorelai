@@ -4,6 +4,7 @@
 #include <exception>
 #include <iostream>
 #include <typeinfo>
+#include <chrono>
 #include "astgen.hpp"
 
 
@@ -61,10 +62,13 @@ int main(int argc, char *argv[]) {
 	);
 
 	try {
-		lorelai::astgen::chunk loadedast(luacode);
+		auto start = std::chrono::high_resolution_clock::now();
+		lorelai::astgen::chunk loadedast(luacode, true);
+		auto elapsed = std::chrono::high_resolution_clock::now() - start;
 		print_branch(0, loadedast);
 
-		std::cout << "success" << std::endl;
+		long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
+		std::cout << "success in " << microseconds << " microseconds" << std::endl;
 	}
 	catch (std::exception &e) {
 		std::cerr << "Error: " << e.what() << std::endl;

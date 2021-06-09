@@ -13,7 +13,7 @@ namespace lorelai {
 
 		public:
 			chunk(lexer &lex);
-			chunk(string data);
+			chunk(string data, bool expect_eof = false);
 
 			bool accept(visitor &visit, std::shared_ptr<node> &container) override;
 		};

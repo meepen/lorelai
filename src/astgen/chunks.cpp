@@ -7,9 +7,12 @@
 using namespace lorelai;
 using namespace lorelai::astgen;
 
-chunk::chunk(string data) {
+chunk::chunk(string data, bool expect_eof) {
 	lexer lex(data);
 	initialize(lex);
+	if (expect_eof && !lex.iseof()) {
+		lex.wasexpected("<eof>", "chunk");
+	}
 }
 
 chunk::chunk(lexer &lex) {
