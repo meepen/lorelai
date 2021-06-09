@@ -9,7 +9,7 @@ using namespace lorelai;
 using namespace lorelai::parser;
 using namespace lorelai::parser::expressions;
 
-#define acceptmacro(name) bool name ::accept(visitor &visit, std::shared_ptr<node> &container) { visit.visit(*this, container); }
+#define acceptmacro(name) bool name ::accept(visitor &visit, std::shared_ptr<node> &container) { return visit.visit(*this, container); }
 LORELAI_EXPRESSION_NODES_CLASS_MACRO(acceptmacro);
 
 bool enclosedexpression::accept(visitor &visit, std::shared_ptr<node> &container) {

@@ -16,12 +16,13 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
       - uses: abel0b/setup-premake@v1
+      - uses: snickerbockers/submodules-init@v4
 
       - name: Build
         run: |
           cd $GITHUB_WORKSPACE
           premake5 gmake
           cd proj
-          export config=debug_x86-64
+          export config=release_x86-64
           make clean
           make
