@@ -1,3 +1,11 @@
+local function includelexer()
+	includedirs {
+		"src"
+	}
+	files {
+		"src/lexer.hpp"
+	}
+end
 local function includeast()
 	includedirs {
 		"src",
@@ -7,12 +15,13 @@ local function includeast()
 		"src/**.hpp"
 	}
 end
-local function includelexer()
+local function includeasmjit()
 	includedirs {
-		"src"
+		"asmjit/src/asmjit",
+		"asmjit/src"
 	}
 	files {
-		"src/lexer.hpp"
+		"asmjit/src/asmjit/**.h"
 	}
 end
 
@@ -27,9 +36,20 @@ local function linkast()
 	linklexer()
 end
 
+local function linkasmjit()
+	filter "system:linux"
+		links {
+			"pthread",
+			"rt",
+			"asmjit"
+		}
+	includeasmjit()
+end
+
 workspace "lorelai"
 	configurations { "debug", "release" }
 	platforms { "x86", "x86-64" }
+
 	cppdialect "C++17"
 
 	targetdir "bin/%{cfg.buildcfg}/%{cfg.platform}"
@@ -84,3 +104,22 @@ workspace "lorelai"
 		files {
 			"tests/visitor/main.cpp",
 		}
+
+	project "asmjit"
+		kind "StaticLib"
+		includeasmjit()
+		defines {
+			"ASMJIT_STATIC",
+			"ASMJIT_TARGET_TYPE=\"STATIC\""
+		}
+		filter "platforms:x86 or x86-64"
+			files {
+				"asmjit/src/asmjit/x86/**.cpp",
+				"asmjit/src/asmjit/core/**.cpp"
+			}
+
+	filter "platforms:x86 or x86-64"
+		project "test-asmjit-x86"
+			kind "ConsoleApp"
+			linkasmjit()
+			files "tests/asmjit/main.cpp"
