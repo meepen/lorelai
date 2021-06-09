@@ -132,14 +132,15 @@ namespace lorelai {
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
 			};
 			
-			class ifstatement : public blockstatement {
+			class ifstatement : public branch, public statement {
 			public:
 				ifstatement(lexer &lex);
 
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
 
 			public:
-				std::shared_ptr<node> conditional;
+				std::vector<std::shared_ptr<node>> conditionals;
+				std::vector<std::shared_ptr<node>> blocks;
 			};
 
 			class functionstatement : public statement, public branch {

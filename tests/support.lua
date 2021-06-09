@@ -62,4 +62,12 @@ function F.FF:FFF(FFFF, FFFFF)
 	return;
 end
 
+if (false) then
+	print "hi!"
+elseif true then
+	print {}
+else
+	a = B
+end
+
 test = b
