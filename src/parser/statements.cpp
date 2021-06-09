@@ -39,9 +39,7 @@ const static std::unordered_map<string, std::shared_ptr<node>(*)(lexer &lex)> lo
 		else if (lex.lookahead().value() == "=") {
 			return std::make_shared<fornumstatement>(name, lex);
 		}
-		else {
-			return std::make_shared<forinstatement>(name, lex);
-		}
+		return std::make_shared<forinstatement>(name, lex);
 	} },
 	{ "break", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<breakstatement>(lex); } },
 	{ "if", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<ifstatement>(lex); } },
