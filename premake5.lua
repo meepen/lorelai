@@ -22,7 +22,7 @@ local function linklexer()
 end
 
 local function linkast()
-	links "astgen"
+	links "parser"
 	includeast()
 	linklexer()
 end
@@ -55,23 +55,23 @@ workspace "lorelai"
 
 		files "src/lexer/**.cpp"
 
-	project "astgen"
+	project "parser"
 		kind "StaticLib"
 		includeast()
 		linklexer()
 
-		includedirs "src/astgen"
-		files "src/astgen/**.cpp"
+		includedirs "src/parser"
+		files "src/parser/**.cpp"
 
-	project "test-astgen"
+	project "test-parser"
 		kind "ConsoleApp"
 		linkast()
 
 		includedirs {
-			"tests/astgen",
+			"tests/parser",
 		}
 		files {
-			"tests/astgen/main.cpp",
+			"tests/parser/main.cpp",
 		}
 
 	project "test-visitor"

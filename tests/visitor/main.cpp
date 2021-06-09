@@ -4,9 +4,9 @@
 #include <exception>
 #include <iostream>
 #include <typeinfo>
-#include "astgen.hpp"
-#include "astgen/statements.hpp"
-#include "astgen/node.hpp"
+#include "parser.hpp"
+#include "parser/statements.hpp"
+#include "parser/node.hpp"
 #include "visitor.hpp"
 
 /*
@@ -15,7 +15,7 @@ using json = nlohmann::json;
 */
 
 using namespace lorelai;
-using namespace lorelai::astgen;
+using namespace lorelai::parser;
 
 #define BASIC_TEST(classname) \
 	bool visit(classname &_node, std::shared_ptr<node> &container) override { \
@@ -27,18 +27,18 @@ class visitor_printer : public visitor {
 };
 
 class printer_visitor : public visitor {
-	bool visit(expressions::stringexpression &node, std::shared_ptr<lorelai::astgen::node> &container) override {
+	bool visit(expressions::stringexpression &node, std::shared_ptr<lorelai::parser::node> &container) override {
 		std::cout << "STRING: " << node.data << std::endl;
 		return false;
 	}
-	bool visit(expressions::numberexpression &node, std::shared_ptr<lorelai::astgen::node> &container) override {
+	bool visit(expressions::numberexpression &node, std::shared_ptr<lorelai::parser::node> &container) override {
 		std::cout << "NUMBER: " << node.data << std::endl;
 		return false;
 	}
 };
 
 class number_to_false_visitor : public visitor {
-	bool visit(expressions::numberexpression &node, std::shared_ptr<lorelai::astgen::node> &container) override {
+	bool visit(expressions::numberexpression &node, std::shared_ptr<lorelai::parser::node> &container) override {
 		container = std::make_shared<expressions::falseexpression>();
 		std::cout << "REPLACED!!" << std::endl;
 		return false;
@@ -46,7 +46,7 @@ class number_to_false_visitor : public visitor {
 };
 
 class return_delete_visitor : public visitor {
-	bool visit(statements::returnstatement &node, std::shared_ptr<lorelai::astgen::node> &container) override {
+	bool visit(statements::returnstatement &node, std::shared_ptr<lorelai::parser::node> &container) override {
 		std::cout << "DELETED!" << std::endl;
 		return true;
 	}
@@ -69,7 +69,7 @@ std::string gettypename(T &data) {
 }
 #endif
 
-static void print_branch(size_t idx, lorelai::astgen::node &node) {
+static void print_branch(size_t idx, lorelai::parser::node &node) {
 	for (size_t i = 0; i < idx; i++) {
 		std::cout << "  ";
 	}
@@ -77,7 +77,7 @@ static void print_branch(size_t idx, lorelai::astgen::node &node) {
 	std::cout << gettypename(node) << std::endl;
 
 	try {
-		lorelai::astgen::branch &branch = dynamic_cast<lorelai::astgen::branch &>(node);
+		lorelai::parser::branch &branch = dynamic_cast<lorelai::parser::branch &>(node);
 		for (auto &child : branch.children) {
 			print_branch(idx + 1, *child);
 		}

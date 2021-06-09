@@ -5,10 +5,10 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "(gdb) test-astgen",
+			"name": "(gdb) test-parser",
 			"type": "cppdbg",
 			"request": "launch",
-			"program": "${workspaceFolder}/bin/debug/x86-64/test-astgen",
+			"program": "${workspaceFolder}/bin/debug/x86-64/test-parser",
 			"args": ["${workspaceFolder}/tests/support.lua"],
 			"stopAtEntry": false,
 			"cwd": "${fileDirname}",
