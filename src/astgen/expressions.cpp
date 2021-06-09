@@ -286,7 +286,7 @@ std::shared_ptr<node> expression::read(lexer &lex, bool postexp) {
 				// left to right needs to process unops
 				// so we need to pass when rhs is nullptr
 				
-				while (tryprocess(lhs->current, rhs->current, layer.second)) {
+				while (tryprocess(lhs->current, rhs ? rhs->current : lhs->current, layer.second)) {
 					delete rhs;
 					rhs = lhs->after;
 				}
