@@ -22,6 +22,9 @@ chunk::chunk(lexer &lex) {
 void chunk::initialize(lexer &lex) {
 	while (auto statement = statement::read(lex)) {
 		children.push_back(statement);
+		if (dynamic_cast<astgen::statement *>(statement.get())->isfinal()) {
+			break;
+		}
 		lex.skipwhite();
 	}
 

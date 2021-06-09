@@ -32,6 +32,8 @@ namespace lorelai {
 		class statement {
 		public:
 			static std::shared_ptr<node> read(lexer &lex);
+
+			virtual bool isfinal() { return false; }
 		};
 
 		class blockstatement : public branch, public statement {
@@ -48,6 +50,8 @@ namespace lorelai {
 			class returnstatement : public branch, public statement {
 			public:
 				returnstatement(lexer &lex);
+
+				bool isfinal() override { return true; }
 
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
 			};
@@ -122,6 +126,8 @@ namespace lorelai {
 			class breakstatement : public node, public statement {
 			public:
 				breakstatement(lexer &lex);
+
+				bool isfinal() override { return true; }
 
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
 			};

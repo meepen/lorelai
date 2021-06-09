@@ -69,8 +69,9 @@ returnstatement::returnstatement(lexer &lex) {
 
 std::shared_ptr<node> statement::read(lexer &lex) {
 	/*
-	stat ::=  varlist `=´ explist | 
-		 functioncall | 
+	stat ::=
+!        varlist `=´ explist | 
+!		 functioncall | 
 !		 do block end | 
 !		 while exp do block end | 
 !		 repeat block until exp | 
