@@ -96,8 +96,21 @@ std::shared_ptr<node> statement::read(lexer &lex) {
 		stmt = lookup->second(lex);
 	}
 
-	if (!stmt && !lexer::iskeyword(word)) {
-		// varlist = exprlist
+	if (!stmt) {
+		// varlist = exprlist | functioncall
+		auto exp = expression::read(lex);
+		if (exp) {
+			if (!lex.lookahead()) {
+				lex.wasexpected("<token>", "statement deducer");
+			}
+
+			if (dynamic_cast<expressions::functioncallexpression *>(exp.get())) {
+				stmt = std::make_shared<functioncallstatement>(exp);
+			}
+			else {
+				stmt = std::make_shared<assignmentstatement>(exp, lex);
+			}
+		}
 	}
 
 	if (stmt && lex.lookahead().value_or("") == ";") {

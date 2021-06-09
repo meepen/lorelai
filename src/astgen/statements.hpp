@@ -11,7 +11,9 @@
 	fn(lorelai::astgen::statements::fornumstatement) \
 	fn(lorelai::astgen::statements::forinstatement) \
 	fn(lorelai::astgen::statements::ifstatement) \
-	fn(lorelai::astgen::statements::functionstatement)
+	fn(lorelai::astgen::statements::functionstatement) \
+	fn(lorelai::astgen::statements::functioncallstatement) \
+	fn(lorelai::astgen::statements::assignmentstatement)
 
 #define LORELAI_STATEMENT_CLASS_MACRO(fn) \
 	LORELAI_STATEMENT_BRANCH_CLASS_MACRO(fn) \
@@ -144,6 +146,26 @@ namespace lorelai {
 				std::vector<std::shared_ptr<node>> names;
 				std::shared_ptr<node> method;
 				std::shared_ptr<node> body;
+			};
+
+			class functioncallstatement : public branch, public statement {
+			public:
+				functioncallstatement(std::shared_ptr<node> functioncall) {
+					children.push_back(functioncall);
+				}
+
+				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+			};
+
+			class assignmentstatement : public branch, public statement {
+			public:
+				assignmentstatement(std::shared_ptr<node> exp, lexer &lex);
+
+				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+
+			public:
+				std::vector<std::shared_ptr<node>> left;
+				std::vector<std::shared_ptr<node>> right;
 			};
 		}
 	}
