@@ -10,7 +10,8 @@
 	fn(lorelai::astgen::statements::localfunctionstatement) \
 	fn(lorelai::astgen::statements::fornumstatement) \
 	fn(lorelai::astgen::statements::forinstatement) \
-	fn(lorelai::astgen::statements::ifstatement)
+	fn(lorelai::astgen::statements::ifstatement) \
+	fn(lorelai::astgen::statements::functionstatement)
 
 #define LORELAI_STATEMENT_CLASS_MACRO(fn) \
 	LORELAI_STATEMENT_BRANCH_CLASS_MACRO(fn) \
@@ -94,17 +95,6 @@ namespace lorelai {
 				std::shared_ptr<node> body;
 			};
 
-			class functionstatement : public blockstatement {
-			public:
-				functionstatement(lexer &lex);
-
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
-
-			public:
-				std::shared_ptr<node> name;
-				std::shared_ptr<node> body;
-			};
-
 			class fornumstatement : public loopstatement {
 			public:
 				fornumstatement(std::shared_ptr<node> name, lexer &lex);
@@ -142,6 +132,18 @@ namespace lorelai {
 
 			public:
 				std::shared_ptr<node> conditional;
+			};
+
+			class functionstatement : public statement, public branch {
+			public:
+				functionstatement(lexer &lex);
+
+				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+
+			public:
+				std::vector<std::shared_ptr<node>> names;
+				std::shared_ptr<node> method;
+				std::shared_ptr<node> body;
 			};
 		}
 	}

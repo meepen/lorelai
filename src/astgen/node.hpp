@@ -1,5 +1,5 @@
-#ifndef BRANCHES_HPP_
-#define BRANCHES_HPP_
+#ifndef NODE_HPP_
+#define NODE_HPP_
 
 #include <vector>
 #include <memory>
@@ -24,4 +24,4 @@ namespace lorelai {
 	}
 }
 
-#endif // BRANCHES_HPP_
+#endif // NODE_HPP_

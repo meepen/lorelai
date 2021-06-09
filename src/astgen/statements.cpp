@@ -44,7 +44,8 @@ const static std::unordered_map<string, std::shared_ptr<node>(*)(lexer &lex)> lo
 		}
 	} },
 	{ "break", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<breakstatement>(lex); } },
-	{ "if", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<ifstatement>(lex); } }
+	{ "if", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<ifstatement>(lex); } },
+	{ "function", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<functionstatement>(lex); } }
 	/* { "function", [](lexer &lex) -> std::shared_ptr<node> {
 		return std::make_shared<functionstatement>(lex);
 	} } */
@@ -76,7 +77,7 @@ std::shared_ptr<node> statement::read(lexer &lex) {
 !		 if exp then block {elseif exp then block} [else block] end | 
 !		 for Name `=´ exp `,´ exp [`,´ exp] do block end | 
 !		 for namelist in explist do block end | 
-		 function funcname funcbody | 
+!		 function funcname funcbody | 
 !		 local function Name funcbody | 
 !		 local namelist [`=´ explist] 
 

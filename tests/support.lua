@@ -56,4 +56,10 @@ end
 
 local b = b()
 
-local a = (false).b(c(0, ...)).c[[ ]] {1 }()(3):d().e().f
+local a = ((false).b(c(0, ...)).c[[ ]] {1 }()(3):d().e().f) * 2
+
+function F.FF:FFF(FFFF, FFFFF)
+	return;
+end
+
+test = b
