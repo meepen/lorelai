@@ -15,6 +15,7 @@ localfunctionstatement::localfunctionstatement(lexer &lex) {
 
 	name = std::make_shared<nameexpression>(lex);
 	children.push_back(name);
+
 	body = std::make_shared<funcbody>(lex);
 	children.push_back(body);
 }

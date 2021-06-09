@@ -32,11 +32,12 @@ namespace lorelai {
 
 		class blockstatement : public branch, public statement {
 		public:
-			std::shared_ptr<node> conditional;
 			std::shared_ptr<node> block;
 		};
 
 		class loopstatement : public blockstatement {
+		public:
+			std::shared_ptr<node> conditional;
 		};
 
 		namespace statements {
@@ -47,7 +48,7 @@ namespace lorelai {
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
 			};
 			
-			class dostatement : public loopstatement {
+			class dostatement : public blockstatement {
 			protected:
 				dostatement() { }
 			public:
@@ -92,7 +93,7 @@ namespace lorelai {
 				std::shared_ptr<node> body;
 			};
 
-			class functionstatement : public branch, public statement {
+			class functionstatement : public blockstatement {
 			public:
 				functionstatement(lexer &lex);
 
@@ -112,7 +113,6 @@ namespace lorelai {
 			public:
 				std::shared_ptr<node> itername;
 				std::shared_ptr<node> startexpr, endexpr, stepexpr;
-				std::shared_ptr<node> body;
 			};
 
 			class forinstatement : public loopstatement {
@@ -124,7 +124,6 @@ namespace lorelai {
 			public:
 				std::vector<std::shared_ptr<node>> iternames;
 				std::shared_ptr<node> inexpr;
-				std::shared_ptr<node> body;
 			};
 
 			class breakstatement : public node, public statement {

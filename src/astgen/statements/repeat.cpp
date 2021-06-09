@@ -16,5 +16,8 @@ repeatstatement::repeatstatement(lexer &lex) {
 	lex.expect("until", "repeat .. until ..");
 
 	conditional = expression::read(lex);
+	if (!conditional) {
+		lex.wasexpected("<expression>", "repeat .. until ..");
+	}
 	children.push_back(conditional);
 }

@@ -33,8 +33,8 @@ forinstatement::forinstatement(std::shared_ptr<node> _itername, lexer &lex) {
 
 	lex.expect("do", "for .. = .., ..[, ..] do .. end");
 
-	body = std::make_shared<chunk>(lex);
-	children.push_back(body);
+	block = std::make_shared<chunk>(lex);
+	children.push_back(block);
 	
 	lex.expect("end", "for .. = .., ..[, ..] do .. end");
 }
