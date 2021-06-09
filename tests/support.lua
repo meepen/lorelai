@@ -41,3 +41,9 @@ local A , B, C =
 		Test = true,
 		[nil] = 1
 	})
+
+for x = 1, 3, 0.1 do
+	for i =1 , 2 do end
+	for x in y do break; end
+	local A, y = -(1 + 1)^2 / 2
+end

@@ -29,6 +29,23 @@ const static std::unordered_map<string, std::shared_ptr<node>(*)(lexer &lex)> lo
 
 		return nullptr;
 	} },
+	{ "for", [](lexer &lex) -> std::shared_ptr<node> {
+		lex.expect("for", "for deducer");
+
+		auto name = std::make_shared<expressions::nameexpression>(lex);
+		if (!lex.lookahead()) {
+			lex.wasexpected("<token>", "for deducer");
+		}
+		else if (lex.lookahead().value() == "=") {
+			return std::make_shared<fornumstatement>(name, lex);
+		}
+		else {
+			return std::make_shared<forinstatement>(name, lex);
+		}
+	} },
+	{ "break", [](lexer &lex) -> std::shared_ptr<node> {
+		return std::make_shared<breakstatement>(lex);
+	} }
 	/* { "function", [](lexer &lex) -> std::shared_ptr<node> {
 		return std::make_shared<functionstatement>(lex);
 	} } */
@@ -58,8 +75,8 @@ std::shared_ptr<node> statement::read(lexer &lex) {
 !		 while exp do block end | 
 !		 repeat block until exp | 
 		 if exp then block {elseif exp then block} [else block] end | 
-		 for Name `=´ exp `,´ exp [`,´ exp] do block end | 
-		 for namelist in explist do block end | 
+!		 for Name `=´ exp `,´ exp [`,´ exp] do block end | 
+!		 for namelist in explist do block end | 
 		 function funcname funcbody | 
 !		 local function Name funcbody | 
 !		 local namelist [`=´ explist] 
@@ -77,6 +94,10 @@ std::shared_ptr<node> statement::read(lexer &lex) {
 	auto lookup = lookupmap.find(word);
 	if (lookup != lookupmap.end()) {
 		stmt = lookup->second(lex);
+	}
+
+	if (!stmt && !lexer::iskeyword(word)) {
+		// namelist [= exprlist]
 	}
 
 	if (stmt && lex.lookahead().value_or("") == ";") {
@@ -97,4 +118,4 @@ bool name ::accept(visitor &visit, std::shared_ptr<node> &container) { \
 	return false; \
 }
 
-LORELAI_STATEMENT_CLASS_MACRO(LORELAI_ACCEPTOR)
+LORELAI_STATEMENT_BRANCH_CLASS_MACRO(LORELAI_ACCEPTOR)

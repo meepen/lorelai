@@ -1,4 +1,3 @@
--- Mandelbrot set in Lua 6/15/2020 db
 local charmap = { [0]=" ", ".", ":", "-", "=", "+", "*", "#", "%", "@" }
 for y = -1.3, 1.3, 0.1 do
     local row = ""

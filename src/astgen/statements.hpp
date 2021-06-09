@@ -1,13 +1,19 @@
 #ifndef STATEMENTS_HPP_
 #define STATEMENTS_HPP_
 
-#define LORELAI_STATEMENT_CLASS_MACRO(fn) \
+#define LORELAI_STATEMENT_BRANCH_CLASS_MACRO(fn) \
 	fn(lorelai::astgen::statements::returnstatement) \
 	fn(lorelai::astgen::statements::dostatement) \
 	fn(lorelai::astgen::statements::whilestatement) \
 	fn(lorelai::astgen::statements::repeatstatement) \
 	fn(lorelai::astgen::statements::localsstatement) \
-	fn(lorelai::astgen::statements::localfunctionstatement)
+	fn(lorelai::astgen::statements::localfunctionstatement) \
+	fn(lorelai::astgen::statements::fornumstatement) \
+	fn(lorelai::astgen::statements::forinstatement)
+
+#define LORELAI_STATEMENT_CLASS_MACRO(fn) \
+	LORELAI_STATEMENT_BRANCH_CLASS_MACRO(fn) \
+	fn(lorelai::astgen::statements::breakstatement)
 
 #include <vector>
 #include <memory>
@@ -30,6 +36,9 @@ namespace lorelai {
 			std::shared_ptr<node> block;
 		};
 
+		class loopstatement : public blockstatement {
+		};
+
 		namespace statements {
 			class returnstatement : public branch, public statement {
 			public:
@@ -38,7 +47,7 @@ namespace lorelai {
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
 			};
 			
-			class dostatement : public blockstatement {
+			class dostatement : public loopstatement {
 			protected:
 				dostatement() { }
 			public:
@@ -47,14 +56,14 @@ namespace lorelai {
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
 			};
 
-			class whilestatement : public blockstatement {
+			class whilestatement : public loopstatement {
 			public:
 				whilestatement(lexer &lex);
 
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
 			};
 
-			class repeatstatement : public blockstatement {
+			class repeatstatement : public loopstatement {
 			public:
 				repeatstatement(lexer &lex);
 
@@ -92,6 +101,37 @@ namespace lorelai {
 			public:
 				std::shared_ptr<node> name;
 				std::shared_ptr<node> body;
+			};
+
+			class fornumstatement : public loopstatement {
+			public:
+				fornumstatement(std::shared_ptr<node> name, lexer &lex);
+
+				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+
+			public:
+				std::shared_ptr<node> itername;
+				std::shared_ptr<node> startexpr, endexpr, stepexpr;
+				std::shared_ptr<node> body;
+			};
+
+			class forinstatement : public loopstatement {
+			public:
+				forinstatement(std::shared_ptr<node> name, lexer &lex);
+
+				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+
+			public:
+				std::vector<std::shared_ptr<node>> iternames;
+				std::shared_ptr<node> inexpr;
+				std::shared_ptr<node> body;
+			};
+
+			class breakstatement : public node, public statement {
+			public:
+				breakstatement(lexer &lex);
+
+				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
 			};
 		}
 	}

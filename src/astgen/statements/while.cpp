@@ -11,6 +11,9 @@ whilestatement::whilestatement(lexer &lex) {
 	lex.expect("while", "while .. do .. end");
 
 	conditional = expression::read(lex);
+	if (!conditional) {
+		lex.wasexpected("<expression>", "while .. do .. end");
+	}
 	children.push_back(conditional);
 
 	lex.expect("do", "while .. do .. end");

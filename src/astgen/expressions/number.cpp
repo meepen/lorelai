@@ -6,7 +6,7 @@ using namespace lorelai::astgen;
 using namespace lorelai::astgen::expressions;
 
 numberexpression::numberexpression(lexer &lex) {
-	size_t size;
+	size_t size = 0;
 	auto word = lex.read();
 
 	if (word.size() >= 2 && word[0] == '0') {
@@ -23,11 +23,9 @@ numberexpression::numberexpression(lexer &lex) {
 			data = static_cast<number>(std::stol(word.substr(2), &size, 2));
 			size += 2;
 		}
-		else {
-			lex.wasexpected("<number>", "number");
-		}
 	}
-	else {
+
+	if (size == 0) {
 		data = std::stod(word, &size);
 	}
 
