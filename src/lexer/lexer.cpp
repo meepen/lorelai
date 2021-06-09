@@ -55,6 +55,7 @@ optional<string> &lexer::lookahead() {
 	}
 
 	lookahead_posdata.position += next_data.size();
+	lookahead_posdata.linecolumn += next_data.size();
 	_lookahead = next_data;
 
 	return _lookahead;
