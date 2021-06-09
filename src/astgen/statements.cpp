@@ -43,9 +43,8 @@ const static std::unordered_map<string, std::shared_ptr<node>(*)(lexer &lex)> lo
 			return std::make_shared<forinstatement>(name, lex);
 		}
 	} },
-	{ "break", [](lexer &lex) -> std::shared_ptr<node> {
-		return std::make_shared<breakstatement>(lex);
-	} }
+	{ "break", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<breakstatement>(lex); } },
+	{ "if", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<ifstatement>(lex); } }
 	/* { "function", [](lexer &lex) -> std::shared_ptr<node> {
 		return std::make_shared<functionstatement>(lex);
 	} } */
@@ -74,7 +73,7 @@ std::shared_ptr<node> statement::read(lexer &lex) {
 !		 do block end | 
 !		 while exp do block end | 
 !		 repeat block until exp | 
-		 if exp then block {elseif exp then block} [else block] end | 
+!		 if exp then block {elseif exp then block} [else block] end | 
 !		 for Name `=´ exp `,´ exp [`,´ exp] do block end | 
 !		 for namelist in explist do block end | 
 		 function funcname funcbody | 
@@ -97,7 +96,7 @@ std::shared_ptr<node> statement::read(lexer &lex) {
 	}
 
 	if (!stmt && !lexer::iskeyword(word)) {
-		// namelist [= exprlist]
+		// varlist = exprlist
 	}
 
 	if (stmt && lex.lookahead().value_or("") == ";") {

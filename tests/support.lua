@@ -47,3 +47,5 @@ for x = 1, 3, 0.1 do
 	for x in y do break; end
 	local A, y = -(1 + 1)^2 / 2
 end
+
+local a = b(c(0, ...))

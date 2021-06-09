@@ -22,7 +22,7 @@ bool enclosedexpression::accept(visitor &visit, std::shared_ptr<node> &container
 	return false;
 }
 
-const static std::unordered_map<string, std::shared_ptr<node>(*)(lexer &lex)> lookupmap = {
+const static std::unordered_map<string, std::shared_ptr<node>(*)(lexer &lex)> expressionmap = {
 	{ "false", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<falseexpression>(lex); } },
 	{ "true", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<trueexpression>(lex); } },
 	{ "nil", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<nilexpression>(lex); } },
@@ -30,8 +30,7 @@ const static std::unordered_map<string, std::shared_ptr<node>(*)(lexer &lex)> lo
 	{ "\"", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<stringexpression>(lex); } },
 	{ "[", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<stringexpression>(lex); } },
 	{ "'", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<stringexpression>(lex); } },
-	{ "{", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<tableexpression>(lex); } },
-	{ "(", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<enclosedexpression>(lex); } }
+	{ "{", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<tableexpression>(lex); } }
 };
 
 
@@ -67,15 +66,16 @@ static std::shared_ptr<node> readone(lexer &lex) {
 
 	auto word = lex.lookahead().value();
 
-	auto has_initializer = lookupmap.find(word);
-	if (has_initializer != lookupmap.end()) {
+	auto has_initializer = expressionmap.find(word);
+	if (has_initializer != expressionmap.end()) {
 		expr = has_initializer->second(lex);
 	}
 	else if (word.size() > 0 && lexer::isnumberstart(word[0])) {
 		expr = std::make_shared<numberexpression>(lex);
 	}
-	else if (lexer::isname(word)) {
-		expr = std::make_shared<nameexpression>(lex);
+
+	if (!expr) {
+		expr = prefixexpression::read(lex);
 	}
 
 	return expr;
@@ -305,4 +305,70 @@ std::shared_ptr<node> expression::read(lexer &lex, bool postexp) {
 	delete begin;
 	
 	return expr;
+}
+
+// so like a prefixexpression can be a varexpression and a varexpression contains prefixexpression
+// so no mater if we can or can not make a prefixexpression, try var
+// since var can just be a name expression as well!!!
+
+std::shared_ptr<node> prefixexpression::read(lexer &lex) {
+	if (!lex.lookahead()) {
+		return nullptr;
+	}
+
+	std::shared_ptr<node> expr;
+	auto word = lex.lookahead().value();
+
+	if (word == "(") {
+		expr = std::make_shared<enclosedexpression>(lex);
+	}
+	else if (!expr && lexer::isname(word)) {
+		// when we reach here it's the end, it has to be a name
+		expr = std::make_shared<nameexpression>(lex);
+	}
+
+	if (!expr) {
+		return nullptr;
+	}
+
+	// by this point we have a valid prefixexp, but now we must keep recursing as needed
+	// for the var-functioncall loop
+	while (true) {
+		if (functioncallexpression::applicable(lex)) {
+			expr = std::make_shared<functioncallexpression>(expr, lex);
+		}
+		else if (auto var = varexpression::read(expr, lex)) {
+			expr = var;
+		}
+		else {
+			break;
+		}
+	}
+
+	return expr;
+}
+
+// only reads index operations
+std::shared_ptr<node> varexpression::read(std::shared_ptr<node> prefixexp, lexer &lex) {
+	if (!lex.lookahead()) {
+		return nullptr;
+	}
+
+	auto ahead = lex.lookahead().value();
+	// var ::=  Name | prefixexp `[´ exp `]´ | prefixexp `.´ Name 
+	// however, Name is already handled in prefixexpression::read
+	// as long as prefixexp is not null
+	if (!prefixexp && lexer::isname(ahead)) {
+		return std::make_shared<nameexpression>(lex);
+	}
+	
+	// look for indexing via `[` exp `]` | `.` Name
+	if (ahead == "[") {
+		return std::make_shared<indexexpression>(prefixexp, lex);
+	}
+	else if (ahead == ".") {
+		return std::make_shared<dotexpression>(prefixexp, lex);
+	}
+
+	return nullptr;
 }

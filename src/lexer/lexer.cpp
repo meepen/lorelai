@@ -5,24 +5,36 @@
 
 using namespace lorelai;
 
-optional<string> &lexer::lookahead() {
+static optional<string> empty = {};
+
+optional<string> &lexer::lookahead(bool shouldskip) {
 	if (_lookahead || islookaheadeof()) {
 		return _lookahead;
 	}
 
-	lookahead_posdata = posdata;
-	skipwhite();
+	if (shouldskip) {
+		lookahead_posdata = posdata;
+		skipwhite();
+	}
 
 	if (islookaheadeof()) {
 		posdata = lookahead_posdata;
 		return _lookahead;
+	}
+
+	// do NOT save whitespace in lookahead
+	if (!shouldskip && iswhite(data[lookahead_posdata.position])) {
+		return empty;
 	}
 	
 	// sometimes the data is just one character, if it's not we update it later
 	string next_data = string(1, data[lookahead_posdata.position]);
 	string::value_type chr = data[lookahead_posdata.position];
 
-	if (chr == '=') {
+	if ((chr == '>' || chr == '<') && !islookaheadeof() && data[lookahead_posdata.position + 1] == '=') {
+		next_data = data.substr(lookahead_posdata.position, 2);
+	}
+	else if (chr == '=') {
 		size_t endpos;
 		for (endpos = lookahead_posdata.position; endpos < data.size(); endpos++) {
 			if (data[endpos] != '=') {

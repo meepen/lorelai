@@ -9,7 +9,8 @@
 	fn(lorelai::astgen::statements::localsstatement) \
 	fn(lorelai::astgen::statements::localfunctionstatement) \
 	fn(lorelai::astgen::statements::fornumstatement) \
-	fn(lorelai::astgen::statements::forinstatement)
+	fn(lorelai::astgen::statements::forinstatement) \
+	fn(lorelai::astgen::statements::ifstatement)
 
 #define LORELAI_STATEMENT_CLASS_MACRO(fn) \
 	LORELAI_STATEMENT_BRANCH_CLASS_MACRO(fn) \
@@ -131,6 +132,16 @@ namespace lorelai {
 				breakstatement(lexer &lex);
 
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+			};
+			
+			class ifstatement : public blockstatement {
+			public:
+				ifstatement(lexer &lex);
+
+				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+
+			public:
+				std::shared_ptr<node> conditional;
 			};
 		}
 	}

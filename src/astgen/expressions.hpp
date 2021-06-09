@@ -22,7 +22,10 @@
 	fn(lorelai::astgen::expressions::tableexpression) \
 	fn(lorelai::astgen::expressions::enclosedexpression) \
 	fn(lorelai::astgen::expressions::binopexpression) \
-	fn(lorelai::astgen::expressions::unopexpression)
+	fn(lorelai::astgen::expressions::unopexpression) \
+	fn(lorelai::astgen::expressions::indexexpression) \
+	fn(lorelai::astgen::expressions::dotexpression) \
+	fn(lorelai::astgen::expressions::functioncallexpression)
 
 #include "types.hpp"
 #include "node.hpp"
@@ -32,14 +35,22 @@
 namespace lorelai {
 	class lexer;
 	namespace astgen {
+		// ANY expression, containing literals expression unary and binary ops indexing etc.
 		class expression {
 		public:
 			static std::shared_ptr<node> read(lexer &lex, bool postexp = true);
 		};
 
+		// lvalue, functioncall or enclosed expression `(` expr `)`
 		class prefixexpression : public expression {
 		public:
 			static std::shared_ptr<node> read(lexer &lex);
+		};
+
+		// actually just lvalue
+		class varexpression : public prefixexpression {
+		public:
+			static std::shared_ptr<node> read(std::shared_ptr<node> prefixexp, lexer &lex);
 		};
 
 		namespace expressions {
@@ -93,8 +104,9 @@ namespace lorelai {
 			class stringexpression : public node, public expression {
 			public:
 				stringexpression(lexer &lex);
-
 				stringexpression(string _data) : data(_data) { }
+
+				static bool applicable(lexer &lex);
 
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
 			public:
@@ -117,7 +129,7 @@ namespace lorelai {
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
 			};
 
-			class nameexpression : public node, public expression {
+			class nameexpression : public node, public varexpression {
 			public:
 				nameexpression(string data) : name(data) { }
 				nameexpression(lexer &lex);
@@ -175,7 +187,42 @@ namespace lorelai {
 				string op;
 			};
 
-			
+			class functioncallexpression : public branch, public prefixexpression {
+			public:
+				functioncallexpression(std::shared_ptr<node> prefixexp, lexer &lex);
+				functioncallexpression(lexer &lex) : functioncallexpression(prefixexpression::read(lex), lex) { }
+
+				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				static bool applicable(lexer &lex);
+
+			public:
+				std::shared_ptr<node> funcexpr;
+				std::shared_ptr<node> methodname;
+				std::shared_ptr<node> arglist;
+			};
+
+			class indexexpression : public branch, public varexpression {
+			protected:
+				indexexpression() { }
+			public:
+				indexexpression(std::shared_ptr<node> prefixexp, lexer &lex);
+				indexexpression(lexer &lex) : indexexpression(prefixexpression::read(lex), lex) { }
+
+				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+			public:
+				std::shared_ptr<node> prefix, index;
+			};
+
+			class dotexpression : public indexexpression {
+			public:
+				dotexpression(std::shared_ptr<node> prefixexp, lexer &lex);
+				dotexpression(lexer &lex) : dotexpression(prefixexpression::read(lex), lex) { }
+
+				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+			public:
+				std::shared_ptr<node> prefix, index;
+			};
+	
 		}
 	}
 }

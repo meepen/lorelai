@@ -83,7 +83,7 @@ static string escape(lexer &lex, string::value_type escape_char) {
 		return string(1, chr);
 	}
 
-	lex.wasexpected("escape character", "string");
+	lex.wasexpected("<escape character>", "string");
 }
 
 stringexpression::stringexpression(lexer &lex) {
@@ -96,11 +96,21 @@ stringexpression::stringexpression(lexer &lex) {
 	}
 	else if (begin == "[") {
 		string_type = LITERAL;
+
+		// ensure no spaces
+		if (!lex.lookahead(false)) {
+			lex.wasexpected("<literal string>", "string");
+		}
 		// literals are /\[=*\]/ 
 
-		// lexer can return '=='
-		if (lex.lookahead().value_or("")[0] == '=') {
+		// lexer can return '====='
+		if (lex.lookahead(false).value_or("")[0] == '=') {
 			long_string_depth += lex.read().size();
+		}
+		
+		// ensure no spaces
+		if (!lex.lookahead(false)) {
+			lex.wasexpected("<literal string>", "string");
 		}
 
 		lex.expect("[", "string");
@@ -114,27 +124,66 @@ stringexpression::stringexpression(lexer &lex) {
 
 	while (true) {
 		auto chr = lex.readchar();
-		if (chr == '\\' && string_type != LITERAL) {
+		if (string_type != LITERAL && chr == '\\') {
 			auto value = escape(lex, string_type == SINGLE_QUOTE ? '\'': '"');
 
 			contents.insert(contents.end(), value.begin(), value.end());
 		}
-		else if (chr == '\'' && string_type == SINGLE_QUOTE || chr == '"' && string_type == DOUBLE_QUOTE) {
-			break;
-		}
 		else {
-			contents.push_back(chr);
+			if (string_type == SINGLE_QUOTE && chr == '\'' || string_type == DOUBLE_QUOTE && chr == '"') {
+				break;
+			}
+			else if (chr == ']' && string_type == LITERAL) {
+				bool good = true;
+				for (size_t i = 0; i < long_string_depth; i++) {
+					auto next = lex.peekchar();
+					if (next != '=') {
+						string equals('=', i);
+						contents.push_back(chr);
+						contents.insert(contents.end(), equals.begin(), equals.end());
+						good = false;
+						break;
+					}
+					lex.readchar();
+				}
+				if (!good) {
+					continue;
+				}
+
+				auto next = lex.peekchar();
+				if (next != ']') {
+					string equals('=', long_string_depth);
+					contents.push_back(chr);
+					contents.insert(contents.end(), equals.begin(), equals.end());
+					continue;
+				}
+				lex.readchar();
+
+				break;
+			}
 		}
+
+		contents.push_back(chr);
 	}
 
 	data = std::string(contents.begin(), contents.end());
+}
 
-	// all other string types are terminated already, we need to consume the last /=*\]/ for literals
-	if (string_type == LITERAL) {
-		for (size_t i = 0; i < long_string_depth; i++) {
-			lex.expect("=", "literal string");
-		}
-		
-		lex.expect("]", "literal string");
+bool stringexpression::applicable(lexer &lex) {
+	if (!lex.lookahead()) {
+		return false;
 	}
+
+	auto word = lex.lookahead().value();
+	if (word == "'" || word == "\"") {
+		return true;
+	}
+
+	if (word == "[") {
+		lexer farther = lex;
+		farther.read();
+		auto next = farther.readchar();
+		return next == '[' || next == '=';
+	}
+	return false;
 }

@@ -93,7 +93,7 @@ namespace lorelai {
 			return lookahead_posdata.position - begin;
 		}
 
-		optional<string> &lookahead();
+		optional<string> &lookahead(bool shouldskip = true);
 
 		const string::value_type *futuredata() {
 			return data.data() + posdata.position;

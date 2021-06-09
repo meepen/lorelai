@@ -7,11 +7,19 @@ using namespace lorelai;
 using namespace lorelai::astgen;
 using namespace lorelai::astgen::statements;
 
-dostatement::dostatement(lexer &lex) {
-	lex.expect("do", "do .. end");
+ifstatement::ifstatement(lexer &lex) {
+	lex.expect("if", "if .. then .. end");
+
+	conditional = expression::read(lex);
+	if (!conditional) {
+		lex.wasexpected("<expression>", "if .. then .. end");
+	}
+	children.push_back(conditional);
+
+	lex.expect("then", "if .. then .. end");
 
 	block = std::make_shared<chunk>(lex);
 	children.push_back(block);
 
-	lex.expect("end", "do .. end");
+	lex.expect("end", "if .. then .. end");
 }
