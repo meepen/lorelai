@@ -25,7 +25,8 @@
 	fn(lorelai::parser::expressions::unopexpression) \
 	fn(lorelai::parser::expressions::indexexpression) \
 	fn(lorelai::parser::expressions::dotexpression) \
-	fn(lorelai::parser::expressions::functioncallexpression)
+	fn(lorelai::parser::expressions::functioncallexpression) \
+	fn(lorelai::parser::expressions::functionexpression)
 
 #include "types.hpp"
 #include "node.hpp"
@@ -221,6 +222,15 @@ namespace lorelai {
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
 			public:
 				std::shared_ptr<node> prefix, index;
+			};
+
+			class functionexpression : public branch, public expression {
+			public:
+				functionexpression(lexer &lex);
+
+				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+			public:
+				std::shared_ptr<node> body;
 			};
 	
 		}

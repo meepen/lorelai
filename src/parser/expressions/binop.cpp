@@ -22,7 +22,7 @@ const std::vector<std::pair<bool, std::vector<string>>> binopexpression::priorit
 	{ false, { "*", "/", "%" } },
 	{ false, { "+", "-", } },
 	{ true, { ".." } },
-	{ false, { "<", ">", "<=", ">=" } },
+	{ false, { "<", ">", "<=", ">=", "==", "~=" } },
 	{ false, { "and" } },
 	{ false, { "or" } }
 };
@@ -37,7 +37,7 @@ const std::unordered_map<string, int> binopexpression::prioritymap = {
 	{ "%", 2 },
 
 	{ "+", 3 },
-	{ "+", 3 },
+	{ "-", 3 },
 
 	{ "..", 4 },
 	
@@ -45,6 +45,8 @@ const std::unordered_map<string, int> binopexpression::prioritymap = {
 	{ "<=", 5 },
 	{ ">=", 5 },
 	{ ">", 5 },
+	{ "==", 5 },
+	{ "~=", 5 },
 
 	{ "and", 6 },
 

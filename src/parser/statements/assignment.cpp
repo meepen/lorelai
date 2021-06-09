@@ -21,9 +21,7 @@ assignmentstatement::assignmentstatement(std::shared_ptr<node> prefix, lexer &le
 		children.push_back(lvalue);
 	}
 
-	if (!lex.read("=")) {
-		lex.wasexpected("=", "assignment statement");
-	}
+	lex.expect("=", "assignment statement");
 
 	do {
 		auto expr = expression::read(lex);

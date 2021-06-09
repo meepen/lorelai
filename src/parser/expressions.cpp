@@ -30,7 +30,8 @@ const static std::unordered_map<string, std::shared_ptr<node>(*)(lexer &lex)> ex
 	{ "\"", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<stringexpression>(lex); } },
 	{ "[", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<stringexpression>(lex); } },
 	{ "'", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<stringexpression>(lex); } },
-	{ "{", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<tableexpression>(lex); } }
+	{ "{", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<tableexpression>(lex); } },
+	{ "function", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<functionexpression>(lex); } }
 };
 
 

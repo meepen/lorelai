@@ -31,7 +31,10 @@ optional<string> &lexer::lookahead(bool shouldskip) {
 	string next_data = string(1, data[lookahead_posdata.position]);
 	string::value_type chr = data[lookahead_posdata.position];
 
-	if ((chr == '>' || chr == '<') && !islookaheadeof() && data[lookahead_posdata.position + 1] == '=') {
+	if (chr == '~' && data[lookahead_posdata.position + 1] == '=') {
+		next_data = "~=";
+	}
+	else if ((chr == '>' || chr == '<') && !islookaheadeof() && data[lookahead_posdata.position + 1] == '=') {
 		next_data = data.substr(lookahead_posdata.position, 2);
 	}
 	else if (chr == '=') {
@@ -56,7 +59,16 @@ optional<string> &lexer::lookahead(bool shouldskip) {
 
 		next_data = data.substr(startpos, curpos - startpos);
 	}
-	else if (isalpha(chr) || isnumeric(chr)) {
+	else if (isnamestart(chr)) {
+		auto curpos = lookahead_posdata.position;
+		while (data.size() > curpos) {
+			if (!ispartofname(data[curpos++])) {
+				break;
+			}
+			next_data = data.substr(lookahead_posdata.position, curpos - lookahead_posdata.position);
+		}
+	}
+	else if (isnumeric(chr)) {
 		auto curpos = lookahead_posdata.position;
 		bool has_decimal = !isnumeric(chr);
 		while (data.size() > curpos && (ispartofname(data[curpos]) || !has_decimal && data[curpos] == '.')) {

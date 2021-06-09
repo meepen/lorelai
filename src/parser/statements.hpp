@@ -6,7 +6,7 @@
 	fn(lorelai::parser::statements::dostatement) \
 	fn(lorelai::parser::statements::whilestatement) \
 	fn(lorelai::parser::statements::repeatstatement) \
-	fn(lorelai::parser::statements::localsstatement) \
+	fn(lorelai::parser::statements::localassignmentstatement) \
 	fn(lorelai::parser::statements::localfunctionstatement) \
 	fn(lorelai::parser::statements::fornumstatement) \
 	fn(lorelai::parser::statements::forinstatement) \
@@ -79,15 +79,15 @@ namespace lorelai {
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
 			};
 
-			class localsstatement : public branch, public statement {
+			class localassignmentstatement : public branch, public statement {
 			public:
-				localsstatement(lexer &lex);
+				localassignmentstatement(lexer &lex);
 
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
 
 			public:
-				std::vector<std::shared_ptr<node>> names;
-				std::vector<std::shared_ptr<node>> initializers;
+				std::vector<std::shared_ptr<node>> left;
+				std::vector<std::shared_ptr<node>> right;
 			};
 
 			class localfunctionstatement : public branch, public statement {

@@ -23,7 +23,7 @@ const static std::unordered_map<string, std::shared_ptr<node>(*)(lexer &lex)> lo
 				return std::make_shared<localfunctionstatement>(lex);
 			}
 			else {
-				return std::make_shared<localsstatement>(lex);
+				return std::make_shared<localassignmentstatement>(lex);
 			}
 		}
 
@@ -101,10 +101,6 @@ std::shared_ptr<node> statement::read(lexer &lex) {
 		// varlist = exprlist | functioncall
 		auto exp = expression::read(lex);
 		if (exp) {
-			if (!lex.lookahead()) {
-				lex.wasexpected("<token>", "statement deducer");
-			}
-
 			if (dynamic_cast<expressions::functioncallexpression *>(exp.get())) {
 				stmt = std::make_shared<functioncallstatement>(exp);
 			}

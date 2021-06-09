@@ -36,7 +36,6 @@ ifstatement::ifstatement(lexer &lex) {
 		block = std::make_shared<chunk>(lex);
 		children.push_back(block);
 		blocks.push_back(block);
-
 	}
 
 	if (lex.read("else")) {

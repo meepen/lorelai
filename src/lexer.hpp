@@ -119,13 +119,18 @@ namespace lorelai {
 
 			auto chr = data[posdata.position];
 			if (chr == '\r') {
+				posdata.linenumber++;
+				posdata.linecolumn = 0;
 				read_newline_r = true;
 			}
 			else {
-				if (chr == '\n' && !read_newline_r) {
-					posdata.linenumber++;
+				if (chr == '\n') {
+					if (!read_newline_r) {
+						posdata.linenumber++;
+					}
 					posdata.linecolumn = 0;
 				}
+				
 				read_newline_r = false;
 			}
 
