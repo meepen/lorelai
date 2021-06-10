@@ -25,6 +25,18 @@ local function includeasmjit()
 	}
 end
 
+local function includelorelaix86()
+	includeasmjit()
+	includeast()
+	includedirs {
+		"src/jit/x86"
+	}
+	files {
+		"src/jit/x86/**.hpp"
+	}
+end
+
+
 local function linklexer()
 	links "lexer"
 	includelexer()
@@ -44,6 +56,13 @@ local function linkasmjit()
 			"asmjit"
 		}
 	includeasmjit()
+end
+
+local function linklorelaix86()
+	includelorelaix86()
+	linkasmjit()
+	linkast()
+	linklexer()
 end
 
 workspace "lorelai"
@@ -123,3 +142,16 @@ workspace "lorelai"
 			kind "ConsoleApp"
 			linkasmjit()
 			files "tests/asmjit/main.cpp"
+
+		project "liblorelaix86"
+			kind "SharedLib"
+			includelorelaix86()
+			files {
+				"src/jit/x86/**.cpp"
+			}
+			
+		project "lorelaix86"
+			kind "ConsoleApp"
+			linklorelaix86()
+			files "tests/jit/main.cpp"
+			

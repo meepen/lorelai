@@ -39,7 +39,6 @@ int main(int argc, char* argv[]) {
 
 		compiler.addFunc(signature);
 		compiler.func()->frame().setPreservedFP();
-
 		auto reg = compiler.newIntPtr();
 		check_error(compiler.setArg(0, reg));
 		compiler.mov(reg, ptr(reg));
