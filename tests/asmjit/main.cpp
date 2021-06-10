@@ -1,60 +1,71 @@
+#include <iostream>
+#include <string>
+#include <exception>
 #include "asmjit/asmjit.h"
-#include <stdio.h>
 
 using namespace asmjit;
 
-// Signature of the generated function.
-typedef int (*Func)(void);
+typedef int (*Func)(int *);
+
+class asmjit_exception : public std::exception {
+public:
+	asmjit_exception(Error _err) : err(std::string("asmjit error: ") + DebugUtils::errorAsString(_err)) { }
+
+	const char *what() {
+		return err.c_str();
+	}
+private:
+	std::string err;
+};
+
+void check_error(Error err) throw() {
+	if (err) {
+		throw asmjit_exception(err);
+	}
+}
 
 int main(int argc, char* argv[]) {
-  // Runtime designed for JIT - it hold relocated functions and controls their lifetime.
-  JitRuntime rt;
+	JitRuntime rt;
+	Func fn;
+	try {
+		CodeHolder code;
+		Error err;
+		code.init(rt.environment());
+		x86::Compiler compiler(&code);
 
-  // Holds code and relocation information during code generation.
-  CodeHolder code;
+		FuncSignatureBuilder signature(CallConv::kIdHost);
+		signature.setRetT<int>();
+		signature.addArgT<int *>();
 
-  // Code holder must be initialized before it can be used. The simples way to initialize
-  // it is to use 'Environment' from JIT runtime, which matches the target architecture,
-  // operating system, ABI, and other important properties.
-  code.init(rt.environment());
+		compiler.addFunc(signature);
+		compiler.func()->frame().setPreservedFP();
 
-  // Emitters can emit code to CodeHolder - let's create 'x86::Assembler', which can emit
-  // either 32-bit (x86) or 64-bit (x86_64) code. The following line also attaches the
-  // assembler to CodeHolder, which calls 'code.attach(&a)' implicitly.
-  x86::Assembler a(&code);
+		auto reg = compiler.newIntPtr();
+		check_error(compiler.setArg(0, reg));
+		compiler.mov(reg, ptr(reg));
+		compiler.add(reg, reg);
+		compiler.ret(reg);
+		compiler.endFunc();
+		compiler.finalize();
 
-  // Use the x86::Assembler to emit some code to .text section in CodeHolder:
-  a.mov(x86::eax, 1);  // Emits 'mov eax, 1' - moves one to 'eax' register.
-  a.ret();             // Emits 'ret'        - returns from a function.
+		// `compiler` can be deleted
 
-  // 'x86::Assembler' is no longer needed from here and can be destroyed or explicitly
-  // detached via 'code.detach(&a)' - which detaches an attached emitter from code holder.
+		check_error(rt.add(&fn, &code));
+		
+		// `code` can die now
+		// can also use code.reset() to reuse
+	}
+	catch (std::exception &e) {
+		std::cerr << e.what() << std::endl;
+		return 1;
+	}
 
-  // Now add the generated code to JitRuntime via JitRuntime::add(). This function would
-  // copy the code from CodeHolder into memory with executable permission and relocate it.
-  Func fn;
-  Error err = rt.add(&fn, &code);
+	int arg = 4;
+	int result = fn(&arg);
+	std::cout << std::to_string(result) << std::endl;
 
-  // It's always a good idea to handle errors, especially those returned from the Runtime.
-  if (err) {
-    printf("AsmJit failed: %s\n", DebugUtils::errorAsString(err));
-    return 1;
-  }
+	// you do not need to call this as long as JitRuntime is destructed properly
+	rt.release(fn);
 
-  // CodeHolder is no longer needed from here and can be safely destroyed. The runtime now
-  // holds the relocated function, which we have generated, and controls its lifetime. The
-  // function will be freed with the runtime, so it's necessary to keep the runtime around.
-  //
-  // Use 'code.reset()' to explicitly free CodeHolder's content when necessary.
-
-  // Execute the generated function and print the resulting '1', which it moves to 'eax'.
-  int result = fn();
-  printf("%d\n", result);
-
-  // All classes use RAII, all resources will be released before `main()` returns, the
-  // generated function can be, however, released explicitly if you intend to reuse or
-  // keep the runtime alive, which you should in a production-ready code.
-  rt.release(fn);
-
-  return 0;
+	return 0;
 }
