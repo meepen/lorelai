@@ -10,7 +10,8 @@
 namespace lorelai {
 	namespace jit {
 		class state {
-			using luafunction = std::uintptr_t (*)(std::uint32_t, void *);
+			struct object;
+			using luafunction = object *(*)(object *);
 
 			class exception : public std::exception {
 			public:
@@ -29,6 +30,14 @@ namespace lorelai {
 				}
 			}
 		public:
+#pragma pack(push, 1)
+			struct object {
+				object *metatable = nullptr;
+				object (*__index)(object *) = nullptr;
+				std::uint8_t type = 0;
+				std::uint8_t flags = 0;
+			};
+#pragma pack(pop)
 
 			luafunction compile() {
 				using namespace asmjit;
@@ -47,6 +56,7 @@ namespace lorelai {
 				auto stackptr = compiler.newUIntPtr();
 				check_error(compiler.setArg(0, stacksize));
 				check_error(compiler.setArg(1, stackptr));
+				
 
 				// code here
 				compiler.ret(stacksize);
