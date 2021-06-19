@@ -25,14 +25,14 @@ local function includeasmjit()
 	}
 end
 
-local function includelorelaix86()
+local function includelorelai()
 	includeasmjit()
 	includeast()
 	includedirs {
-		"src/jit/x86"
+		"src/vm"
 	}
 	files {
-		"src/jit/x86/**.hpp"
+		"src/vm/**.hpp"
 	}
 end
 
@@ -58,8 +58,8 @@ local function linkasmjit()
 	includeasmjit()
 end
 
-local function linklorelaix86()
-	includelorelaix86()
+local function linklorelai()
+	includelorelai()
 	linkasmjit()
 	linkast()
 	linklexer()
@@ -137,21 +137,36 @@ workspace "lorelai"
 				"asmjit/src/asmjit/core/**.cpp"
 			}
 
+	project "liblorelai"
+		kind "SharedLib"
+		includelorelai()
+		prebuildcommands {
+			"protoc --proto_path=../src/vm/proto/src --cpp_out=../src/vm/proto ../src/vm/proto/src/bytecode.proto"
+		}
+
+		files {
+			"src/jit/vm/**.cc",
+			"src/jit/vm/*.cpp"
+		}
+
+		filter "platforms:x86 or x86-64"
+			files {
+				"src/jit/vm/x86/**.cpp"
+			}
+		filter "platforms:not x86 and not x86-64"
+			files {
+				"src/jit/software/**.cpp"
+			}
+		
+	project "lorelai"
+		kind "ConsoleApp"
+		linklorelai()
+		files "tests/jit/main.cpp"
+
 	filter "platforms:x86 or x86-64"
 		project "test-asmjit-x86"
 			kind "ConsoleApp"
 			linkasmjit()
 			files "tests/asmjit/main.cpp"
 
-		project "liblorelaix86"
-			kind "SharedLib"
-			includelorelaix86()
-			files {
-				"src/jit/x86/**.cpp"
-			}
-			
-		project "lorelaix86"
-			kind "ConsoleApp"
-			linklorelaix86()
-			files "tests/jit/main.cpp"
 			

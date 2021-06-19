@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package lorelai.vm.bytecode;
+
+message debugdata {
+	uint32 linenumber = 1;
+	uint32 linecolumn = 2;
+	string filename = 3;
+}
+
+message instruction {
+	uint32 opcode = 1;
+	uint32 a = 2;
+	uint32 b = 3;
+	uint32 c = 4;
+
+	optional debugdata debug = 5;
+}
+
+message tablevalue {
+	enum valuetype {
+		NIL = 0;
+		NUMBER = 1;
+		STRING = 2;
+		TABLE = 3;
+		FUNCTION = 4;
+	}
+	valuetype type = 1;
+	optional uint32 index = 2;
+}
+
+message tablekeyvalue {
+	tablevalue key = 1;
+	tablevalue value = 2;
+}
+
+message table {
+	repeated tablevalue arraypart = 1;
+	repeated tablevalue keyvaluepart = 2;
+}
+
+message prototype {
+	repeated instruction instructions = 1;
+	repeated double numbers = 2;
+	repeated string strings = 3;
+	repeated table tables = 4;
+	repeated prototype protos = 5;
+
+	optional string identifier = 6;
+}
