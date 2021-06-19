@@ -13,11 +13,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
-      - uses: abel0b/setup-premake@v1
-      - uses: snickerbockers/submodules-init@v4
-      - name: Install Protoc
-        uses: arduino/setup-protoc@v1
+      - name: Checkout project
+        uses: actions/checkout@v2
+      - name: Install premake5
+        uses: abel0b/setup-premake@v1
+      - name: Init submodule
+        uses: snickerbockers/submodules-init@v4
 
       - name: Build
         run: |
