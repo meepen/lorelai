@@ -14,7 +14,7 @@ namespace lorelai {
 
 			static bool applicable(lexer &lex);
 			
-			bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+			bool accept(visitor &visit, std::shared_ptr<node> &container, void *data) override;
 		};
 	}
 }

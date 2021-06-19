@@ -13,7 +13,7 @@ namespace lorelai {
 		public:
 			funcbody(lexer &lex);
 
-			bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+			bool accept(visitor &visit, std::shared_ptr<node> &container, void *data) override;
 
 		public:
 			std::vector<std::shared_ptr<node>> params;

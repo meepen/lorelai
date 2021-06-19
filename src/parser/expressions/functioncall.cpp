@@ -33,12 +33,12 @@ functioncallexpression::functioncallexpression(std::shared_ptr<node> prefixexp, 
 }
 
 
-bool functioncallexpression::accept(visitor &visit, std::shared_ptr<node> &container) {
-	if (visit.visit(*this, container)) {
+bool functioncallexpression::accept(visitor &visit, std::shared_ptr<node> &container, void *data) {
+	if (visit.visit(*this, container, data)) {
 		return true;
 	}
 
-	visitchildren(visit);
+	visitchildren(visit, data);
 
 	return false;
 }

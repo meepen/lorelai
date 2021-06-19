@@ -60,7 +60,7 @@ namespace lorelai {
 				nilexpression() { }
 				nilexpression(lexer &lex);
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				bool accept(visitor &visit, std::shared_ptr<node> &container, void *data) override;
 			};
 
 			class falseexpression : public node, public expression {
@@ -68,7 +68,7 @@ namespace lorelai {
 				falseexpression() { }
 				falseexpression(lexer &lex);
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				bool accept(visitor &visit, std::shared_ptr<node> &container, void *data) override;
 			};
 
 			class trueexpression : public node, public expression {
@@ -76,7 +76,7 @@ namespace lorelai {
 				trueexpression() { }
 				trueexpression(lexer &lex);
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				bool accept(visitor &visit, std::shared_ptr<node> &container, void *data) override;
 			};
 
 			class numberexpression : public node, public expression {
@@ -84,7 +84,7 @@ namespace lorelai {
 				numberexpression(lexer &lex);
 				numberexpression(number num) : data(num) { }
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				bool accept(visitor &visit, std::shared_ptr<node> &container, void *data) override;
 
 			public:
 				number data;
@@ -109,7 +109,7 @@ namespace lorelai {
 
 				static bool applicable(lexer &lex);
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				bool accept(visitor &visit, std::shared_ptr<node> &container, void *data) override;
 			public:
 				using type = enum {
 					SINGLE_QUOTE,
@@ -127,7 +127,7 @@ namespace lorelai {
 				varargexpression() { }
 				varargexpression(lexer &lex);
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				bool accept(visitor &visit, std::shared_ptr<node> &container, void *data) override;
 			};
 
 			class nameexpression : public node, public varexpression {
@@ -135,7 +135,7 @@ namespace lorelai {
 				nameexpression(string data) : name(data) { }
 				nameexpression(lexer &lex);
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				bool accept(visitor &visit, std::shared_ptr<node> &container, void *data) override;
 			public:
 				string name;
 			};
@@ -144,7 +144,7 @@ namespace lorelai {
 			public:
 				tableexpression(lexer &lex);
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				bool accept(visitor &visit, std::shared_ptr<node> &container, void *data) override;
 			public:
 				std::vector<std::pair<std::shared_ptr<node>, std::shared_ptr<node>>> tabledata;
 			};
@@ -154,7 +154,7 @@ namespace lorelai {
 			public:
 				enclosedexpression(lexer &lex);
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				bool accept(visitor &visit, std::shared_ptr<node> &container, void *data) override;
 			};
 
 
@@ -168,7 +168,7 @@ namespace lorelai {
 					children.push_back(rhs);
 				}
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				bool accept(visitor &visit, std::shared_ptr<node> &container, void *data) override;
 
 			public:
 				std::shared_ptr<node> lhs, rhs;
@@ -181,7 +181,7 @@ namespace lorelai {
 					children.push_back(expr);
 				}
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				bool accept(visitor &visit, std::shared_ptr<node> &container, void *data) override;
 
 			public:
 				std::shared_ptr<node> expr;
@@ -193,7 +193,7 @@ namespace lorelai {
 				functioncallexpression(std::shared_ptr<node> prefixexp, lexer &lex);
 				functioncallexpression(lexer &lex) : functioncallexpression(prefixexpression::read(lex), lex) { }
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				bool accept(visitor &visit, std::shared_ptr<node> &container, void *data) override;
 				static bool applicable(lexer &lex);
 
 			public:
@@ -209,7 +209,7 @@ namespace lorelai {
 				indexexpression(std::shared_ptr<node> prefixexp, lexer &lex);
 				indexexpression(lexer &lex) : indexexpression(prefixexpression::read(lex), lex) { }
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				bool accept(visitor &visit, std::shared_ptr<node> &container, void *data) override;
 			public:
 				std::shared_ptr<node> prefix, index;
 			};
@@ -219,7 +219,7 @@ namespace lorelai {
 				dotexpression(std::shared_ptr<node> prefixexp, lexer &lex);
 				dotexpression(lexer &lex) : dotexpression(prefixexpression::read(lex), lex) { }
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				bool accept(visitor &visit, std::shared_ptr<node> &container, void *data) override;
 			public:
 				std::shared_ptr<node> prefix, index;
 			};
@@ -228,7 +228,7 @@ namespace lorelai {
 			public:
 				functionexpression(lexer &lex);
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				bool accept(visitor &visit, std::shared_ptr<node> &container, void *data = nullptr) override;
 			public:
 				std::shared_ptr<node> body;
 			};

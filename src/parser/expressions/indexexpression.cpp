@@ -31,22 +31,20 @@ dotexpression::dotexpression(std::shared_ptr<node> _prefix, lexer &lex) {
 }
 
 
-bool indexexpression::accept(visitor &visit, std::shared_ptr<node> &container) {
-	if (visit.visit(*this, container)) {
+bool indexexpression::accept(visitor &visit, std::shared_ptr<node> &container, void *data) {
+	if (visit.visit(*this, container, data)) {
 		return true;
 	}
 
-	visitchildren(visit);
-
+	visitchildren(visit, data);
 	return false;
 }
 
-bool dotexpression::accept(visitor &visit, std::shared_ptr<node> &container) {
-	if (visit.visit(*this, container)) {
+bool dotexpression::accept(visitor &visit, std::shared_ptr<node> &container, void *data) {
+	if (visit.visit(*this, container, data)) {
 		return true;
 	}
 
-	visitchildren(visit);
-
+	visitchildren(visit, data);
 	return false;
 }

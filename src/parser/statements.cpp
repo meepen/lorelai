@@ -117,12 +117,12 @@ std::shared_ptr<node> statement::read(lexer &lex) {
 
 
 #define LORELAI_ACCEPTOR(name) \
-bool name ::accept(visitor &visit, std::shared_ptr<node> &container) { \
-	if (visit.visit(*this, container)) { \
+bool name ::accept(visitor &visit, std::shared_ptr<node> &container, void *data) { \
+	if (visit.visit(*this, container, data)) { \
 		return true; \
 	} \
 	\
-	visitchildren(visit); \
+	visitchildren(visit, data); \
 	return false; \
 }
 

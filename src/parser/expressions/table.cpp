@@ -82,8 +82,8 @@ tableexpression::tableexpression(lexer &lex) {
 	lex.expect("}", "table constructor");
 }
 
-bool tableexpression::accept(visitor &visit, std::shared_ptr<node> &container) {
-	if (visit.visit(*this, container)) {
+bool tableexpression::accept(visitor &visit, std::shared_ptr<node> &container, void *data) {
+	if (visit.visit(*this, container, data)) {
 		return true;
 	}
 
@@ -95,7 +95,7 @@ bool tableexpression::accept(visitor &visit, std::shared_ptr<node> &container) {
 	std::vector<std::pair<std::shared_ptr<node>, std::shared_ptr<node>>> keys;
 
 	for (auto &child : children) {
-		if (child->accept(visit, child)) {
+		if (child->accept(visit, child, data)) {
 			deleted.push_back(child);
 		}
 	}

@@ -32,8 +32,8 @@ void chunk::initialize(lexer &lex) {
 }
 
 // visitor acceptors
-bool chunk::accept(visitor &visit, std::shared_ptr<node> &container) {
-	bool ret = visit.visit(*this, container);
+bool chunk::accept(visitor &visit, std::shared_ptr<node> &container, void *data) {
+	bool ret = visit.visit(*this, container, data);
 	if (ret) { // if we delete who cares, return early
 		return true;
 	}
@@ -41,7 +41,7 @@ bool chunk::accept(visitor &visit, std::shared_ptr<node> &container) {
 	std::vector<std::shared_ptr<node>> deleted;
 
 	for (auto &child : children) {
-		if (child->accept(visit, child)) {
+		if (child->accept(visit, child, data)) {
 			// mark for removal
 			deleted.push_back(child);
 		}

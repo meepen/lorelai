@@ -9,12 +9,12 @@ namespace lorelai {
 		class visitor;
 		class node {
 		public:
-			virtual bool accept(visitor &visit, std::shared_ptr<node> &container) = 0;
+			virtual bool accept(visitor &visit, std::shared_ptr<node> &container, void *data) = 0;
 		};
 
 		class branch : public node {
 		protected:
-			void visitchildren(visitor &visit);
+			void visitchildren(visitor &visit, void *data);
 
 		public:
 			branch() : children() { }

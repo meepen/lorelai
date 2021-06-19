@@ -3,11 +3,11 @@
 #include <algorithm>
 
 using namespace lorelai::parser;
-void branch::visitchildren(visitor &visit) {
+void branch::visitchildren(visitor &visit, void *data) {
 	std::vector<std::shared_ptr<node>> deleted;
 
 	for (auto &child : children) {
-		if (child->accept(visit, child)) {
+		if (child->accept(visit, child, data)) {
 			deleted.push_back(child);
 		}
 	}
