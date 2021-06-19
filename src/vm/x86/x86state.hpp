@@ -27,6 +27,12 @@ namespace lorelai {
 		};
 
 		class x86state : public state {
+			struct asmdata {
+				x86state *state;
+				object **stack;
+				std::uint32_t stacksize;
+			};
+
 			static void check_error(asmjit::Error err) {
 				if (err) {
 					throw new exception(err);
@@ -35,7 +41,7 @@ namespace lorelai {
 		public:
 			const char *backend() override { return "x86 JIT"; }
 
-			luafunction compile() {
+			void *compile() {
 				using namespace asmjit;
 
 				CodeHolder code;
@@ -65,7 +71,7 @@ namespace lorelai {
 				check_error(compiler.endFunc());
 				check_error(compiler.finalize());
 
-				luafunction out;
+				void *out;
 				check_error(runtime.add(&out, &code));
 
 				return out;
