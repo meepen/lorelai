@@ -22,9 +22,9 @@ message instruction {
 	}
 
 	opcode op = 1;
-	uint32 a = 2;
-	uint32 b = 3;
-	uint32 c = 4;
+	optional uint32 a = 2;
+	optional uint32 b = 3;
+	optional uint32 c = 4;
 
 	optional debugdata debug = 5;
 }

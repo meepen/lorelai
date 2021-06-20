@@ -510,7 +510,11 @@ class instruction final :
   void _internal_set_op(::lorelai::vm::bytecode::instruction_opcode value);
   public:
 
-  // uint32 a = 2;
+  // optional uint32 a = 2;
+  bool has_a() const;
+  private:
+  bool _internal_has_a() const;
+  public:
   void clear_a();
   ::PROTOBUF_NAMESPACE_ID::uint32 a() const;
   void set_a(::PROTOBUF_NAMESPACE_ID::uint32 value);
@@ -519,7 +523,11 @@ class instruction final :
   void _internal_set_a(::PROTOBUF_NAMESPACE_ID::uint32 value);
   public:
 
-  // uint32 b = 3;
+  // optional uint32 b = 3;
+  bool has_b() const;
+  private:
+  bool _internal_has_b() const;
+  public:
   void clear_b();
   ::PROTOBUF_NAMESPACE_ID::uint32 b() const;
   void set_b(::PROTOBUF_NAMESPACE_ID::uint32 value);
@@ -528,7 +536,11 @@ class instruction final :
   void _internal_set_b(::PROTOBUF_NAMESPACE_ID::uint32 value);
   public:
 
-  // uint32 c = 4;
+  // optional uint32 c = 4;
+  bool has_c() const;
+  private:
+  bool _internal_has_c() const;
+  public:
   void clear_c();
   ::PROTOBUF_NAMESPACE_ID::uint32 c() const;
   void set_c(::PROTOBUF_NAMESPACE_ID::uint32 value);
@@ -1460,9 +1472,17 @@ inline void instruction::set_op(::lorelai::vm::bytecode::instruction_opcode valu
   // @@protoc_insertion_point(field_set:lorelai.vm.bytecode.instruction.op)
 }
 
-// uint32 a = 2;
+// optional uint32 a = 2;
+inline bool instruction::_internal_has_a() const {
+  bool value = (_has_bits_[0] & 0x00000002u) != 0;
+  return value;
+}
+inline bool instruction::has_a() const {
+  return _internal_has_a();
+}
 inline void instruction::clear_a() {
   a_ = 0u;
+  _has_bits_[0] &= ~0x00000002u;
 }
 inline ::PROTOBUF_NAMESPACE_ID::uint32 instruction::_internal_a() const {
   return a_;
@@ -1472,7 +1492,7 @@ inline ::PROTOBUF_NAMESPACE_ID::uint32 instruction::a() const {
   return _internal_a();
 }
 inline void instruction::_internal_set_a(::PROTOBUF_NAMESPACE_ID::uint32 value) {
-  
+  _has_bits_[0] |= 0x00000002u;
   a_ = value;
 }
 inline void instruction::set_a(::PROTOBUF_NAMESPACE_ID::uint32 value) {
@@ -1480,9 +1500,17 @@ inline void instruction::set_a(::PROTOBUF_NAMESPACE_ID::uint32 value) {
   // @@protoc_insertion_point(field_set:lorelai.vm.bytecode.instruction.a)
 }
 
-// uint32 b = 3;
+// optional uint32 b = 3;
+inline bool instruction::_internal_has_b() const {
+  bool value = (_has_bits_[0] & 0x00000004u) != 0;
+  return value;
+}
+inline bool instruction::has_b() const {
+  return _internal_has_b();
+}
 inline void instruction::clear_b() {
   b_ = 0u;
+  _has_bits_[0] &= ~0x00000004u;
 }
 inline ::PROTOBUF_NAMESPACE_ID::uint32 instruction::_internal_b() const {
   return b_;
@@ -1492,7 +1520,7 @@ inline ::PROTOBUF_NAMESPACE_ID::uint32 instruction::b() const {
   return _internal_b();
 }
 inline void instruction::_internal_set_b(::PROTOBUF_NAMESPACE_ID::uint32 value) {
-  
+  _has_bits_[0] |= 0x00000004u;
   b_ = value;
 }
 inline void instruction::set_b(::PROTOBUF_NAMESPACE_ID::uint32 value) {
@@ -1500,9 +1528,17 @@ inline void instruction::set_b(::PROTOBUF_NAMESPACE_ID::uint32 value) {
   // @@protoc_insertion_point(field_set:lorelai.vm.bytecode.instruction.b)
 }
 
-// uint32 c = 4;
+// optional uint32 c = 4;
+inline bool instruction::_internal_has_c() const {
+  bool value = (_has_bits_[0] & 0x00000008u) != 0;
+  return value;
+}
+inline bool instruction::has_c() const {
+  return _internal_has_c();
+}
 inline void instruction::clear_c() {
   c_ = 0u;
+  _has_bits_[0] &= ~0x00000008u;
 }
 inline ::PROTOBUF_NAMESPACE_ID::uint32 instruction::_internal_c() const {
   return c_;
@@ -1512,7 +1548,7 @@ inline ::PROTOBUF_NAMESPACE_ID::uint32 instruction::c() const {
   return _internal_c();
 }
 inline void instruction::_internal_set_c(::PROTOBUF_NAMESPACE_ID::uint32 value) {
-  
+  _has_bits_[0] |= 0x00000008u;
   c_ = value;
 }
 inline void instruction::set_c(::PROTOBUF_NAMESPACE_ID::uint32 value) {

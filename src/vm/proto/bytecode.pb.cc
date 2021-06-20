@@ -134,9 +134,9 @@ const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_bytecode_2eproto::offsets[] PR
   PROTOBUF_FIELD_OFFSET(::lorelai::vm::bytecode::instruction, c_),
   PROTOBUF_FIELD_OFFSET(::lorelai::vm::bytecode::instruction, debug_),
   ~0u,
-  ~0u,
-  ~0u,
-  ~0u,
+  1,
+  2,
+  3,
   0,
   PROTOBUF_FIELD_OFFSET(::lorelai::vm::bytecode::tablevalue, _has_bits_),
   PROTOBUF_FIELD_OFFSET(::lorelai::vm::bytecode::tablevalue, _internal_metadata_),
@@ -200,34 +200,35 @@ static ::PROTOBUF_NAMESPACE_ID::Message const * const file_default_instances[] =
 const char descriptor_table_protodef_bytecode_2eproto[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) =
   "\n\016bytecode.proto\022\023lorelai.vm.bytecode\"E\n"
   "\tdebugdata\022\022\n\nlinenumber\030\001 \001(\r\022\022\n\nlineco"
-  "lumn\030\002 \001(\r\022\020\n\010filename\030\003 \001(\t\"\221\002\n\013instruc"
+  "lumn\030\002 \001(\r\022\020\n\010filename\030\003 \001(\t\"\262\002\n\013instruc"
   "tion\0223\n\002op\030\001 \001(\0162\'.lorelai.vm.bytecode.i"
-  "nstruction.opcode\022\t\n\001a\030\002 \001(\r\022\t\n\001b\030\003 \001(\r\022"
-  "\t\n\001c\030\004 \001(\r\0222\n\005debug\030\005 \001(\0132\036.lorelai.vm.b"
-  "ytecode.debugdataH\000\210\001\001\"n\n\006opcode\022\007\n\003SET\020"
-  "\000\022\007\n\003MOV\020\001\022\t\n\005BINOP\020\002\022\010\n\004UNOP\020\003\022\n\n\006RETUR"
-  "N\020\004\022\010\n\004CALL\020\005\022\014\n\010TAILCALL\020\006\022\014\n\010UPVALSET\020"
-  "\007\022\013\n\007NEWFUNC\020\010B\010\n\006_debug\"\252\001\n\ntablevalue\022"
-  "7\n\004type\030\001 \001(\0162).lorelai.vm.bytecode.tabl"
-  "evalue.valuetype\022\022\n\005index\030\002 \001(\rH\000\210\001\001\"E\n\t"
-  "valuetype\022\007\n\003NIL\020\000\022\n\n\006NUMBER\020\001\022\n\n\006STRING"
-  "\020\002\022\t\n\005TABLE\020\003\022\014\n\010FUNCTION\020\004B\010\n\006_index\"m\n"
-  "\rtablekeyvalue\022,\n\003key\030\001 \001(\0132\037.lorelai.vm"
-  ".bytecode.tablevalue\022.\n\005value\030\002 \001(\0132\037.lo"
-  "relai.vm.bytecode.tablevalue\"r\n\005table\0222\n"
-  "\tarraypart\030\001 \003(\0132\037.lorelai.vm.bytecode.t"
-  "ablevalue\0225\n\014keyvaluepart\030\002 \003(\0132\037.lorela"
-  "i.vm.bytecode.tablevalue\"\351\001\n\tprototype\0226"
-  "\n\014instructions\030\001 \003(\0132 .lorelai.vm.byteco"
-  "de.instruction\022\017\n\007numbers\030\002 \003(\001\022\017\n\007strin"
-  "gs\030\003 \003(\t\022*\n\006tables\030\004 \003(\0132\032.lorelai.vm.by"
-  "tecode.table\022.\n\006protos\030\005 \003(\0132\036.lorelai.v"
-  "m.bytecode.prototype\022\027\n\nidentifier\030\006 \001(\t"
-  "H\000\210\001\001B\r\n\013_identifierb\006proto3"
+  "nstruction.opcode\022\016\n\001a\030\002 \001(\rH\000\210\001\001\022\016\n\001b\030\003"
+  " \001(\rH\001\210\001\001\022\016\n\001c\030\004 \001(\rH\002\210\001\001\0222\n\005debug\030\005 \001(\013"
+  "2\036.lorelai.vm.bytecode.debugdataH\003\210\001\001\"n\n"
+  "\006opcode\022\007\n\003SET\020\000\022\007\n\003MOV\020\001\022\t\n\005BINOP\020\002\022\010\n\004"
+  "UNOP\020\003\022\n\n\006RETURN\020\004\022\010\n\004CALL\020\005\022\014\n\010TAILCALL"
+  "\020\006\022\014\n\010UPVALSET\020\007\022\013\n\007NEWFUNC\020\010B\004\n\002_aB\004\n\002_"
+  "bB\004\n\002_cB\010\n\006_debug\"\252\001\n\ntablevalue\0227\n\004type"
+  "\030\001 \001(\0162).lorelai.vm.bytecode.tablevalue."
+  "valuetype\022\022\n\005index\030\002 \001(\rH\000\210\001\001\"E\n\tvaluety"
+  "pe\022\007\n\003NIL\020\000\022\n\n\006NUMBER\020\001\022\n\n\006STRING\020\002\022\t\n\005T"
+  "ABLE\020\003\022\014\n\010FUNCTION\020\004B\010\n\006_index\"m\n\rtablek"
+  "eyvalue\022,\n\003key\030\001 \001(\0132\037.lorelai.vm.byteco"
+  "de.tablevalue\022.\n\005value\030\002 \001(\0132\037.lorelai.v"
+  "m.bytecode.tablevalue\"r\n\005table\0222\n\tarrayp"
+  "art\030\001 \003(\0132\037.lorelai.vm.bytecode.tableval"
+  "ue\0225\n\014keyvaluepart\030\002 \003(\0132\037.lorelai.vm.by"
+  "tecode.tablevalue\"\351\001\n\tprototype\0226\n\014instr"
+  "uctions\030\001 \003(\0132 .lorelai.vm.bytecode.inst"
+  "ruction\022\017\n\007numbers\030\002 \003(\001\022\017\n\007strings\030\003 \003("
+  "\t\022*\n\006tables\030\004 \003(\0132\032.lorelai.vm.bytecode."
+  "table\022.\n\006protos\030\005 \003(\0132\036.lorelai.vm.bytec"
+  "ode.prototype\022\027\n\nidentifier\030\006 \001(\tH\000\210\001\001B\r"
+  "\n\013_identifierb\006proto3"
   ;
 static ::PROTOBUF_NAMESPACE_ID::internal::once_flag descriptor_table_bytecode_2eproto_once;
 const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_bytecode_2eproto = {
-  false, false, 1028, descriptor_table_protodef_bytecode_2eproto, "bytecode.proto", 
+  false, false, 1061, descriptor_table_protodef_bytecode_2eproto, "bytecode.proto", 
   &descriptor_table_bytecode_2eproto_once, nullptr, 0, 6,
   schemas, file_default_instances, TableStruct_bytecode_2eproto::offsets,
   file_level_metadata_bytecode_2eproto, file_level_enum_descriptors_bytecode_2eproto, file_level_service_descriptors_bytecode_2eproto,
@@ -571,6 +572,15 @@ void debugdata::InternalSwap(debugdata* other) {
 class instruction::_Internal {
  public:
   using HasBits = decltype(std::declval<instruction>()._has_bits_);
+  static void set_has_a(HasBits* has_bits) {
+    (*has_bits)[0] |= 2u;
+  }
+  static void set_has_b(HasBits* has_bits) {
+    (*has_bits)[0] |= 4u;
+  }
+  static void set_has_c(HasBits* has_bits) {
+    (*has_bits)[0] |= 8u;
+  }
   static const ::lorelai::vm::bytecode::debugdata& debug(const instruction* msg);
   static void set_has_debug(HasBits* has_bits) {
     (*has_bits)[0] |= 1u;
@@ -645,9 +655,12 @@ void instruction::Clear() {
     GOOGLE_DCHECK(debug_ != nullptr);
     debug_->Clear();
   }
-  ::memset(&op_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&c_) -
-      reinterpret_cast<char*>(&op_)) + sizeof(c_));
+  op_ = 0;
+  if (cached_has_bits & 0x0000000eu) {
+    ::memset(&a_, 0, static_cast<size_t>(
+        reinterpret_cast<char*>(&c_) -
+        reinterpret_cast<char*>(&a_)) + sizeof(c_));
+  }
   _has_bits_.Clear();
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
@@ -667,23 +680,26 @@ const char* instruction::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID
           _internal_set_op(static_cast<::lorelai::vm::bytecode::instruction_opcode>(val));
         } else goto handle_unusual;
         continue;
-      // uint32 a = 2;
+      // optional uint32 a = 2;
       case 2:
         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 16)) {
+          _Internal::set_has_a(&has_bits);
           a_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
           CHK_(ptr);
         } else goto handle_unusual;
         continue;
-      // uint32 b = 3;
+      // optional uint32 b = 3;
       case 3:
         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 24)) {
+          _Internal::set_has_b(&has_bits);
           b_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
           CHK_(ptr);
         } else goto handle_unusual;
         continue;
-      // uint32 c = 4;
+      // optional uint32 c = 4;
       case 4:
         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 32)) {
+          _Internal::set_has_c(&has_bits);
           c_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
           CHK_(ptr);
         } else goto handle_unusual;
@@ -732,20 +748,20 @@ failure:
       1, this->_internal_op(), target);
   }
 
-  // uint32 a = 2;
-  if (this->_internal_a() != 0) {
+  // optional uint32 a = 2;
+  if (_internal_has_a()) {
     target = stream->EnsureSpace(target);
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32ToArray(2, this->_internal_a(), target);
   }
 
-  // uint32 b = 3;
-  if (this->_internal_b() != 0) {
+  // optional uint32 b = 3;
+  if (_internal_has_b()) {
     target = stream->EnsureSpace(target);
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32ToArray(3, this->_internal_b(), target);
   }
 
-  // uint32 c = 4;
-  if (this->_internal_c() != 0) {
+  // optional uint32 c = 4;
+  if (_internal_has_c()) {
     target = stream->EnsureSpace(target);
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32ToArray(4, this->_internal_c(), target);
   }
@@ -788,27 +804,29 @@ size_t instruction::ByteSizeLong() const {
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::EnumSize(this->_internal_op());
   }
 
-  // uint32 a = 2;
-  if (this->_internal_a() != 0) {
-    total_size += 1 +
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt32Size(
-        this->_internal_a());
-  }
+  if (cached_has_bits & 0x0000000eu) {
+    // optional uint32 a = 2;
+    if (cached_has_bits & 0x00000002u) {
+      total_size += 1 +
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt32Size(
+          this->_internal_a());
+    }
 
-  // uint32 b = 3;
-  if (this->_internal_b() != 0) {
-    total_size += 1 +
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt32Size(
-        this->_internal_b());
-  }
+    // optional uint32 b = 3;
+    if (cached_has_bits & 0x00000004u) {
+      total_size += 1 +
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt32Size(
+          this->_internal_b());
+    }
 
-  // uint32 c = 4;
-  if (this->_internal_c() != 0) {
-    total_size += 1 +
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt32Size(
-        this->_internal_c());
-  }
+    // optional uint32 c = 4;
+    if (cached_has_bits & 0x00000008u) {
+      total_size += 1 +
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt32Size(
+          this->_internal_c());
+    }
 
+  }
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
     return ::PROTOBUF_NAMESPACE_ID::internal::ComputeUnknownFieldsSize(
         _internal_metadata_, total_size, &_cached_size_);
@@ -843,14 +861,18 @@ void instruction::MergeFrom(const instruction& from) {
   if (from._internal_op() != 0) {
     _internal_set_op(from._internal_op());
   }
-  if (from._internal_a() != 0) {
-    _internal_set_a(from._internal_a());
-  }
-  if (from._internal_b() != 0) {
-    _internal_set_b(from._internal_b());
-  }
-  if (from._internal_c() != 0) {
-    _internal_set_c(from._internal_c());
+  cached_has_bits = from._has_bits_[0];
+  if (cached_has_bits & 0x0000000eu) {
+    if (cached_has_bits & 0x00000002u) {
+      a_ = from.a_;
+    }
+    if (cached_has_bits & 0x00000004u) {
+      b_ = from.b_;
+    }
+    if (cached_has_bits & 0x00000008u) {
+      c_ = from.c_;
+    }
+    _has_bits_[0] |= cached_has_bits;
   }
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }

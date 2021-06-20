@@ -52,8 +52,9 @@ local libs = {
 		links = {
 			"asmjit",
 			"parser",
-			"protobuf"
-		}
+			"protobuf",
+			"pthread",
+		},
 	}
 }
 
@@ -97,15 +98,23 @@ local function addlinks(lib, noincludes)
 		end
 		return
 	end
+	local libt = libs[lib]
+
+	if (libt and libt.linkoptions) then
+		for _filter, options in pairs(libt.linkoptions) do
+			filter(_filter)
+				linkoptions(options)
+		end
+		filter {}
+	end
 
 	links(lib)
 	if (not noincludes) then
 		addincludes(lib)
 	end
 
-	lib = libs[lib]
-	if (lib and lib.links) then
-		return addlinks(lib.links, true)
+	if (libt and libt.links) then
+		return addlinks(libt.links, true)
 	end
 end
 

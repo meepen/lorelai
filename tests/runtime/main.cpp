@@ -49,5 +49,30 @@ int main(int argc, char *argv[]) {
 	std::cout << "    Numbers:      " << bytecode.numbers_size() << std::endl;
 	std::cout << "    Strings:      " << bytecode.strings_size() << std::endl;
 
+	size_t longest = 0;
+	auto descriptor = lorelai::vm::bytecode::instruction_opcode_descriptor();
+	for (int i = 0; i < descriptor->value_count(); i++) {
+		longest = std::max(descriptor->value(i)->name().length() + 1, longest);
+	}
+
+	for (int i = 0; i < bytecode.instructions_size(); i++) {	
+		auto &instruct = bytecode.instructions(i);
+		auto instrname = lorelai::vm::bytecode::instruction_opcode_Name(instruct.op());
+
+		std::cout << "#" << i << ": " << instrname << std::string(longest - instrname.size(), ' ');
+
+		if (instruct.has_a()) {
+			std::cout << instruct.a();
+			if (instruct.has_b()) {
+				std::cout << ", " << instruct.b();
+				if (instruct.has_c()) {
+					std::cout << ", " << instruct.c();
+				}
+			}
+		}
+		
+		std::cout << std::endl;
+	}
+
 	return 0;
 }

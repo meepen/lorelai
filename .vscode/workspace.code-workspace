@@ -60,7 +60,8 @@
 			"condition_variable": "cpp",
 			"set": "cpp",
 			"mutex": "cpp",
-			"thread": "cpp"
+			"thread": "cpp",
+			"*.inc": "cpp"
 		}
 	}
 }
