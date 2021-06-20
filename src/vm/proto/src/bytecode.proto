@@ -9,7 +9,19 @@ message debugdata {
 }
 
 message instruction {
-	uint32 opcode = 1;
+	enum opcode {
+		SET      = 0; // A = lookuptable(B)[c]
+		MOV      = 1; // A .. A+C = B .. B+C
+		BINOP    = 2; // A = A binaryoperator(B) C
+		UNOP     = 3; // A = unaryoperator(B) A
+		RETURN   = 4; // return A .. A+B, vararg(C)
+		CALL     = 5; // A(A+1 .. A + B, vararg(C))
+		TAILCALL = 6; // return A(A+1 .. A + B, vararg(C))
+		UPVALSET = 7; // UP(A)[B] = C
+		NEWFUNC  = 8; // A = NEWFUNC(prototypes[B], C...)
+	}
+
+	opcode op = 1;
 	uint32 a = 2;
 	uint32 b = 3;
 	uint32 c = 4;

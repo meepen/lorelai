@@ -90,6 +90,38 @@ namespace lorelai {
 namespace vm {
 namespace bytecode {
 
+enum instruction_opcode : int {
+  instruction_opcode_SET = 0,
+  instruction_opcode_MOV = 1,
+  instruction_opcode_BINOP = 2,
+  instruction_opcode_UNOP = 3,
+  instruction_opcode_RETURN = 4,
+  instruction_opcode_CALL = 5,
+  instruction_opcode_TAILCALL = 6,
+  instruction_opcode_UPVALSET = 7,
+  instruction_opcode_NEWFUNC = 8,
+  instruction_opcode_instruction_opcode_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<::PROTOBUF_NAMESPACE_ID::int32>::min(),
+  instruction_opcode_instruction_opcode_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<::PROTOBUF_NAMESPACE_ID::int32>::max()
+};
+bool instruction_opcode_IsValid(int value);
+constexpr instruction_opcode instruction_opcode_opcode_MIN = instruction_opcode_SET;
+constexpr instruction_opcode instruction_opcode_opcode_MAX = instruction_opcode_NEWFUNC;
+constexpr int instruction_opcode_opcode_ARRAYSIZE = instruction_opcode_opcode_MAX + 1;
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* instruction_opcode_descriptor();
+template<typename T>
+inline const std::string& instruction_opcode_Name(T enum_t_value) {
+  static_assert(::std::is_same<T, instruction_opcode>::value ||
+    ::std::is_integral<T>::value,
+    "Incorrect type passed to function instruction_opcode_Name.");
+  return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
+    instruction_opcode_descriptor(), enum_t_value);
+}
+inline bool instruction_opcode_Parse(
+    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, instruction_opcode* value) {
+  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<instruction_opcode>(
+    instruction_opcode_descriptor(), name, value);
+}
 enum tablevalue_valuetype : int {
   tablevalue_valuetype_NIL = 0,
   tablevalue_valuetype_NUMBER = 1,
@@ -398,11 +430,55 @@ class instruction final :
 
   // nested types ----------------------------------------------------
 
+  typedef instruction_opcode opcode;
+  static constexpr opcode SET =
+    instruction_opcode_SET;
+  static constexpr opcode MOV =
+    instruction_opcode_MOV;
+  static constexpr opcode BINOP =
+    instruction_opcode_BINOP;
+  static constexpr opcode UNOP =
+    instruction_opcode_UNOP;
+  static constexpr opcode RETURN =
+    instruction_opcode_RETURN;
+  static constexpr opcode CALL =
+    instruction_opcode_CALL;
+  static constexpr opcode TAILCALL =
+    instruction_opcode_TAILCALL;
+  static constexpr opcode UPVALSET =
+    instruction_opcode_UPVALSET;
+  static constexpr opcode NEWFUNC =
+    instruction_opcode_NEWFUNC;
+  static inline bool opcode_IsValid(int value) {
+    return instruction_opcode_IsValid(value);
+  }
+  static constexpr opcode opcode_MIN =
+    instruction_opcode_opcode_MIN;
+  static constexpr opcode opcode_MAX =
+    instruction_opcode_opcode_MAX;
+  static constexpr int opcode_ARRAYSIZE =
+    instruction_opcode_opcode_ARRAYSIZE;
+  static inline const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor*
+  opcode_descriptor() {
+    return instruction_opcode_descriptor();
+  }
+  template<typename T>
+  static inline const std::string& opcode_Name(T enum_t_value) {
+    static_assert(::std::is_same<T, opcode>::value ||
+      ::std::is_integral<T>::value,
+      "Incorrect type passed to function opcode_Name.");
+    return instruction_opcode_Name(enum_t_value);
+  }
+  static inline bool opcode_Parse(::PROTOBUF_NAMESPACE_ID::ConstStringParam name,
+      opcode* value) {
+    return instruction_opcode_Parse(name, value);
+  }
+
   // accessors -------------------------------------------------------
 
   enum : int {
     kDebugFieldNumber = 5,
-    kOpcodeFieldNumber = 1,
+    kOpFieldNumber = 1,
     kAFieldNumber = 2,
     kBFieldNumber = 3,
     kCFieldNumber = 4,
@@ -425,13 +501,13 @@ class instruction final :
       ::lorelai::vm::bytecode::debugdata* debug);
   ::lorelai::vm::bytecode::debugdata* unsafe_arena_release_debug();
 
-  // uint32 opcode = 1;
-  void clear_opcode();
-  ::PROTOBUF_NAMESPACE_ID::uint32 opcode() const;
-  void set_opcode(::PROTOBUF_NAMESPACE_ID::uint32 value);
+  // .lorelai.vm.bytecode.instruction.opcode op = 1;
+  void clear_op();
+  ::lorelai::vm::bytecode::instruction_opcode op() const;
+  void set_op(::lorelai::vm::bytecode::instruction_opcode value);
   private:
-  ::PROTOBUF_NAMESPACE_ID::uint32 _internal_opcode() const;
-  void _internal_set_opcode(::PROTOBUF_NAMESPACE_ID::uint32 value);
+  ::lorelai::vm::bytecode::instruction_opcode _internal_op() const;
+  void _internal_set_op(::lorelai::vm::bytecode::instruction_opcode value);
   public:
 
   // uint32 a = 2;
@@ -471,7 +547,7 @@ class instruction final :
   ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   ::lorelai::vm::bytecode::debugdata* debug_;
-  ::PROTOBUF_NAMESPACE_ID::uint32 opcode_;
+  int op_;
   ::PROTOBUF_NAMESPACE_ID::uint32 a_;
   ::PROTOBUF_NAMESPACE_ID::uint32 b_;
   ::PROTOBUF_NAMESPACE_ID::uint32 c_;
@@ -1364,24 +1440,24 @@ inline void debugdata::set_allocated_filename(std::string* filename) {
 
 // instruction
 
-// uint32 opcode = 1;
-inline void instruction::clear_opcode() {
-  opcode_ = 0u;
+// .lorelai.vm.bytecode.instruction.opcode op = 1;
+inline void instruction::clear_op() {
+  op_ = 0;
 }
-inline ::PROTOBUF_NAMESPACE_ID::uint32 instruction::_internal_opcode() const {
-  return opcode_;
+inline ::lorelai::vm::bytecode::instruction_opcode instruction::_internal_op() const {
+  return static_cast< ::lorelai::vm::bytecode::instruction_opcode >(op_);
 }
-inline ::PROTOBUF_NAMESPACE_ID::uint32 instruction::opcode() const {
-  // @@protoc_insertion_point(field_get:lorelai.vm.bytecode.instruction.opcode)
-  return _internal_opcode();
+inline ::lorelai::vm::bytecode::instruction_opcode instruction::op() const {
+  // @@protoc_insertion_point(field_get:lorelai.vm.bytecode.instruction.op)
+  return _internal_op();
 }
-inline void instruction::_internal_set_opcode(::PROTOBUF_NAMESPACE_ID::uint32 value) {
+inline void instruction::_internal_set_op(::lorelai::vm::bytecode::instruction_opcode value) {
   
-  opcode_ = value;
+  op_ = value;
 }
-inline void instruction::set_opcode(::PROTOBUF_NAMESPACE_ID::uint32 value) {
-  _internal_set_opcode(value);
-  // @@protoc_insertion_point(field_set:lorelai.vm.bytecode.instruction.opcode)
+inline void instruction::set_op(::lorelai::vm::bytecode::instruction_opcode value) {
+  _internal_set_op(value);
+  // @@protoc_insertion_point(field_set:lorelai.vm.bytecode.instruction.op)
 }
 
 // uint32 a = 2;
@@ -2180,6 +2256,11 @@ inline void prototype::set_allocated_identifier(std::string* identifier) {
 
 PROTOBUF_NAMESPACE_OPEN
 
+template <> struct is_proto_enum< ::lorelai::vm::bytecode::instruction_opcode> : ::std::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::lorelai::vm::bytecode::instruction_opcode>() {
+  return ::lorelai::vm::bytecode::instruction_opcode_descriptor();
+}
 template <> struct is_proto_enum< ::lorelai::vm::bytecode::tablevalue_valuetype> : ::std::true_type {};
 template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::lorelai::vm::bytecode::tablevalue_valuetype>() {

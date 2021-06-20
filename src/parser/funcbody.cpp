@@ -51,11 +51,11 @@ funcbody::funcbody(lexer &lex) {
 	lex.expect("end", "funcbody");
 }
 
-bool funcbody::accept(visitor &visit, std::shared_ptr<node> &container, void *data) {
-	if (visit.visit(*this, container, data)) {
+bool funcbody::accept(visitor &visit, std::shared_ptr<node> &container) {
+	if (visit.visit(*this, container)) {
 		return true;
 	}
 
-	visitchildren(visit, data);
+	visitchildren(visit);
 	return false;
 }
