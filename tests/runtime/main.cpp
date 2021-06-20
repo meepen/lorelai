@@ -39,15 +39,25 @@ static void print_branch(size_t idx, lorelai::parser::node &node) {
 }
 
 int main(int argc, char *argv[]) {
-	lorelai::parser::chunk mainchunk("local a = 3.14");
+	std::string inputcode = "local a = 3.14";
+
+	lorelai::parser::chunk mainchunk(inputcode);
 	print_branch(0, mainchunk);
 	auto bytecode = lorelai::vm::parse(mainchunk);
+
+	std::cout << "Code evaluated: " << inputcode << std::endl;
 
 	std::cout << "Bytecode evaluated: " << std::endl;
 	std::cout << "    Instructions: " << bytecode.instructions_size() << std::endl;
 	std::cout << "    Prototypes:   " << bytecode.protos_size() << std::endl;
 	std::cout << "    Numbers:      " << bytecode.numbers_size() << std::endl;
+	for (int i = 0; i < bytecode.numbers_size(); i++) {
+		std::cout << "        #" << i << ": " << std::to_string(bytecode.numbers(i)) << std::endl;
+	}
 	std::cout << "    Strings:      " << bytecode.strings_size() << std::endl;
+	for (int i = 0; i < bytecode.strings_size(); i++) {
+		std::cout << "        #" << i << ": " << bytecode.strings(i) << std::endl;
+	}
 
 	size_t longest = 0;
 	auto descriptor = lorelai::vm::bytecode::instruction_opcode_descriptor();

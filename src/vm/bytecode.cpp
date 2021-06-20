@@ -185,7 +185,7 @@ public:
 };
 
 class bytecodegenerator;
-using expressiongenerator = void (*)(bytecodegenerator &gen, expression &expr, size_t stackindex);
+using expressiongenerator = void (*)(bytecodegenerator &gen, node &expr, size_t stackindex);
 
 extern std::unordered_map<std::size_t, expressiongenerator> expressionmap;
 
@@ -208,8 +208,6 @@ public:
 			// generate expression bytecode NOW
 			auto found = expressionmap.find(typeid(*_expr.get()).hash_code());
 
-			std::cout << "expression map size: " << expressionmap.size() << std::endl;
-
 			if (found == expressionmap.end()) {
 				std::cerr << "Unsupported expression when generating localassignmentstatement: " << gettypename(*_expr.get()) << std::endl;
 				throw;
@@ -229,16 +227,13 @@ public:
 				target = curfunc.gettemp();
 			}
 
-			found->second(*this, *dynamic_cast<expression *>(_expr.get()), target);
+			found->second(*this, *_expr.get(), target);
 
 			if (is_temp) {
 				curfunc.freetemp(target);
 			}
-
-			std::cout << "Emitted bytecode for expression " << gettypename(*_expr.get()) << " at bytecode # " << start << " to " << proto.instructions_size() << std::endl;
 		}
 
-		std::cout << "finished local assignment statement" << std::endl;
 		return false;
 	}
 
@@ -271,8 +266,10 @@ public:
 	bytecode::prototype proto;
 };
 
-static void generate_numberexpression(bytecodegenerator &gen, expression &expr, size_t target) {
-	gen.emit(bytecode::instruction_opcode_SET, target, 0, 0);
+static void generate_numberexpression(bytecodegenerator &gen, node &expr, size_t target) {
+	
+	gen.emit(bytecode::instruction_opcode_SET, target, 1, gen.proto.numbers_size());
+	gen.proto.add_numbers(dynamic_cast<expressions::numberexpression *>(&expr)->data);
 }
 
 std::unordered_map<std::size_t, expressiongenerator> expressionmap = {
