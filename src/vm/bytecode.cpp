@@ -6,6 +6,7 @@
 #include <vector>
 #include <deque>
 #include <unordered_set>
+#include <typeindex>
 
 using namespace lorelai;
 using namespace lorelai::vm;
@@ -187,7 +188,7 @@ public:
 class bytecodegenerator;
 using expressiongenerator = void (*)(bytecodegenerator &gen, node &expr, size_t stackindex);
 
-extern std::unordered_map<std::size_t, expressiongenerator> expressionmap;
+extern std::unordered_map<std::type_index, expressiongenerator> expressionmap;
 
 class bytecodegenerator : public visitor {
 public:
@@ -206,7 +207,7 @@ public:
 
 		for (auto &_expr : obj.right) {
 			// generate expression bytecode NOW
-			auto found = expressionmap.find(typeid(*_expr.get()).hash_code());
+			auto found = expressionmap.find(typeid(*_expr.get()));
 
 			if (found == expressionmap.end()) {
 				std::cerr << "Unsupported expression when generating localassignmentstatement: " << gettypename(*_expr.get()) << std::endl;
@@ -267,13 +268,13 @@ public:
 };
 
 static void generate_numberexpression(bytecodegenerator &gen, node &expr, size_t target) {
-	
 	gen.emit(bytecode::instruction_opcode_SET, target, 1, gen.proto.numbers_size());
 	gen.proto.add_numbers(dynamic_cast<expressions::numberexpression *>(&expr)->data);
 }
 
-std::unordered_map<std::size_t, expressiongenerator> expressionmap = {
-	{ typeid(expressions::numberexpression).hash_code(), generate_numberexpression }
+
+std::unordered_map<std::type_index, expressiongenerator> expressionmap = {
+	{ typeid(expressions::numberexpression), generate_numberexpression }
 };
 
 

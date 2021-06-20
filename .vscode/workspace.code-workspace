@@ -61,7 +61,8 @@
 			"set": "cpp",
 			"mutex": "cpp",
 			"thread": "cpp",
-			"*.inc": "cpp"
+			"*.inc": "cpp",
+			"typeindex": "cpp"
 		}
 	}
 }
