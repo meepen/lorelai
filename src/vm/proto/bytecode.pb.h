@@ -91,21 +91,42 @@ namespace vm {
 namespace bytecode {
 
 enum instruction_opcode : int {
-  instruction_opcode_SET = 0,
+  instruction_opcode_CONSTANT = 0,
   instruction_opcode_MOV = 1,
-  instruction_opcode_BINOP = 2,
-  instruction_opcode_UNOP = 3,
+  instruction_opcode_ADD = 2,
+  instruction_opcode_NOT = 3,
   instruction_opcode_RETURN = 4,
   instruction_opcode_CALL = 5,
   instruction_opcode_TAILCALL = 6,
   instruction_opcode_UPVALSET = 7,
   instruction_opcode_NEWFUNC = 8,
+  instruction_opcode_STRING = 9,
+  instruction_opcode_NUMBER = 10,
+  instruction_opcode_FUNCTION = 11,
+  instruction_opcode_TABLE = 12,
+  instruction_opcode_SUBTRACT = 13,
+  instruction_opcode_DIVIDE = 14,
+  instruction_opcode_MULTIPLY = 15,
+  instruction_opcode_POWER = 16,
+  instruction_opcode_MODULO = 17,
+  instruction_opcode_CONCAT = 18,
+  instruction_opcode_INDEX = 19,
+  instruction_opcode_OR = 20,
+  instruction_opcode_AND = 21,
+  instruction_opcode_LESSTHAN = 22,
+  instruction_opcode_LESSTHANEQUAL = 23,
+  instruction_opcode_GREATERTHAN = 24,
+  instruction_opcode_GREATERTHANEQUAL = 25,
+  instruction_opcode_EQUALS = 26,
+  instruction_opcode_NOTEQUALS = 27,
+  instruction_opcode_MINUS = 28,
+  instruction_opcode_LENGTH = 29,
   instruction_opcode_instruction_opcode_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<::PROTOBUF_NAMESPACE_ID::int32>::min(),
   instruction_opcode_instruction_opcode_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<::PROTOBUF_NAMESPACE_ID::int32>::max()
 };
 bool instruction_opcode_IsValid(int value);
-constexpr instruction_opcode instruction_opcode_opcode_MIN = instruction_opcode_SET;
-constexpr instruction_opcode instruction_opcode_opcode_MAX = instruction_opcode_NEWFUNC;
+constexpr instruction_opcode instruction_opcode_opcode_MIN = instruction_opcode_CONSTANT;
+constexpr instruction_opcode instruction_opcode_opcode_MAX = instruction_opcode_LENGTH;
 constexpr int instruction_opcode_opcode_ARRAYSIZE = instruction_opcode_opcode_MAX + 1;
 
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* instruction_opcode_descriptor();
@@ -431,14 +452,14 @@ class instruction final :
   // nested types ----------------------------------------------------
 
   typedef instruction_opcode opcode;
-  static constexpr opcode SET =
-    instruction_opcode_SET;
+  static constexpr opcode CONSTANT =
+    instruction_opcode_CONSTANT;
   static constexpr opcode MOV =
     instruction_opcode_MOV;
-  static constexpr opcode BINOP =
-    instruction_opcode_BINOP;
-  static constexpr opcode UNOP =
-    instruction_opcode_UNOP;
+  static constexpr opcode ADD =
+    instruction_opcode_ADD;
+  static constexpr opcode NOT =
+    instruction_opcode_NOT;
   static constexpr opcode RETURN =
     instruction_opcode_RETURN;
   static constexpr opcode CALL =
@@ -449,6 +470,48 @@ class instruction final :
     instruction_opcode_UPVALSET;
   static constexpr opcode NEWFUNC =
     instruction_opcode_NEWFUNC;
+  static constexpr opcode STRING =
+    instruction_opcode_STRING;
+  static constexpr opcode NUMBER =
+    instruction_opcode_NUMBER;
+  static constexpr opcode FUNCTION =
+    instruction_opcode_FUNCTION;
+  static constexpr opcode TABLE =
+    instruction_opcode_TABLE;
+  static constexpr opcode SUBTRACT =
+    instruction_opcode_SUBTRACT;
+  static constexpr opcode DIVIDE =
+    instruction_opcode_DIVIDE;
+  static constexpr opcode MULTIPLY =
+    instruction_opcode_MULTIPLY;
+  static constexpr opcode POWER =
+    instruction_opcode_POWER;
+  static constexpr opcode MODULO =
+    instruction_opcode_MODULO;
+  static constexpr opcode CONCAT =
+    instruction_opcode_CONCAT;
+  static constexpr opcode INDEX =
+    instruction_opcode_INDEX;
+  static constexpr opcode OR =
+    instruction_opcode_OR;
+  static constexpr opcode AND =
+    instruction_opcode_AND;
+  static constexpr opcode LESSTHAN =
+    instruction_opcode_LESSTHAN;
+  static constexpr opcode LESSTHANEQUAL =
+    instruction_opcode_LESSTHANEQUAL;
+  static constexpr opcode GREATERTHAN =
+    instruction_opcode_GREATERTHAN;
+  static constexpr opcode GREATERTHANEQUAL =
+    instruction_opcode_GREATERTHANEQUAL;
+  static constexpr opcode EQUALS =
+    instruction_opcode_EQUALS;
+  static constexpr opcode NOTEQUALS =
+    instruction_opcode_NOTEQUALS;
+  static constexpr opcode MINUS =
+    instruction_opcode_MINUS;
+  static constexpr opcode LENGTH =
+    instruction_opcode_LENGTH;
   static inline bool opcode_IsValid(int value) {
     return instruction_opcode_IsValid(value);
   }

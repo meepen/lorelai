@@ -71,7 +71,7 @@ public:
 	}
 
 public:
-	size_t maxsize;
+	size_t maxsize = 0;
 	std::vector<size_t> freeslots;
 };
 
@@ -186,7 +186,7 @@ public:
 };
 
 class bytecodegenerator;
-using expressiongenerator = void (*)(bytecodegenerator &gen, node &expr, size_t stackindex);
+using expressiongenerator = void (*)(bytecodegenerator &gen, node &expr, size_t stackindex, size_t size);
 
 extern std::unordered_map<std::type_index, expressiongenerator> expressionmap;
 
@@ -207,13 +207,6 @@ public:
 
 		for (auto &_expr : obj.right) {
 			// generate expression bytecode NOW
-			auto found = expressionmap.find(typeid(*_expr.get()));
-
-			if (found == expressionmap.end()) {
-				std::cerr << "Unsupported expression when generating localassignmentstatement: " << gettypename(*_expr.get()) << std::endl;
-				throw;
-			}
-
 			auto start = proto.instructions_size();
 
 			size_t target;
@@ -228,14 +221,38 @@ public:
 				target = curfunc.gettemp();
 			}
 
-			found->second(*this, *_expr.get(), target);
+			runexpressionhandler(_expr, target, 1);
 
 			if (is_temp) {
 				curfunc.freetemp(target);
 			}
 		}
 
+		// fill the rest with nil
+		for (int i = obj.right.size(); i < obj.left.size(); i++) {
+			auto index = indexes[0];
+			indexes.pop_front();
+
+			emit(bytecode::instruction_opcode_CONSTANT, index, 2);
+		}
+
 		return false;
+	}
+
+public:
+	void runexpressionhandler(node &_expr, size_t target, size_t size) {
+		auto found = expressionmap.find(typeid(_expr));
+
+		if (found == expressionmap.end()) {
+			std::cerr << "Unsupported expression when generating: " << gettypename(_expr) << std::endl;
+			throw;
+		}
+
+		found->second(*this, _expr, target, size);
+	}
+
+	void runexpressionhandler(std::shared_ptr<node> _expr, size_t target, size_t size) {
+		return runexpressionhandler(*_expr.get(), target, size);
 	}
 
 public:
@@ -267,15 +284,111 @@ public:
 	bytecode::prototype proto;
 };
 
-static void generate_numberexpression(bytecodegenerator &gen, node &expr, size_t target) {
-	gen.emit(bytecode::instruction_opcode_SET, target, 1, gen.proto.numbers_size());
+static void generate_numberexpression(bytecodegenerator &gen, node &expr, size_t target, size_t size) {
+	gen.emit(bytecode::instruction_opcode_NUMBER, target, gen.proto.numbers_size());
 	gen.proto.add_numbers(dynamic_cast<expressions::numberexpression *>(&expr)->data);
 }
 
+static void generate_stringexpression(bytecodegenerator &gen, node &expr, size_t target, size_t size) {
+	gen.emit(bytecode::instruction_opcode_STRING, target, gen.proto.strings_size());
+	gen.proto.add_strings(dynamic_cast<expressions::stringexpression *>(&expr)->data);
+}
 
-std::unordered_map<std::type_index, expressiongenerator> expressionmap = {
-	{ typeid(expressions::numberexpression), generate_numberexpression }
+static void generate_enclosedexpression(bytecodegenerator &gen, node &expr, size_t target, size_t size) {
+	auto &child = *dynamic_cast<expressions::enclosedexpression *>(&expr)->children[0].get();
+	gen.runexpressionhandler(child, target, 1);
+}
+
+std::unordered_map<string, bytecode::instruction_opcode> binoplookup = {
+	{ "%", bytecode::instruction_opcode_MODULO },
+	{ "-", bytecode::instruction_opcode_SUBTRACT },
+	{ "+", bytecode::instruction_opcode_ADD },
+	{ "..", bytecode::instruction_opcode_CONCAT },
+	{ "^", bytecode::instruction_opcode_POWER },
+	{ "and", bytecode::instruction_opcode_AND },
+	{ "&&", bytecode::instruction_opcode_AND },
+	{ "or", bytecode::instruction_opcode_OR },
+	{ "||", bytecode::instruction_opcode_OR },
+	{ "<", bytecode::instruction_opcode_LESSTHAN },
+	{ "<=", bytecode::instruction_opcode_LESSTHANEQUAL },
+	{ ">", bytecode::instruction_opcode_GREATERTHAN },
+	{ ">=", bytecode::instruction_opcode_GREATERTHANEQUAL },
+	{ "==", bytecode::instruction_opcode_EQUALS },
+	{ "~=", bytecode::instruction_opcode_NOTEQUALS },
+	{ "!=", bytecode::instruction_opcode_NOTEQUALS },
 };
+
+static void generate_binopexpression(bytecodegenerator &gen, node &_expr, size_t target, size_t size) {
+	auto &expr = *dynamic_cast<expressions::binopexpression *>(&_expr);
+	gen.runexpressionhandler(expr.lhs, target, 1);
+	auto temp = gen.curfunc.gettemp();
+	gen.runexpressionhandler(expr.rhs, temp, 1);
+	gen.emit(binoplookup[expr.op], target, target, temp);
+	gen.curfunc.freetemp(temp);
+}
+
+std::unordered_map<string, bytecode::instruction_opcode> unoplookup = {
+	{ "not", bytecode::instruction_opcode_NOT },
+	{ "!", bytecode::instruction_opcode_NOT },
+	{ "#", bytecode::instruction_opcode_LENGTH },
+	{ "-", bytecode::instruction_opcode_MINUS },
+};
+
+static void generate_unopexpression(bytecodegenerator &gen, node &_expr, size_t target, size_t size) {
+	auto &expr = *dynamic_cast<expressions::unopexpression *>(&_expr);
+	gen.runexpressionhandler(expr.expr, target, 1);
+	gen.emit(unoplookup[expr.op], target, target);
+}
+
+static void generate_nilexpression(bytecodegenerator &gen, node &expr, size_t target, size_t size) {
+	gen.emit(bytecode::instruction_opcode_CONSTANT, target, 2);
+}
+
+static void generate_falseexpression(bytecodegenerator &gen, node &expr, size_t target, size_t size) {
+	gen.emit(bytecode::instruction_opcode_CONSTANT, target, 1);
+}
+
+static void generate_trueexpression(bytecodegenerator &gen, node &expr, size_t target, size_t size) {
+	gen.emit(bytecode::instruction_opcode_CONSTANT, target, 0);
+}
+
+static void generate_indexexpression(bytecodegenerator &gen, node &_expr, size_t target, size_t size) {
+	auto &expr = *dynamic_cast<expressions::indexexpression *>(&_expr);
+	gen.runexpressionhandler(expr.prefix, target, 1);
+
+	auto temp = gen.curfunc.gettemp();
+	gen.runexpressionhandler(expr.index, temp, 1);
+	gen.emit(bytecode::instruction_opcode_INDEX, target, target, temp);
+	gen.curfunc.freetemp(temp);
+}
+
+static void generate_dotexpression(bytecodegenerator &gen, node &_expr, size_t target, size_t size) {
+	auto &expr = *dynamic_cast<expressions::dotexpression *>(&_expr);
+	gen.runexpressionhandler(expr.prefix, target, 1);
+
+	auto temp = gen.curfunc.gettemp();
+	expressions::stringexpression name(dynamic_cast<expressions::nameexpression *>(expr.index.get())->name);
+	gen.runexpressionhandler(name, temp, 1);
+	gen.emit(bytecode::instruction_opcode_INDEX, target, target, temp);
+	gen.curfunc.freetemp(temp);
+}
+
+
+#define ADD(x) { typeid(expressions::x), generate_##x }
+std::unordered_map<std::type_index, expressiongenerator> expressionmap = {
+	ADD(numberexpression),
+	ADD(nilexpression),
+	ADD(falseexpression),
+	ADD(trueexpression),
+	ADD(stringexpression),
+	ADD(enclosedexpression),
+	ADD(binopexpression),
+	ADD(unopexpression),
+	// ADD(functioncallexpression),
+	ADD(indexexpression),
+	ADD(dotexpression),
+};
+#undef ADD
 
 
 bytecode::prototype lorelai::vm::parse(chunk &data) {

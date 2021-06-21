@@ -12,36 +12,6 @@ namespace lorelai {
 			parser::chunk mainchunk(code, expect_eof);
 			return parse(mainchunk);
 		}
-
-		namespace binaryoperators {
-			enum binaryoperator {
-				ADD,
-				SUBTRACT,
-				DIVIDE,
-				MULTIPLY,
-				POWER,
-				MODULO,
-				CONCAT,
-				INDEX,
-				OR,
-				AND,
-
-				LESSTHAN,
-				LESSTHANEQUAL,
-				GREATERTHAN,
-				GREATERTHANEQUAL,
-				EQUALS,
-				NOTEQUALS
-			};
-		}
-
-		namespace unaryoperators {
-			enum unaryoperator {
-				NOT,
-				MINUS,
-				LENGTH
-			};
-		}
 	}
 }
 

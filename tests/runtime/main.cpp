@@ -39,7 +39,7 @@ static void print_branch(size_t idx, lorelai::parser::node &node) {
 }
 
 int main(int argc, char *argv[]) {
-	std::string inputcode = "local a = 3.14";
+	std::string inputcode = "local a = -3.14, (false ~= not true), true, nil, 333, 'bbbd', ('b').c, ('d')['e']";
 
 	lorelai::parser::chunk mainchunk(inputcode);
 	print_branch(0, mainchunk);

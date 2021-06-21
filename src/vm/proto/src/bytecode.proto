@@ -10,15 +10,45 @@ message debugdata {
 
 message instruction {
 	enum opcode {
-		SET      = 0; // A = lookuptable(B)[c]
-		MOV      = 1; // A .. A+C = B .. B+C
-		BINOP    = 2; // A = A binaryoperator(B) C
-		UNOP     = 3; // A = unaryoperator(B) A
-		RETURN   = 4; // return A .. A+B, vararg(C)
-		CALL     = 5; // A(A+1 .. A + B, vararg(C))
-		TAILCALL = 6; // return A(A+1 .. A + B, vararg(C))
-		UPVALSET = 7; // UP(A)[B] = C
-		NEWFUNC  = 8; // A = NEWFUNC(prototypes[B], C...)
+
+		CONSTANT = 0;  // A = ({true, false, nil})[B]
+
+		MOV      = 1;  // A .. A+C = B .. B+C
+
+		ADD      = 2;  // A = B + C
+
+		NOT      = 3;  // A = not B
+		RETURN   = 4;  // return A .. A+B, vararg(C)
+		CALL     = 5;  // A(A+1 .. A + B, vararg(C))
+		TAILCALL = 6;  // return A(A+1 .. A + B, vararg(C))
+		UPVALSET = 7;  // UP(A)[B] = C
+		NEWFUNC  = 8;  // A = NEWFUNC(prototypes[B], C...)
+		
+		STRING   = 9;  // A = string(B)
+		NUMBER   = 10; // A = number(B)
+		FUNCTION = 11; // A = function(B)
+		TABLE    = 12; // A = table(B)
+
+		SUBTRACT = 13; // A = B - C
+		DIVIDE   = 14; // A = B / C
+		MULTIPLY = 15; // A = B * C
+		POWER    = 16; // A = B ^ C
+		MODULO   = 17; // A = B % C
+		CONCAT   = 18; // A = B .. C
+		INDEX    = 19; // A = B [ C ]
+		OR       = 20; // A = B or C
+		AND      = 21; // A = B and C
+
+		LESSTHAN         = 22; // A = B < C
+		LESSTHANEQUAL    = 23; // A = B <= C
+		GREATERTHAN      = 24; // A = B > C
+		GREATERTHANEQUAL = 25; // A = B >= C
+		EQUALS           = 26; // A = B == C
+		NOTEQUALS        = 27; // A = B ~= C
+
+		
+		MINUS  = 28;  // A = -B
+		LENGTH = 29;  // A = #B
 	}
 
 	opcode op = 1;

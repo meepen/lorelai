@@ -200,35 +200,42 @@ static ::PROTOBUF_NAMESPACE_ID::Message const * const file_default_instances[] =
 const char descriptor_table_protodef_bytecode_2eproto[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) =
   "\n\016bytecode.proto\022\023lorelai.vm.bytecode\"E\n"
   "\tdebugdata\022\022\n\nlinenumber\030\001 \001(\r\022\022\n\nlineco"
-  "lumn\030\002 \001(\r\022\020\n\010filename\030\003 \001(\t\"\262\002\n\013instruc"
+  "lumn\030\002 \001(\r\022\020\n\010filename\030\003 \001(\t\"\307\004\n\013instruc"
   "tion\0223\n\002op\030\001 \001(\0162\'.lorelai.vm.bytecode.i"
   "nstruction.opcode\022\016\n\001a\030\002 \001(\rH\000\210\001\001\022\016\n\001b\030\003"
   " \001(\rH\001\210\001\001\022\016\n\001c\030\004 \001(\rH\002\210\001\001\0222\n\005debug\030\005 \001(\013"
-  "2\036.lorelai.vm.bytecode.debugdataH\003\210\001\001\"n\n"
-  "\006opcode\022\007\n\003SET\020\000\022\007\n\003MOV\020\001\022\t\n\005BINOP\020\002\022\010\n\004"
-  "UNOP\020\003\022\n\n\006RETURN\020\004\022\010\n\004CALL\020\005\022\014\n\010TAILCALL"
-  "\020\006\022\014\n\010UPVALSET\020\007\022\013\n\007NEWFUNC\020\010B\004\n\002_aB\004\n\002_"
-  "bB\004\n\002_cB\010\n\006_debug\"\252\001\n\ntablevalue\0227\n\004type"
-  "\030\001 \001(\0162).lorelai.vm.bytecode.tablevalue."
-  "valuetype\022\022\n\005index\030\002 \001(\rH\000\210\001\001\"E\n\tvaluety"
-  "pe\022\007\n\003NIL\020\000\022\n\n\006NUMBER\020\001\022\n\n\006STRING\020\002\022\t\n\005T"
-  "ABLE\020\003\022\014\n\010FUNCTION\020\004B\010\n\006_index\"m\n\rtablek"
-  "eyvalue\022,\n\003key\030\001 \001(\0132\037.lorelai.vm.byteco"
-  "de.tablevalue\022.\n\005value\030\002 \001(\0132\037.lorelai.v"
-  "m.bytecode.tablevalue\"r\n\005table\0222\n\tarrayp"
-  "art\030\001 \003(\0132\037.lorelai.vm.bytecode.tableval"
-  "ue\0225\n\014keyvaluepart\030\002 \003(\0132\037.lorelai.vm.by"
-  "tecode.tablevalue\"\351\001\n\tprototype\0226\n\014instr"
-  "uctions\030\001 \003(\0132 .lorelai.vm.bytecode.inst"
-  "ruction\022\017\n\007numbers\030\002 \003(\001\022\017\n\007strings\030\003 \003("
-  "\t\022*\n\006tables\030\004 \003(\0132\032.lorelai.vm.bytecode."
-  "table\022.\n\006protos\030\005 \003(\0132\036.lorelai.vm.bytec"
-  "ode.prototype\022\027\n\nidentifier\030\006 \001(\tH\000\210\001\001B\r"
-  "\n\013_identifierb\006proto3"
+  "2\036.lorelai.vm.bytecode.debugdataH\003\210\001\001\"\202\003"
+  "\n\006opcode\022\014\n\010CONSTANT\020\000\022\007\n\003MOV\020\001\022\007\n\003ADD\020\002"
+  "\022\007\n\003NOT\020\003\022\n\n\006RETURN\020\004\022\010\n\004CALL\020\005\022\014\n\010TAILC"
+  "ALL\020\006\022\014\n\010UPVALSET\020\007\022\013\n\007NEWFUNC\020\010\022\n\n\006STRI"
+  "NG\020\t\022\n\n\006NUMBER\020\n\022\014\n\010FUNCTION\020\013\022\t\n\005TABLE\020"
+  "\014\022\014\n\010SUBTRACT\020\r\022\n\n\006DIVIDE\020\016\022\014\n\010MULTIPLY\020"
+  "\017\022\t\n\005POWER\020\020\022\n\n\006MODULO\020\021\022\n\n\006CONCAT\020\022\022\t\n\005"
+  "INDEX\020\023\022\006\n\002OR\020\024\022\007\n\003AND\020\025\022\014\n\010LESSTHAN\020\026\022\021"
+  "\n\rLESSTHANEQUAL\020\027\022\017\n\013GREATERTHAN\020\030\022\024\n\020GR"
+  "EATERTHANEQUAL\020\031\022\n\n\006EQUALS\020\032\022\r\n\tNOTEQUAL"
+  "S\020\033\022\t\n\005MINUS\020\034\022\n\n\006LENGTH\020\035B\004\n\002_aB\004\n\002_bB\004"
+  "\n\002_cB\010\n\006_debug\"\252\001\n\ntablevalue\0227\n\004type\030\001 "
+  "\001(\0162).lorelai.vm.bytecode.tablevalue.val"
+  "uetype\022\022\n\005index\030\002 \001(\rH\000\210\001\001\"E\n\tvaluetype\022"
+  "\007\n\003NIL\020\000\022\n\n\006NUMBER\020\001\022\n\n\006STRING\020\002\022\t\n\005TABL"
+  "E\020\003\022\014\n\010FUNCTION\020\004B\010\n\006_index\"m\n\rtablekeyv"
+  "alue\022,\n\003key\030\001 \001(\0132\037.lorelai.vm.bytecode."
+  "tablevalue\022.\n\005value\030\002 \001(\0132\037.lorelai.vm.b"
+  "ytecode.tablevalue\"r\n\005table\0222\n\tarraypart"
+  "\030\001 \003(\0132\037.lorelai.vm.bytecode.tablevalue\022"
+  "5\n\014keyvaluepart\030\002 \003(\0132\037.lorelai.vm.bytec"
+  "ode.tablevalue\"\351\001\n\tprototype\0226\n\014instruct"
+  "ions\030\001 \003(\0132 .lorelai.vm.bytecode.instruc"
+  "tion\022\017\n\007numbers\030\002 \003(\001\022\017\n\007strings\030\003 \003(\t\022*"
+  "\n\006tables\030\004 \003(\0132\032.lorelai.vm.bytecode.tab"
+  "le\022.\n\006protos\030\005 \003(\0132\036.lorelai.vm.bytecode"
+  ".prototype\022\027\n\nidentifier\030\006 \001(\tH\000\210\001\001B\r\n\013_"
+  "identifierb\006proto3"
   ;
 static ::PROTOBUF_NAMESPACE_ID::internal::once_flag descriptor_table_bytecode_2eproto_once;
 const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_bytecode_2eproto = {
-  false, false, 1061, descriptor_table_protodef_bytecode_2eproto, "bytecode.proto", 
+  false, false, 1338, descriptor_table_protodef_bytecode_2eproto, "bytecode.proto", 
   &descriptor_table_bytecode_2eproto_once, nullptr, 0, 6,
   schemas, file_default_instances, TableStruct_bytecode_2eproto::offsets,
   file_level_metadata_bytecode_2eproto, file_level_enum_descriptors_bytecode_2eproto, file_level_service_descriptors_bytecode_2eproto,
@@ -257,6 +264,27 @@ bool instruction_opcode_IsValid(int value) {
     case 6:
     case 7:
     case 8:
+    case 9:
+    case 10:
+    case 11:
+    case 12:
+    case 13:
+    case 14:
+    case 15:
+    case 16:
+    case 17:
+    case 18:
+    case 19:
+    case 20:
+    case 21:
+    case 22:
+    case 23:
+    case 24:
+    case 25:
+    case 26:
+    case 27:
+    case 28:
+    case 29:
       return true;
     default:
       return false;
@@ -264,15 +292,36 @@ bool instruction_opcode_IsValid(int value) {
 }
 
 #if (__cplusplus < 201703) && (!defined(_MSC_VER) || _MSC_VER >= 1900)
-constexpr instruction_opcode instruction::SET;
+constexpr instruction_opcode instruction::CONSTANT;
 constexpr instruction_opcode instruction::MOV;
-constexpr instruction_opcode instruction::BINOP;
-constexpr instruction_opcode instruction::UNOP;
+constexpr instruction_opcode instruction::ADD;
+constexpr instruction_opcode instruction::NOT;
 constexpr instruction_opcode instruction::RETURN;
 constexpr instruction_opcode instruction::CALL;
 constexpr instruction_opcode instruction::TAILCALL;
 constexpr instruction_opcode instruction::UPVALSET;
 constexpr instruction_opcode instruction::NEWFUNC;
+constexpr instruction_opcode instruction::STRING;
+constexpr instruction_opcode instruction::NUMBER;
+constexpr instruction_opcode instruction::FUNCTION;
+constexpr instruction_opcode instruction::TABLE;
+constexpr instruction_opcode instruction::SUBTRACT;
+constexpr instruction_opcode instruction::DIVIDE;
+constexpr instruction_opcode instruction::MULTIPLY;
+constexpr instruction_opcode instruction::POWER;
+constexpr instruction_opcode instruction::MODULO;
+constexpr instruction_opcode instruction::CONCAT;
+constexpr instruction_opcode instruction::INDEX;
+constexpr instruction_opcode instruction::OR;
+constexpr instruction_opcode instruction::AND;
+constexpr instruction_opcode instruction::LESSTHAN;
+constexpr instruction_opcode instruction::LESSTHANEQUAL;
+constexpr instruction_opcode instruction::GREATERTHAN;
+constexpr instruction_opcode instruction::GREATERTHANEQUAL;
+constexpr instruction_opcode instruction::EQUALS;
+constexpr instruction_opcode instruction::NOTEQUALS;
+constexpr instruction_opcode instruction::MINUS;
+constexpr instruction_opcode instruction::LENGTH;
 constexpr instruction_opcode instruction::opcode_MIN;
 constexpr instruction_opcode instruction::opcode_MAX;
 constexpr int instruction::opcode_ARRAYSIZE;
