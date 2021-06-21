@@ -51,6 +51,8 @@ message instruction {
 		LENGTH = 29;  // A = #B
 
 		ENVIRONMENT = 30; // A = _ENV
+
+		SETINDEX    = 31; // A[B] = C
 	}
 
 	opcode op = 1;

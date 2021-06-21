@@ -266,6 +266,53 @@ public:
 		return false;
 	}
 
+	LORELAI_VISIT_FUNCTION(statements::assignmentstatement) {
+		for (int i = 0; i < std::max(obj.left.size(), obj.right.size()); i++) {
+
+			if (i < obj.left.size()) {
+				auto &lhs = obj.left[i];
+
+				auto name = dynamic_cast<expressions::nameexpression *>(lhs.get());
+				if (name) {
+					auto scope = curfunc.curscope->findvariablescope(name->name);
+					if (scope) {
+						size_t target = scope->getvariableindex(name->name);
+						pushornil(obj.right, i, target);
+					} // TODO: upvalues
+					else {
+						size_t target = curfunc.gettemp(3);
+
+						emit(bytecode::instruction_opcode_ENVIRONMENT, target);
+						expressions::stringexpression string(name->name);
+						runexpressionhandler(string, target + 1, 1);
+						pushornil(obj.right, i, target + 2);
+
+						emit(bytecode::instruction_opcode_SETINDEX, target, target + 1, target + 2);
+
+						curfunc.freetemp(target);
+					}
+				}
+				else {
+					auto index = dynamic_cast<expressions::indexexpression *>(lhs.get());
+					throw;
+					// TODO
+				}
+			}
+		}
+
+		return false;
+	}
+
+private:
+	void pushornil(std::vector<std::shared_ptr<node>> &v, int index, size_t target) {
+		if (index < v.size()) {
+			runexpressionhandler(v[index], target, 1);
+		}
+		else {
+			emit(bytecode::instruction_opcode_CONSTANT, target, 2);
+		}
+	}
+
 public:
 	void runexpressionhandler(node &_expr, size_t target, size_t size) {
 		auto found = expressionmap.find(typeid(_expr));
