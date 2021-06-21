@@ -268,12 +268,10 @@ public:
 
 	LORELAI_VISIT_FUNCTION(statements::assignmentstatement) {
 		for (int i = 0; i < std::max(obj.left.size(), obj.right.size()); i++) {
-
 			if (i < obj.left.size()) {
 				auto &lhs = obj.left[i];
 
-				auto name = dynamic_cast<expressions::nameexpression *>(lhs.get());
-				if (name) {
+				if (auto name = dynamic_cast<expressions::nameexpression *>(lhs.get())) {
 					auto scope = curfunc.curscope->findvariablescope(name->name);
 					if (scope) {
 						size_t target = scope->getvariableindex(name->name);
@@ -289,14 +287,38 @@ public:
 
 						emit(bytecode::instruction_opcode_SETINDEX, target, target + 1, target + 2);
 
-						curfunc.freetemp(target);
+						curfunc.freetemp(target, 3);
 					}
 				}
-				else {
-					auto index = dynamic_cast<expressions::indexexpression *>(lhs.get());
-					throw;
-					// TODO
+				else if (auto index = dynamic_cast<expressions::dotexpression *>(lhs.get())) {
+					size_t target = curfunc.gettemp(3);
+					
+					runexpressionhandler(index->prefix, target, 1);
+					expressions::stringexpression string(dynamic_cast<expressions::nameexpression *>(index->index.get())->name);
+					runexpressionhandler(string, target + 1, 1);
+					pushornil(obj.right, i, target + 2);
+
+					emit(bytecode::instruction_opcode_SETINDEX, target, target + 1, target + 2);
+
+					curfunc.freetemp(target, 3);
 				}
+				else if (auto index = dynamic_cast<expressions::indexexpression *>(lhs.get())) {
+					size_t target = curfunc.gettemp(3);
+					
+					runexpressionhandler(index->prefix, target, 1);
+					runexpressionhandler(index->index, target + 1, 1);
+					pushornil(obj.right, i, target + 2);
+
+					emit(bytecode::instruction_opcode_SETINDEX, target, target + 1, target + 2);
+
+					curfunc.freetemp(target, 3);
+				}
+				else {
+					throw;
+				}
+			}
+			else {
+				runexpressionhandler(obj.right[i], 0, 0);
 			}
 		}
 
