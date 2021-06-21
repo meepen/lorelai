@@ -39,7 +39,7 @@ static void print_branch(size_t idx, lorelai::parser::node &node) {
 }
 
 int main(int argc, char *argv[]) {
-	std::string inputcode = "local a = -3.14, (false ~= not true), true, nil, 333, 'bbbd', ('b').c, ('d')['e']";
+	std::string inputcode = "local a = -3.14, (false ~= not true), true, nil, 333, 'bbbd', ('b').c, d['e'].f(), g:h(i)";
 
 	lorelai::parser::chunk mainchunk(inputcode);
 	print_branch(0, mainchunk);
@@ -65,11 +65,15 @@ int main(int argc, char *argv[]) {
 		longest = std::max(descriptor->value(i)->name().length() + 1, longest);
 	}
 
+	std::string max_index = std::to_string(bytecode.instructions_size() - 1);
+
 	for (int i = 0; i < bytecode.instructions_size(); i++) {	
 		auto &instruct = bytecode.instructions(i);
 		auto instrname = lorelai::vm::bytecode::instruction_opcode_Name(instruct.op());
 
-		std::cout << "#" << i << ": " << instrname << std::string(longest - instrname.size(), ' ');
+		std::string index = std::to_string(i);
+
+		std::cout << "#" << index << std::string(max_index.size() - index.size() + 1, ' ') << "| " <<  instrname << std::string(longest - instrname.size(), ' ') << "| ";
 
 		if (instruct.has_a()) {
 			std::cout << instruct.a();

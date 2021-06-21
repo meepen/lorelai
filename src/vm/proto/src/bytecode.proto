@@ -19,7 +19,7 @@ message instruction {
 
 		NOT      = 3;  // A = not B
 		RETURN   = 4;  // return A .. A+B, vararg(C)
-		CALL     = 5;  // A(A+1 .. A + B, vararg(C))
+		CALL     = 5;  // A .. A+C = A(A+1 .. A + B)
 		TAILCALL = 6;  // return A(A+1 .. A + B, vararg(C))
 		UPVALSET = 7;  // UP(A)[B] = C
 		NEWFUNC  = 8;  // A = NEWFUNC(prototypes[B], C...)
@@ -49,6 +49,8 @@ message instruction {
 		
 		MINUS  = 28;  // A = -B
 		LENGTH = 29;  // A = #B
+
+		ENVIRONMENT = 30; // A = _ENV
 	}
 
 	opcode op = 1;

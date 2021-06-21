@@ -200,11 +200,11 @@ static ::PROTOBUF_NAMESPACE_ID::Message const * const file_default_instances[] =
 const char descriptor_table_protodef_bytecode_2eproto[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) =
   "\n\016bytecode.proto\022\023lorelai.vm.bytecode\"E\n"
   "\tdebugdata\022\022\n\nlinenumber\030\001 \001(\r\022\022\n\nlineco"
-  "lumn\030\002 \001(\r\022\020\n\010filename\030\003 \001(\t\"\307\004\n\013instruc"
+  "lumn\030\002 \001(\r\022\020\n\010filename\030\003 \001(\t\"\330\004\n\013instruc"
   "tion\0223\n\002op\030\001 \001(\0162\'.lorelai.vm.bytecode.i"
   "nstruction.opcode\022\016\n\001a\030\002 \001(\rH\000\210\001\001\022\016\n\001b\030\003"
   " \001(\rH\001\210\001\001\022\016\n\001c\030\004 \001(\rH\002\210\001\001\0222\n\005debug\030\005 \001(\013"
-  "2\036.lorelai.vm.bytecode.debugdataH\003\210\001\001\"\202\003"
+  "2\036.lorelai.vm.bytecode.debugdataH\003\210\001\001\"\223\003"
   "\n\006opcode\022\014\n\010CONSTANT\020\000\022\007\n\003MOV\020\001\022\007\n\003ADD\020\002"
   "\022\007\n\003NOT\020\003\022\n\n\006RETURN\020\004\022\010\n\004CALL\020\005\022\014\n\010TAILC"
   "ALL\020\006\022\014\n\010UPVALSET\020\007\022\013\n\007NEWFUNC\020\010\022\n\n\006STRI"
@@ -214,28 +214,28 @@ const char descriptor_table_protodef_bytecode_2eproto[] PROTOBUF_SECTION_VARIABL
   "INDEX\020\023\022\006\n\002OR\020\024\022\007\n\003AND\020\025\022\014\n\010LESSTHAN\020\026\022\021"
   "\n\rLESSTHANEQUAL\020\027\022\017\n\013GREATERTHAN\020\030\022\024\n\020GR"
   "EATERTHANEQUAL\020\031\022\n\n\006EQUALS\020\032\022\r\n\tNOTEQUAL"
-  "S\020\033\022\t\n\005MINUS\020\034\022\n\n\006LENGTH\020\035B\004\n\002_aB\004\n\002_bB\004"
-  "\n\002_cB\010\n\006_debug\"\252\001\n\ntablevalue\0227\n\004type\030\001 "
-  "\001(\0162).lorelai.vm.bytecode.tablevalue.val"
-  "uetype\022\022\n\005index\030\002 \001(\rH\000\210\001\001\"E\n\tvaluetype\022"
-  "\007\n\003NIL\020\000\022\n\n\006NUMBER\020\001\022\n\n\006STRING\020\002\022\t\n\005TABL"
-  "E\020\003\022\014\n\010FUNCTION\020\004B\010\n\006_index\"m\n\rtablekeyv"
-  "alue\022,\n\003key\030\001 \001(\0132\037.lorelai.vm.bytecode."
-  "tablevalue\022.\n\005value\030\002 \001(\0132\037.lorelai.vm.b"
-  "ytecode.tablevalue\"r\n\005table\0222\n\tarraypart"
-  "\030\001 \003(\0132\037.lorelai.vm.bytecode.tablevalue\022"
-  "5\n\014keyvaluepart\030\002 \003(\0132\037.lorelai.vm.bytec"
-  "ode.tablevalue\"\351\001\n\tprototype\0226\n\014instruct"
-  "ions\030\001 \003(\0132 .lorelai.vm.bytecode.instruc"
-  "tion\022\017\n\007numbers\030\002 \003(\001\022\017\n\007strings\030\003 \003(\t\022*"
-  "\n\006tables\030\004 \003(\0132\032.lorelai.vm.bytecode.tab"
-  "le\022.\n\006protos\030\005 \003(\0132\036.lorelai.vm.bytecode"
-  ".prototype\022\027\n\nidentifier\030\006 \001(\tH\000\210\001\001B\r\n\013_"
-  "identifierb\006proto3"
+  "S\020\033\022\t\n\005MINUS\020\034\022\n\n\006LENGTH\020\035\022\017\n\013ENVIRONMEN"
+  "T\020\036B\004\n\002_aB\004\n\002_bB\004\n\002_cB\010\n\006_debug\"\252\001\n\ntabl"
+  "evalue\0227\n\004type\030\001 \001(\0162).lorelai.vm.byteco"
+  "de.tablevalue.valuetype\022\022\n\005index\030\002 \001(\rH\000"
+  "\210\001\001\"E\n\tvaluetype\022\007\n\003NIL\020\000\022\n\n\006NUMBER\020\001\022\n\n"
+  "\006STRING\020\002\022\t\n\005TABLE\020\003\022\014\n\010FUNCTION\020\004B\010\n\006_i"
+  "ndex\"m\n\rtablekeyvalue\022,\n\003key\030\001 \001(\0132\037.lor"
+  "elai.vm.bytecode.tablevalue\022.\n\005value\030\002 \001"
+  "(\0132\037.lorelai.vm.bytecode.tablevalue\"r\n\005t"
+  "able\0222\n\tarraypart\030\001 \003(\0132\037.lorelai.vm.byt"
+  "ecode.tablevalue\0225\n\014keyvaluepart\030\002 \003(\0132\037"
+  ".lorelai.vm.bytecode.tablevalue\"\351\001\n\tprot"
+  "otype\0226\n\014instructions\030\001 \003(\0132 .lorelai.vm"
+  ".bytecode.instruction\022\017\n\007numbers\030\002 \003(\001\022\017"
+  "\n\007strings\030\003 \003(\t\022*\n\006tables\030\004 \003(\0132\032.lorela"
+  "i.vm.bytecode.table\022.\n\006protos\030\005 \003(\0132\036.lo"
+  "relai.vm.bytecode.prototype\022\027\n\nidentifie"
+  "r\030\006 \001(\tH\000\210\001\001B\r\n\013_identifierb\006proto3"
   ;
 static ::PROTOBUF_NAMESPACE_ID::internal::once_flag descriptor_table_bytecode_2eproto_once;
 const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_bytecode_2eproto = {
-  false, false, 1338, descriptor_table_protodef_bytecode_2eproto, "bytecode.proto", 
+  false, false, 1355, descriptor_table_protodef_bytecode_2eproto, "bytecode.proto", 
   &descriptor_table_bytecode_2eproto_once, nullptr, 0, 6,
   schemas, file_default_instances, TableStruct_bytecode_2eproto::offsets,
   file_level_metadata_bytecode_2eproto, file_level_enum_descriptors_bytecode_2eproto, file_level_service_descriptors_bytecode_2eproto,
@@ -285,6 +285,7 @@ bool instruction_opcode_IsValid(int value) {
     case 27:
     case 28:
     case 29:
+    case 30:
       return true;
     default:
       return false;
@@ -322,6 +323,7 @@ constexpr instruction_opcode instruction::EQUALS;
 constexpr instruction_opcode instruction::NOTEQUALS;
 constexpr instruction_opcode instruction::MINUS;
 constexpr instruction_opcode instruction::LENGTH;
+constexpr instruction_opcode instruction::ENVIRONMENT;
 constexpr instruction_opcode instruction::opcode_MIN;
 constexpr instruction_opcode instruction::opcode_MAX;
 constexpr int instruction::opcode_ARRAYSIZE;
