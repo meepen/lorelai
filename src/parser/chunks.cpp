@@ -33,23 +33,23 @@ void chunk::initialize(lexer &lex) {
 
 // visitor acceptors
 bool chunk::accept(visitor &visit, std::shared_ptr<node> &container) {
-	bool ret = visit.visit(*this, container);
-	if (ret) { // if we delete who cares, return early
-		return true;
-	}
-	
-	std::vector<std::shared_ptr<node>> deleted;
+	bool r;
+	if (!(r = visit.visit(*this, container))) {
+		std::vector<std::shared_ptr<node>> deleted;
 
-	for (auto &child : children) {
-		if (child->accept(visit, child)) {
-			// mark for removal
-			deleted.push_back(child);
+		for (auto &child : children) {
+			if (child->accept(visit, child)) {
+				// mark for removal
+				deleted.push_back(child);
+			}
+		}
+		
+		for (auto &del : deleted) {
+			children.erase(std::find(children.cbegin(), children.cend(), del));
 		}
 	}
-	
-	for (auto &del : deleted) {
-		children.erase(std::find(children.cbegin(), children.cend(), del));
-	}
 
-	return false;
+	bool r2 = visit.postvisit(*this, container);
+
+	return r || r2;
 }

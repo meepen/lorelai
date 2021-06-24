@@ -1,0 +1,7 @@
+local a = -3.14, (false ~= not true), true, nil, 333, 'bbbd', ('b').c, d['e'].f(), g:h(i)
+a, b, c().d = 4, "B"
+e(1)
+
+do
+	local b
+end

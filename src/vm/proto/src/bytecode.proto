@@ -88,12 +88,18 @@ message table {
 	repeated tablevalue keyvaluepart = 2;
 }
 
+message upvaluereference {
+	uint32 protoup = 1;
+	uint32 stackindex = 2;
+}
+
 message prototype {
 	repeated instruction instructions = 1;
 	repeated double numbers = 2;
 	repeated string strings = 3;
 	repeated table tables = 4;
 	repeated prototype protos = 5;
+	repeated upvaluereference upvalue = 7;
 
 	optional string identifier = 6;
 }

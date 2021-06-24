@@ -2,6 +2,7 @@
 #include "object.hpp"
 #include "bytecode.hpp"
 #include <iostream>
+#include <fstream>
 
 #ifdef __linux__
 #include <cxxabi.h>
@@ -39,11 +40,16 @@ static void print_branch(size_t idx, lorelai::parser::node &node) {
 }
 
 int main(int argc, char *argv[]) {
-	std::string inputcode = R"(
-		local a = -3.14, (false ~= not true), true, nil, 333, 'bbbd', ('b').c, d['e'].f(), g:h(i)
-		a, b, c().d = 4, "B"
-		e(1)
-)";
+	if (argc != 2) {
+		std::cerr << "Error: no argument for file" << std::endl;
+		return 1;
+	}
+
+	std::ifstream luafile(argv[1]);
+	auto inputcode = std::string(
+		std::istreambuf_iterator<char>(luafile),
+		std::istreambuf_iterator<char>()
+	);
 
 	lorelai::parser::chunk mainchunk(inputcode);
 	print_branch(0, mainchunk);

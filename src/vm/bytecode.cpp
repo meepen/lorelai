@@ -204,6 +204,12 @@ public:
 	}
 
 	size_t createlocal(string name) {
+		// since it already exists and won't be used passed this point, reuse slot
+		// this might have to change if used as an upvalue?
+		if (curscope->hasvariable(name)) {
+			return curscope->getvariableindex(name);
+		}
+
 		auto scopeindex = curscope->addvariable(name, funcstack.getslots());
 		return scopeindex;
 	}

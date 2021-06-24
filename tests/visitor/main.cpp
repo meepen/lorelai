@@ -19,11 +19,21 @@ using namespace lorelai::parser;
 
 #define BASIC_TEST(classname) \
 	bool visit(classname &_node, std::shared_ptr<node> &container) override { \
+		visited++; \
 		std::cout << "visited: " << #classname << std::endl; \
 		return false; \
+	} \
+	bool postvisit(classname &_node, std::shared_ptr<node> &container) override { \
+		postvisited++; \
+		std::cout << "post visit: " << #classname << std::endl; \
+		return false; \
 	}
+
 class visitor_printer : public visitor {
 	LORELAI_VISIT_NAME_MACRO(BASIC_TEST)
+
+public:
+	size_t visited = 0, postvisited = 0;
 };
 
 class printer_visitor : public visitor {
@@ -103,7 +113,10 @@ int main(int argc, char *argv[]) {
 		std::shared_ptr<node> main = std::make_shared<chunk>(luacode);
 		visitor_printer printer;
 		main->accept(printer, main);
-		print_branch(0, *main);
+		if (printer.postvisited != printer.visited) {
+			std::cerr << "postvisited (" << printer.postvisited << ") != visited (" << printer.visited << ")" << std::endl;
+			return 1;
+		}
 
 		printer_visitor string_printer;
 		main->accept(string_printer, main);

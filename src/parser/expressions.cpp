@@ -9,18 +9,9 @@ using namespace lorelai;
 using namespace lorelai::parser;
 using namespace lorelai::parser::expressions;
 
-#define acceptmacro(name) bool name ::accept(visitor &visit, std::shared_ptr<node> &container) { return visit.visit(*this, container); }
-LORELAI_EXPRESSION_NODES_CLASS_MACRO(acceptmacro);
+LORELAI_EXPRESSION_NODES_CLASS_MACRO(LORELAI_VISIT_NODE_DEFINE)
 
-bool enclosedexpression::accept(visitor &visit, std::shared_ptr<node> &container) {
-	if (visit.visit(*this, container)) {
-		return true;
-	}
-
-	visitchildren(visit);
-
-	return false;
-}
+LORELAI_VISIT_BRANCH_DEFINE(enclosedexpression)
 
 const static std::unordered_map<string, std::shared_ptr<node>(*)(lexer &lex)> expressionmap = {
 	{ "false", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<falseexpression>(lex); } },

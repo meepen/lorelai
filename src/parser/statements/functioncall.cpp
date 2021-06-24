@@ -6,11 +6,4 @@ using namespace lorelai::parser;
 using namespace lorelai::parser::statements;
 using namespace lorelai::parser::expressions;
 
-bool functioncallstatement::accept(visitor &visit, std::shared_ptr<node> &container) {
-	if (visit.visit(*this, container)) {
-		return true;
-	}
-
-	visitchildren(visit);
-	return false;
-}
+LORELAI_VISIT_BRANCH_DEFINE(functioncallstatement)

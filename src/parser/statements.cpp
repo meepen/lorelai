@@ -115,15 +115,4 @@ std::shared_ptr<node> statement::read(lexer &lex) {
 	return stmt;
 }
 
-
-#define LORELAI_ACCEPTOR(name) \
-bool name ::accept(visitor &visit, std::shared_ptr<node> &container) { \
-	if (visit.visit(*this, container)) { \
-		return true; \
-	} \
-	\
-	visitchildren(visit); \
-	return false; \
-}
-
-LORELAI_STATEMENT_BRANCH_CLASS_MACRO(LORELAI_ACCEPTOR)
+LORELAI_STATEMENT_BRANCH_CLASS_MACRO(LORELAI_VISIT_BRANCH_DEFINE)

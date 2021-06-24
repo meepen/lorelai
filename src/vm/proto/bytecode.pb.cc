@@ -90,6 +90,19 @@ struct tableDefaultTypeInternal {
   };
 };
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT tableDefaultTypeInternal _table_default_instance_;
+constexpr upvaluereference::upvaluereference(
+  ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized)
+  : protoup_(0u)
+  , stackindex_(0u){}
+struct upvaluereferenceDefaultTypeInternal {
+  constexpr upvaluereferenceDefaultTypeInternal()
+    : _instance(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized{}) {}
+  ~upvaluereferenceDefaultTypeInternal() {}
+  union {
+    upvaluereference _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT upvaluereferenceDefaultTypeInternal _upvaluereference_default_instance_;
 constexpr prototype::prototype(
   ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized)
   : instructions_()
@@ -97,6 +110,7 @@ constexpr prototype::prototype(
   , strings_()
   , tables_()
   , protos_()
+  , upvalue_()
   , identifier_(&::PROTOBUF_NAMESPACE_ID::internal::fixed_address_empty_string){}
 struct prototypeDefaultTypeInternal {
   constexpr prototypeDefaultTypeInternal()
@@ -110,7 +124,7 @@ PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT prototypeDefaultTypeInternal _p
 }  // namespace bytecode
 }  // namespace vm
 }  // namespace lorelai
-static ::PROTOBUF_NAMESPACE_ID::Metadata file_level_metadata_bytecode_2eproto[6];
+static ::PROTOBUF_NAMESPACE_ID::Metadata file_level_metadata_bytecode_2eproto[7];
 static const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* file_level_enum_descriptors_bytecode_2eproto[2];
 static constexpr ::PROTOBUF_NAMESPACE_ID::ServiceDescriptor const** file_level_service_descriptors_bytecode_2eproto = nullptr;
 
@@ -161,6 +175,13 @@ const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_bytecode_2eproto::offsets[] PR
   ~0u,  // no _weak_field_map_
   PROTOBUF_FIELD_OFFSET(::lorelai::vm::bytecode::table, arraypart_),
   PROTOBUF_FIELD_OFFSET(::lorelai::vm::bytecode::table, keyvaluepart_),
+  ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::lorelai::vm::bytecode::upvaluereference, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  PROTOBUF_FIELD_OFFSET(::lorelai::vm::bytecode::upvaluereference, protoup_),
+  PROTOBUF_FIELD_OFFSET(::lorelai::vm::bytecode::upvaluereference, stackindex_),
   PROTOBUF_FIELD_OFFSET(::lorelai::vm::bytecode::prototype, _has_bits_),
   PROTOBUF_FIELD_OFFSET(::lorelai::vm::bytecode::prototype, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -171,7 +192,9 @@ const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_bytecode_2eproto::offsets[] PR
   PROTOBUF_FIELD_OFFSET(::lorelai::vm::bytecode::prototype, strings_),
   PROTOBUF_FIELD_OFFSET(::lorelai::vm::bytecode::prototype, tables_),
   PROTOBUF_FIELD_OFFSET(::lorelai::vm::bytecode::prototype, protos_),
+  PROTOBUF_FIELD_OFFSET(::lorelai::vm::bytecode::prototype, upvalue_),
   PROTOBUF_FIELD_OFFSET(::lorelai::vm::bytecode::prototype, identifier_),
+  ~0u,
   ~0u,
   ~0u,
   ~0u,
@@ -185,7 +208,8 @@ static const ::PROTOBUF_NAMESPACE_ID::internal::MigrationSchema schemas[] PROTOB
   { 23, 30, sizeof(::lorelai::vm::bytecode::tablevalue)},
   { 32, -1, sizeof(::lorelai::vm::bytecode::tablekeyvalue)},
   { 39, -1, sizeof(::lorelai::vm::bytecode::table)},
-  { 46, 57, sizeof(::lorelai::vm::bytecode::prototype)},
+  { 46, -1, sizeof(::lorelai::vm::bytecode::upvaluereference)},
+  { 53, 65, sizeof(::lorelai::vm::bytecode::prototype)},
 };
 
 static ::PROTOBUF_NAMESPACE_ID::Message const * const file_default_instances[] = {
@@ -194,6 +218,7 @@ static ::PROTOBUF_NAMESPACE_ID::Message const * const file_default_instances[] =
   reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::lorelai::vm::bytecode::_tablevalue_default_instance_),
   reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::lorelai::vm::bytecode::_tablekeyvalue_default_instance_),
   reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::lorelai::vm::bytecode::_table_default_instance_),
+  reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::lorelai::vm::bytecode::_upvaluereference_default_instance_),
   reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::lorelai::vm::bytecode::_prototype_default_instance_),
 };
 
@@ -227,18 +252,21 @@ const char descriptor_table_protodef_bytecode_2eproto[] PROTOBUF_SECTION_VARIABL
   "ablevalue\"r\n\005table\0222\n\tarraypart\030\001 \003(\0132\037."
   "lorelai.vm.bytecode.tablevalue\0225\n\014keyval"
   "uepart\030\002 \003(\0132\037.lorelai.vm.bytecode.table"
-  "value\"\351\001\n\tprototype\0226\n\014instructions\030\001 \003("
-  "\0132 .lorelai.vm.bytecode.instruction\022\017\n\007n"
-  "umbers\030\002 \003(\001\022\017\n\007strings\030\003 \003(\t\022*\n\006tables\030"
-  "\004 \003(\0132\032.lorelai.vm.bytecode.table\022.\n\006pro"
-  "tos\030\005 \003(\0132\036.lorelai.vm.bytecode.prototyp"
-  "e\022\027\n\nidentifier\030\006 \001(\tH\000\210\001\001B\r\n\013_identifie"
-  "rb\006proto3"
+  "value\"7\n\020upvaluereference\022\017\n\007protoup\030\001 \001"
+  "(\r\022\022\n\nstackindex\030\002 \001(\r\"\241\002\n\tprototype\0226\n\014"
+  "instructions\030\001 \003(\0132 .lorelai.vm.bytecode"
+  ".instruction\022\017\n\007numbers\030\002 \003(\001\022\017\n\007strings"
+  "\030\003 \003(\t\022*\n\006tables\030\004 \003(\0132\032.lorelai.vm.byte"
+  "code.table\022.\n\006protos\030\005 \003(\0132\036.lorelai.vm."
+  "bytecode.prototype\0226\n\007upvalue\030\007 \003(\0132%.lo"
+  "relai.vm.bytecode.upvaluereference\022\027\n\nid"
+  "entifier\030\006 \001(\tH\000\210\001\001B\r\n\013_identifierb\006prot"
+  "o3"
   ;
 static ::PROTOBUF_NAMESPACE_ID::internal::once_flag descriptor_table_bytecode_2eproto_once;
 const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_bytecode_2eproto = {
-  false, false, 1409, descriptor_table_protodef_bytecode_2eproto, "bytecode.proto", 
-  &descriptor_table_bytecode_2eproto_once, nullptr, 0, 6,
+  false, false, 1522, descriptor_table_protodef_bytecode_2eproto, "bytecode.proto", 
+  &descriptor_table_bytecode_2eproto_once, nullptr, 0, 7,
   schemas, file_default_instances, TableStruct_bytecode_2eproto::offsets,
   file_level_metadata_bytecode_2eproto, file_level_enum_descriptors_bytecode_2eproto, file_level_service_descriptors_bytecode_2eproto,
 };
@@ -1668,6 +1696,226 @@ void table::InternalSwap(table* other) {
 
 // ===================================================================
 
+class upvaluereference::_Internal {
+ public:
+};
+
+upvaluereference::upvaluereference(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                         bool is_message_owned)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
+  SharedCtor();
+  if (!is_message_owned) {
+    RegisterArenaDtor(arena);
+  }
+  // @@protoc_insertion_point(arena_constructor:lorelai.vm.bytecode.upvaluereference)
+}
+upvaluereference::upvaluereference(const upvaluereference& from)
+  : ::PROTOBUF_NAMESPACE_ID::Message() {
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  ::memcpy(&protoup_, &from.protoup_,
+    static_cast<size_t>(reinterpret_cast<char*>(&stackindex_) -
+    reinterpret_cast<char*>(&protoup_)) + sizeof(stackindex_));
+  // @@protoc_insertion_point(copy_constructor:lorelai.vm.bytecode.upvaluereference)
+}
+
+inline void upvaluereference::SharedCtor() {
+::memset(reinterpret_cast<char*>(this) + static_cast<size_t>(
+    reinterpret_cast<char*>(&protoup_) - reinterpret_cast<char*>(this)),
+    0, static_cast<size_t>(reinterpret_cast<char*>(&stackindex_) -
+    reinterpret_cast<char*>(&protoup_)) + sizeof(stackindex_));
+}
+
+upvaluereference::~upvaluereference() {
+  // @@protoc_insertion_point(destructor:lorelai.vm.bytecode.upvaluereference)
+  if (GetArenaForAllocation() != nullptr) return;
+  SharedDtor();
+  _internal_metadata_.Delete<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
+}
+
+inline void upvaluereference::SharedDtor() {
+  GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
+}
+
+void upvaluereference::ArenaDtor(void* object) {
+  upvaluereference* _this = reinterpret_cast< upvaluereference* >(object);
+  (void)_this;
+}
+void upvaluereference::RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena*) {
+}
+void upvaluereference::SetCachedSize(int size) const {
+  _cached_size_.Set(size);
+}
+
+void upvaluereference::Clear() {
+// @@protoc_insertion_point(message_clear_start:lorelai.vm.bytecode.upvaluereference)
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  ::memset(&protoup_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&stackindex_) -
+      reinterpret_cast<char*>(&protoup_)) + sizeof(stackindex_));
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
+}
+
+const char* upvaluereference::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  while (!ctx->Done(&ptr)) {
+    ::PROTOBUF_NAMESPACE_ID::uint32 tag;
+    ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
+    switch (tag >> 3) {
+      // uint32 protoup = 1;
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 8)) {
+          protoup_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // uint32 stackindex = 2;
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 16)) {
+          stackindex_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      default: {
+      handle_unusual:
+        if ((tag == 0) || ((tag & 7) == 4)) {
+          CHK_(ptr);
+          ctx->SetLastTag(tag);
+          goto success;
+        }
+        ptr = UnknownFieldParse(tag,
+            _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+            ptr, ctx);
+        CHK_(ptr != nullptr);
+        continue;
+      }
+    }  // switch
+  }  // while
+success:
+  return ptr;
+failure:
+  ptr = nullptr;
+  goto success;
+#undef CHK_
+}
+
+::PROTOBUF_NAMESPACE_ID::uint8* upvaluereference::_InternalSerialize(
+    ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
+  // @@protoc_insertion_point(serialize_to_array_start:lorelai.vm.bytecode.upvaluereference)
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // uint32 protoup = 1;
+  if (this->_internal_protoup() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32ToArray(1, this->_internal_protoup(), target);
+  }
+
+  // uint32 stackindex = 2;
+  if (this->_internal_stackindex() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32ToArray(2, this->_internal_stackindex(), target);
+  }
+
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:lorelai.vm.bytecode.upvaluereference)
+  return target;
+}
+
+size_t upvaluereference::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:lorelai.vm.bytecode.upvaluereference)
+  size_t total_size = 0;
+
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  // uint32 protoup = 1;
+  if (this->_internal_protoup() != 0) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt32Size(
+        this->_internal_protoup());
+  }
+
+  // uint32 stackindex = 2;
+  if (this->_internal_stackindex() != 0) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt32Size(
+        this->_internal_stackindex());
+  }
+
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    return ::PROTOBUF_NAMESPACE_ID::internal::ComputeUnknownFieldsSize(
+        _internal_metadata_, total_size, &_cached_size_);
+  }
+  int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(total_size);
+  SetCachedSize(cached_size);
+  return total_size;
+}
+
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData upvaluereference::_class_data_ = {
+    ::PROTOBUF_NAMESPACE_ID::Message::CopyWithSizeCheck,
+    upvaluereference::MergeImpl
+};
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*upvaluereference::GetClassData() const { return &_class_data_; }
+
+void upvaluereference::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message*to,
+                      const ::PROTOBUF_NAMESPACE_ID::Message&from) {
+  static_cast<upvaluereference *>(to)->MergeFrom(
+      static_cast<const upvaluereference &>(from));
+}
+
+
+void upvaluereference::MergeFrom(const upvaluereference& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:lorelai.vm.bytecode.upvaluereference)
+  GOOGLE_DCHECK_NE(&from, this);
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from._internal_protoup() != 0) {
+    _internal_set_protoup(from._internal_protoup());
+  }
+  if (from._internal_stackindex() != 0) {
+    _internal_set_stackindex(from._internal_stackindex());
+  }
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+}
+
+void upvaluereference::CopyFrom(const upvaluereference& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:lorelai.vm.bytecode.upvaluereference)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool upvaluereference::IsInitialized() const {
+  return true;
+}
+
+void upvaluereference::InternalSwap(upvaluereference* other) {
+  using std::swap;
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  ::PROTOBUF_NAMESPACE_ID::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(upvaluereference, stackindex_)
+      + sizeof(upvaluereference::stackindex_)
+      - PROTOBUF_FIELD_OFFSET(upvaluereference, protoup_)>(
+          reinterpret_cast<char*>(&protoup_),
+          reinterpret_cast<char*>(&other->protoup_));
+}
+
+::PROTOBUF_NAMESPACE_ID::Metadata upvaluereference::GetMetadata() const {
+  return ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(
+      &descriptor_table_bytecode_2eproto_getter, &descriptor_table_bytecode_2eproto_once,
+      file_level_metadata_bytecode_2eproto[5]);
+}
+
+// ===================================================================
+
 class prototype::_Internal {
  public:
   using HasBits = decltype(std::declval<prototype>()._has_bits_);
@@ -1683,7 +1931,8 @@ prototype::prototype(::PROTOBUF_NAMESPACE_ID::Arena* arena,
   numbers_(arena),
   strings_(arena),
   tables_(arena),
-  protos_(arena) {
+  protos_(arena),
+  upvalue_(arena) {
   SharedCtor();
   if (!is_message_owned) {
     RegisterArenaDtor(arena);
@@ -1697,7 +1946,8 @@ prototype::prototype(const prototype& from)
       numbers_(from.numbers_),
       strings_(from.strings_),
       tables_(from.tables_),
-      protos_(from.protos_) {
+      protos_(from.protos_),
+      upvalue_(from.upvalue_) {
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
   identifier_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
   if (from._internal_has_identifier()) {
@@ -1744,6 +1994,7 @@ void prototype::Clear() {
   strings_.Clear();
   tables_.Clear();
   protos_.Clear();
+  upvalue_.Clear();
   cached_has_bits = _has_bits_[0];
   if (cached_has_bits & 0x00000001u) {
     identifier_.ClearNonDefaultToEmpty();
@@ -1828,6 +2079,18 @@ const char* prototype::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::
           CHK_(ptr);
         } else goto handle_unusual;
         continue;
+      // repeated .lorelai.vm.bytecode.upvaluereference upvalue = 7;
+      case 7:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 58)) {
+          ptr -= 1;
+          do {
+            ptr += 1;
+            ptr = ctx->ParseMessage(_internal_add_upvalue(), ptr);
+            CHK_(ptr);
+            if (!ctx->DataAvailable(ptr)) break;
+          } while (::PROTOBUF_NAMESPACE_ID::internal::ExpectTag<58>(ptr));
+        } else goto handle_unusual;
+        continue;
       default: {
       handle_unusual:
         if ((tag == 0) || ((tag & 7) == 4)) {
@@ -1907,6 +2170,14 @@ failure:
         6, this->_internal_identifier(), target);
   }
 
+  // repeated .lorelai.vm.bytecode.upvaluereference upvalue = 7;
+  for (unsigned int i = 0,
+      n = static_cast<unsigned int>(this->_internal_upvalue_size()); i < n; i++) {
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      InternalWriteMessage(7, this->_internal_upvalue(i), target, stream);
+  }
+
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::InternalSerializeUnknownFieldsToArray(
         _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
@@ -1964,6 +2235,13 @@ size_t prototype::ByteSizeLong() const {
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(msg);
   }
 
+  // repeated .lorelai.vm.bytecode.upvaluereference upvalue = 7;
+  total_size += 1UL * this->_internal_upvalue_size();
+  for (const auto& msg : this->upvalue_) {
+    total_size +=
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(msg);
+  }
+
   // optional string identifier = 6;
   cached_has_bits = _has_bits_[0];
   if (cached_has_bits & 0x00000001u) {
@@ -2005,6 +2283,7 @@ void prototype::MergeFrom(const prototype& from) {
   strings_.MergeFrom(from.strings_);
   tables_.MergeFrom(from.tables_);
   protos_.MergeFrom(from.protos_);
+  upvalue_.MergeFrom(from.upvalue_);
   if (from._internal_has_identifier()) {
     _internal_set_identifier(from._internal_identifier());
   }
@@ -2031,6 +2310,7 @@ void prototype::InternalSwap(prototype* other) {
   strings_.InternalSwap(&other->strings_);
   tables_.InternalSwap(&other->tables_);
   protos_.InternalSwap(&other->protos_);
+  upvalue_.InternalSwap(&other->upvalue_);
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
       &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
       &identifier_, GetArenaForAllocation(),
@@ -2041,7 +2321,7 @@ void prototype::InternalSwap(prototype* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata prototype::GetMetadata() const {
   return ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(
       &descriptor_table_bytecode_2eproto_getter, &descriptor_table_bytecode_2eproto_once,
-      file_level_metadata_bytecode_2eproto[5]);
+      file_level_metadata_bytecode_2eproto[6]);
 }
 
 // @@protoc_insertion_point(namespace_scope)
@@ -2063,6 +2343,9 @@ template<> PROTOBUF_NOINLINE ::lorelai::vm::bytecode::tablekeyvalue* Arena::Crea
 }
 template<> PROTOBUF_NOINLINE ::lorelai::vm::bytecode::table* Arena::CreateMaybeMessage< ::lorelai::vm::bytecode::table >(Arena* arena) {
   return Arena::CreateMessageInternal< ::lorelai::vm::bytecode::table >(arena);
+}
+template<> PROTOBUF_NOINLINE ::lorelai::vm::bytecode::upvaluereference* Arena::CreateMaybeMessage< ::lorelai::vm::bytecode::upvaluereference >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::lorelai::vm::bytecode::upvaluereference >(arena);
 }
 template<> PROTOBUF_NOINLINE ::lorelai::vm::bytecode::prototype* Arena::CreateMaybeMessage< ::lorelai::vm::bytecode::prototype >(Arena* arena) {
   return Arena::CreateMessageInternal< ::lorelai::vm::bytecode::prototype >(arena);

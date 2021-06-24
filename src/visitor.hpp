@@ -10,7 +10,28 @@
 #include "parser/args.hpp"
 
 #define LORELAI_VISIT_FUNCTION(name) virtual bool visit(name &obj, std::shared_ptr<node> &container) override
+#define LORELAI_POSTVISIT_FUNCTION(name) virtual bool postvisit(name &obj, std::shared_ptr<node> &container) override
 #define LORELAI_VISIT_MACRO(name) virtual bool visit(name &_node, std::shared_ptr<node> &container) { return false; }
+#define LORELAI_POSTVISIT_MACRO(name) virtual bool postvisit(name &_node, std::shared_ptr<node> &container) { return false; }
+#define LORELAI_VISIT_BRANCH_DEFINE(name) \
+	bool name::accept(visitor &visit, std::shared_ptr<node> &container) { \
+		bool r; \
+		if (!(r = visit.visit(*this, container))) { \
+			visitchildren(visit); \
+		} \
+ \
+		bool r2 = visit.postvisit(*this, container); \
+ \
+		return r || r2; \
+	}
+
+#define LORELAI_VISIT_NODE_DEFINE(name) \
+	bool name::accept(visitor &visit, std::shared_ptr<node> &container) { \
+		bool r = visit.visit(*this, container); \
+		bool r2 = visit.postvisit(*this, container); \
+		return r || r2; \
+	}
+
 
 #define LORELAI_VISIT_NAME_MACRO(fn) \
 	LORELAI_EXPRESSION_CLASS_MACRO(fn) \
@@ -25,10 +46,12 @@ namespace lorelai {
 		class visitor {
 		public:
 			LORELAI_VISIT_NAME_MACRO(LORELAI_VISIT_MACRO)
+			LORELAI_VISIT_NAME_MACRO(LORELAI_POSTVISIT_MACRO)
 		};
 	}
 }
 
 #undef LORELAI_VISIT_MACRO
+#undef LORELAI_POSTVISIT_MACRO
 
 #endif // VISITOR_HPP_

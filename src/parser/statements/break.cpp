@@ -10,6 +10,4 @@ breakstatement::breakstatement(lexer &lex) {
 	lex.expect("break", "break");
 }
 
-bool breakstatement::accept(visitor &visit, std::shared_ptr<node> &container) {
-	return visit.visit(*this, container);
-}
+LORELAI_VISIT_NODE_DEFINE(breakstatement)

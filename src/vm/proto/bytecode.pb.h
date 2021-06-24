@@ -47,7 +47,7 @@ struct TableStruct_bytecode_2eproto {
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
   static const ::PROTOBUF_NAMESPACE_ID::internal::AuxiliaryParseTableField aux[]
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
-  static const ::PROTOBUF_NAMESPACE_ID::internal::ParseTable schema[6]
+  static const ::PROTOBUF_NAMESPACE_ID::internal::ParseTable schema[7]
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
   static const ::PROTOBUF_NAMESPACE_ID::internal::FieldMetadata field_metadata[];
   static const ::PROTOBUF_NAMESPACE_ID::internal::SerializationTable serialization_table[];
@@ -75,6 +75,9 @@ extern tablekeyvalueDefaultTypeInternal _tablekeyvalue_default_instance_;
 class tablevalue;
 struct tablevalueDefaultTypeInternal;
 extern tablevalueDefaultTypeInternal _tablevalue_default_instance_;
+class upvaluereference;
+struct upvaluereferenceDefaultTypeInternal;
+extern upvaluereferenceDefaultTypeInternal _upvaluereference_default_instance_;
 }  // namespace bytecode
 }  // namespace vm
 }  // namespace lorelai
@@ -85,6 +88,7 @@ template<> ::lorelai::vm::bytecode::prototype* Arena::CreateMaybeMessage<::lorel
 template<> ::lorelai::vm::bytecode::table* Arena::CreateMaybeMessage<::lorelai::vm::bytecode::table>(Arena*);
 template<> ::lorelai::vm::bytecode::tablekeyvalue* Arena::CreateMaybeMessage<::lorelai::vm::bytecode::tablekeyvalue>(Arena*);
 template<> ::lorelai::vm::bytecode::tablevalue* Arena::CreateMaybeMessage<::lorelai::vm::bytecode::tablevalue>(Arena*);
+template<> ::lorelai::vm::bytecode::upvaluereference* Arena::CreateMaybeMessage<::lorelai::vm::bytecode::upvaluereference>(Arena*);
 PROTOBUF_NAMESPACE_CLOSE
 namespace lorelai {
 namespace vm {
@@ -1169,6 +1173,156 @@ class table final :
 };
 // -------------------------------------------------------------------
 
+class upvaluereference final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:lorelai.vm.bytecode.upvaluereference) */ {
+ public:
+  inline upvaluereference() : upvaluereference(nullptr) {}
+  ~upvaluereference() override;
+  explicit constexpr upvaluereference(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  upvaluereference(const upvaluereference& from);
+  upvaluereference(upvaluereference&& from) noexcept
+    : upvaluereference() {
+    *this = ::std::move(from);
+  }
+
+  inline upvaluereference& operator=(const upvaluereference& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline upvaluereference& operator=(upvaluereference&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const upvaluereference& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const upvaluereference* internal_default_instance() {
+    return reinterpret_cast<const upvaluereference*>(
+               &_upvaluereference_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    5;
+
+  friend void swap(upvaluereference& a, upvaluereference& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(upvaluereference* other) {
+    if (other == this) return;
+    if (GetOwningArena() == other->GetOwningArena()) {
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(upvaluereference* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline upvaluereference* New() const final {
+    return new upvaluereference();
+  }
+
+  upvaluereference* New(::PROTOBUF_NAMESPACE_ID::Arena* arena) const final {
+    return CreateMaybeMessage<upvaluereference>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const upvaluereference& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom(const upvaluereference& from);
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message*to, const ::PROTOBUF_NAMESPACE_ID::Message&from);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  ::PROTOBUF_NAMESPACE_ID::uint8* _InternalSerialize(
+      ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(upvaluereference* other);
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "lorelai.vm.bytecode.upvaluereference";
+  }
+  protected:
+  explicit upvaluereference(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  private:
+  static void ArenaDtor(void* object);
+  inline void RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena* arena);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kProtoupFieldNumber = 1,
+    kStackindexFieldNumber = 2,
+  };
+  // uint32 protoup = 1;
+  void clear_protoup();
+  ::PROTOBUF_NAMESPACE_ID::uint32 protoup() const;
+  void set_protoup(::PROTOBUF_NAMESPACE_ID::uint32 value);
+  private:
+  ::PROTOBUF_NAMESPACE_ID::uint32 _internal_protoup() const;
+  void _internal_set_protoup(::PROTOBUF_NAMESPACE_ID::uint32 value);
+  public:
+
+  // uint32 stackindex = 2;
+  void clear_stackindex();
+  ::PROTOBUF_NAMESPACE_ID::uint32 stackindex() const;
+  void set_stackindex(::PROTOBUF_NAMESPACE_ID::uint32 value);
+  private:
+  ::PROTOBUF_NAMESPACE_ID::uint32 _internal_stackindex() const;
+  void _internal_set_stackindex(::PROTOBUF_NAMESPACE_ID::uint32 value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:lorelai.vm.bytecode.upvaluereference)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  ::PROTOBUF_NAMESPACE_ID::uint32 protoup_;
+  ::PROTOBUF_NAMESPACE_ID::uint32 stackindex_;
+  mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  friend struct ::TableStruct_bytecode_2eproto;
+};
+// -------------------------------------------------------------------
+
 class prototype final :
     public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:lorelai.vm.bytecode.prototype) */ {
  public:
@@ -1213,7 +1367,7 @@ class prototype final :
                &_prototype_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    5;
+    6;
 
   friend void swap(prototype& a, prototype& b) {
     a.Swap(&b);
@@ -1289,6 +1443,7 @@ class prototype final :
     kStringsFieldNumber = 3,
     kTablesFieldNumber = 4,
     kProtosFieldNumber = 5,
+    kUpvalueFieldNumber = 7,
     kIdentifierFieldNumber = 6,
   };
   // repeated .lorelai.vm.bytecode.instruction instructions = 1;
@@ -1391,6 +1546,24 @@ class prototype final :
   const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::lorelai::vm::bytecode::prototype >&
       protos() const;
 
+  // repeated .lorelai.vm.bytecode.upvaluereference upvalue = 7;
+  int upvalue_size() const;
+  private:
+  int _internal_upvalue_size() const;
+  public:
+  void clear_upvalue();
+  ::lorelai::vm::bytecode::upvaluereference* mutable_upvalue(int index);
+  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::lorelai::vm::bytecode::upvaluereference >*
+      mutable_upvalue();
+  private:
+  const ::lorelai::vm::bytecode::upvaluereference& _internal_upvalue(int index) const;
+  ::lorelai::vm::bytecode::upvaluereference* _internal_add_upvalue();
+  public:
+  const ::lorelai::vm::bytecode::upvaluereference& upvalue(int index) const;
+  ::lorelai::vm::bytecode::upvaluereference* add_upvalue();
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::lorelai::vm::bytecode::upvaluereference >&
+      upvalue() const;
+
   // optional string identifier = 6;
   bool has_identifier() const;
   private:
@@ -1423,6 +1596,7 @@ class prototype final :
   ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField<std::string> strings_;
   ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::lorelai::vm::bytecode::table > tables_;
   ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::lorelai::vm::bytecode::prototype > protos_;
+  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::lorelai::vm::bytecode::upvaluereference > upvalue_;
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr identifier_;
   friend struct ::TableStruct_bytecode_2eproto;
 };
@@ -2043,6 +2217,50 @@ table::keyvaluepart() const {
 
 // -------------------------------------------------------------------
 
+// upvaluereference
+
+// uint32 protoup = 1;
+inline void upvaluereference::clear_protoup() {
+  protoup_ = 0u;
+}
+inline ::PROTOBUF_NAMESPACE_ID::uint32 upvaluereference::_internal_protoup() const {
+  return protoup_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::uint32 upvaluereference::protoup() const {
+  // @@protoc_insertion_point(field_get:lorelai.vm.bytecode.upvaluereference.protoup)
+  return _internal_protoup();
+}
+inline void upvaluereference::_internal_set_protoup(::PROTOBUF_NAMESPACE_ID::uint32 value) {
+  
+  protoup_ = value;
+}
+inline void upvaluereference::set_protoup(::PROTOBUF_NAMESPACE_ID::uint32 value) {
+  _internal_set_protoup(value);
+  // @@protoc_insertion_point(field_set:lorelai.vm.bytecode.upvaluereference.protoup)
+}
+
+// uint32 stackindex = 2;
+inline void upvaluereference::clear_stackindex() {
+  stackindex_ = 0u;
+}
+inline ::PROTOBUF_NAMESPACE_ID::uint32 upvaluereference::_internal_stackindex() const {
+  return stackindex_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::uint32 upvaluereference::stackindex() const {
+  // @@protoc_insertion_point(field_get:lorelai.vm.bytecode.upvaluereference.stackindex)
+  return _internal_stackindex();
+}
+inline void upvaluereference::_internal_set_stackindex(::PROTOBUF_NAMESPACE_ID::uint32 value) {
+  
+  stackindex_ = value;
+}
+inline void upvaluereference::set_stackindex(::PROTOBUF_NAMESPACE_ID::uint32 value) {
+  _internal_set_stackindex(value);
+  // @@protoc_insertion_point(field_set:lorelai.vm.bytecode.upvaluereference.stackindex)
+}
+
+// -------------------------------------------------------------------
+
 // prototype
 
 // repeated .lorelai.vm.bytecode.instruction instructions = 1;
@@ -2287,6 +2505,46 @@ prototype::protos() const {
   return protos_;
 }
 
+// repeated .lorelai.vm.bytecode.upvaluereference upvalue = 7;
+inline int prototype::_internal_upvalue_size() const {
+  return upvalue_.size();
+}
+inline int prototype::upvalue_size() const {
+  return _internal_upvalue_size();
+}
+inline void prototype::clear_upvalue() {
+  upvalue_.Clear();
+}
+inline ::lorelai::vm::bytecode::upvaluereference* prototype::mutable_upvalue(int index) {
+  // @@protoc_insertion_point(field_mutable:lorelai.vm.bytecode.prototype.upvalue)
+  return upvalue_.Mutable(index);
+}
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::lorelai::vm::bytecode::upvaluereference >*
+prototype::mutable_upvalue() {
+  // @@protoc_insertion_point(field_mutable_list:lorelai.vm.bytecode.prototype.upvalue)
+  return &upvalue_;
+}
+inline const ::lorelai::vm::bytecode::upvaluereference& prototype::_internal_upvalue(int index) const {
+  return upvalue_.Get(index);
+}
+inline const ::lorelai::vm::bytecode::upvaluereference& prototype::upvalue(int index) const {
+  // @@protoc_insertion_point(field_get:lorelai.vm.bytecode.prototype.upvalue)
+  return _internal_upvalue(index);
+}
+inline ::lorelai::vm::bytecode::upvaluereference* prototype::_internal_add_upvalue() {
+  return upvalue_.Add();
+}
+inline ::lorelai::vm::bytecode::upvaluereference* prototype::add_upvalue() {
+  ::lorelai::vm::bytecode::upvaluereference* _add = _internal_add_upvalue();
+  // @@protoc_insertion_point(field_add:lorelai.vm.bytecode.prototype.upvalue)
+  return _add;
+}
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::lorelai::vm::bytecode::upvaluereference >&
+prototype::upvalue() const {
+  // @@protoc_insertion_point(field_list:lorelai.vm.bytecode.prototype.upvalue)
+  return upvalue_;
+}
+
 // optional string identifier = 6;
 inline bool prototype::_internal_has_identifier() const {
   bool value = (_has_bits_[0] & 0x00000001u) != 0;
@@ -2348,6 +2606,8 @@ inline void prototype::set_allocated_identifier(std::string* identifier) {
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

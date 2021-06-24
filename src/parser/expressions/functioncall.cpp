@@ -32,13 +32,4 @@ functioncallexpression::functioncallexpression(std::shared_ptr<node> prefixexp, 
 	children.push_back(arglist);
 }
 
-
-bool functioncallexpression::accept(visitor &visit, std::shared_ptr<node> &container) {
-	if (visit.visit(*this, container)) {
-		return true;
-	}
-
-	visitchildren(visit);
-
-	return false;
-}
+LORELAI_VISIT_BRANCH_DEFINE(functioncallexpression)
