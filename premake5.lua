@@ -128,11 +128,13 @@ workspace "lorelai"
 	targetdir "bin/%{cfg.buildcfg}/%{cfg.platform}"
 	location "proj"
 	characterset "MBCS"
+	warnings "Default"
 
 	filter "configurations:debug"
 		defines "DEBUG"
 		symbols "On"
 		optimize "Debug"
+
 	filter "configurations:release"
 		defines "NDEBUG"
 		optimize "Full"

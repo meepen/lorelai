@@ -56,7 +56,7 @@ std::string gettypename(T &data) {
 
 class stack {
 public:
-	size_t getslots(size_t amount = 1) {
+	size_t getslots(size_t amount) {
 		bool found = false;
 		for (size_t index = 0; index <= maxsize; index++) {
 			found = true;
@@ -86,7 +86,7 @@ public:
 		throw;
 	}
 
-	void freeslots(size_t slot, size_t amount = 1) {
+	void freeslots(size_t slot, size_t amount) {
 		for (size_t i = 0; i < amount; i++) {
 			unusedslots.insert(std::lower_bound(unusedslots.begin(), unusedslots.end(), slot + i), slot + i);
 		}
@@ -176,7 +176,7 @@ public:
 
 		for (auto stackpos : curscope->variables) {
 			// erase stack usage for scope now that is gone
-			funcstack.freeslots(stackpos.second);
+			funcstack.freeslots(stackpos.second, 1);
 		}
 
 		curscope = curscope->parent;
@@ -210,7 +210,7 @@ public:
 			return curscope->getvariableindex(name);
 		}
 
-		auto scopeindex = curscope->addvariable(name, funcstack.getslots());
+		auto scopeindex = curscope->addvariable(name, funcstack.getslots(1));
 		return scopeindex;
 	}
 
@@ -243,6 +243,7 @@ extern std::unordered_map<std::type_index, expressiongenerator> expressionmap;
 class bytecodegenerator : public visitor {
 public:
 	using visitor::visit;
+	using visitor::postvisit;
 
 	LORELAI_VISIT_FUNCTION(statements::localassignmentstatement) { // TODO: VARARG
 		std::deque<size_t> indexes;
@@ -366,6 +367,18 @@ public:
 		emit(bytecode::instruction_opcode_CALL, target, stacksize - 1, 0);
 
 		curfunc.freetemp(target, stacksize);
+
+		return false;
+	}
+
+	LORELAI_VISIT_FUNCTION(statements::dostatement) {
+		curfunc.pushscope();
+		return false;
+	}
+
+	LORELAI_POSTVISIT_FUNCTION(statements::dostatement) {
+		curfunc.popscope();
+		return false;
 	}
 
 private:

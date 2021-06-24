@@ -3,5 +3,7 @@ a, b, c().d = 4, "B"
 e(1)
 
 do
-	local b
+	local b, a = 1, 2
 end
+
+print(a)
