@@ -123,12 +123,14 @@ enum instruction_opcode : int {
   instruction_opcode_LENGTH = 29,
   instruction_opcode_ENVIRONMENT = 30,
   instruction_opcode_SETINDEX = 31,
+  instruction_opcode_ENVIRONMENTGET = 32,
+  instruction_opcode_ENVIRONMENTSET = 33,
   instruction_opcode_instruction_opcode_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<::PROTOBUF_NAMESPACE_ID::int32>::min(),
   instruction_opcode_instruction_opcode_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<::PROTOBUF_NAMESPACE_ID::int32>::max()
 };
 bool instruction_opcode_IsValid(int value);
 constexpr instruction_opcode instruction_opcode_opcode_MIN = instruction_opcode_CONSTANT;
-constexpr instruction_opcode instruction_opcode_opcode_MAX = instruction_opcode_SETINDEX;
+constexpr instruction_opcode instruction_opcode_opcode_MAX = instruction_opcode_ENVIRONMENTSET;
 constexpr int instruction_opcode_opcode_ARRAYSIZE = instruction_opcode_opcode_MAX + 1;
 
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* instruction_opcode_descriptor();
@@ -518,6 +520,10 @@ class instruction final :
     instruction_opcode_ENVIRONMENT;
   static constexpr opcode SETINDEX =
     instruction_opcode_SETINDEX;
+  static constexpr opcode ENVIRONMENTGET =
+    instruction_opcode_ENVIRONMENTGET;
+  static constexpr opcode ENVIRONMENTSET =
+    instruction_opcode_ENVIRONMENTSET;
   static inline bool opcode_IsValid(int value) {
     return instruction_opcode_IsValid(value);
   }

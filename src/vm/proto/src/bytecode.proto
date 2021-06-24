@@ -53,6 +53,9 @@ message instruction {
 		ENVIRONMENT = 30; // A = _ENV
 
 		SETINDEX    = 31; // A[B] = C
+
+		ENVIRONMENTGET = 32; // A = _ENV[str(B)]
+		ENVIRONMENTSET = 33; // _ENV[str(A)] = B
 	}
 
 	opcode op = 1;

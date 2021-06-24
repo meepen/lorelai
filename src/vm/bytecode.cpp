@@ -9,6 +9,7 @@
 #include <list>
 #include <unordered_set>
 #include <typeindex>
+#include <iostream>
 
 using namespace lorelai;
 using namespace lorelai::vm;
@@ -60,7 +61,7 @@ public:
 		for (size_t index = 0; index <= maxsize; index++) {
 			found = true;
 			for (size_t i = 0; i < amount; i++) {
-				if (isslotinuse(index + i)) {
+				if (isslotfree(index + i)) {
 					found = false;
 					break;
 				}
@@ -91,7 +92,19 @@ public:
 		}
 	}
 
-	bool isslotinuse(size_t slot) {
+	// note: untested
+	size_t highestfree() {
+		size_t ret = maxsize - 1;
+		if (!isslotfree(ret)) {
+			return maxsize;
+		}
+
+		while (isslotfree(ret) && ret-- != 0);
+
+		return ret + 1;
+	}
+
+	bool isslotfree(size_t slot) {
 		if (slot >= maxsize) {
 			return false;
 		}
@@ -200,7 +213,7 @@ public:
 	}
 
 	void freetemp(size_t slot, size_t amount = 1) {
-		funcstack.freeslots(slot);
+		funcstack.freeslots(slot, amount);
 	}
 
 	// returns pair<upvalueprotoid, stackpos>
@@ -225,7 +238,7 @@ class bytecodegenerator : public visitor {
 public:
 	using visitor::visit;
 
-	LORELAI_VISIT_FUNCTION(statements::localassignmentstatement) {
+	LORELAI_VISIT_FUNCTION(statements::localassignmentstatement) { // TODO: VARARG
 		std::deque<size_t> indexes;
 		for (auto &_name : obj.left) {
 			auto name = dynamic_cast<expressions::nameexpression *>(_name.get());
@@ -266,7 +279,7 @@ public:
 		return false;
 	}
 
-	LORELAI_VISIT_FUNCTION(statements::assignmentstatement) {
+	LORELAI_VISIT_FUNCTION(statements::assignmentstatement) { // TODO: VARARG
 		for (int i = 0; i < std::max(obj.left.size(), obj.right.size()); i++) {
 			if (i < obj.left.size()) {
 				auto &lhs = obj.left[i];
@@ -278,16 +291,13 @@ public:
 						pushornil(obj.right, i, target);
 					} // TODO: upvalues
 					else {
-						size_t target = curfunc.gettemp(3);
+						size_t target = curfunc.gettemp(2);
 
-						emit(bytecode::instruction_opcode_ENVIRONMENT, target);
-						expressions::stringexpression string(name->name);
-						runexpressionhandler(string, target + 1, 1);
-						pushornil(obj.right, i, target + 2);
+						pushornil(obj.right, i, target + 1);
+						emit(bytecode::instruction_opcode_ENVIRONMENTSET, target, proto.strings_size(), target + 1);
+						proto.add_strings(name->name);
 
-						emit(bytecode::instruction_opcode_SETINDEX, target, target + 1, target + 2);
-
-						curfunc.freetemp(target, 3);
+						curfunc.freetemp(target, 2);
 					}
 				}
 				else if (auto index = dynamic_cast<expressions::dotexpression *>(lhs.get())) {
@@ -323,6 +333,33 @@ public:
 		}
 
 		return false;
+	}
+
+	LORELAI_VISIT_FUNCTION(statements::functioncallstatement) {
+		auto call = dynamic_cast<expressions::functioncallexpression *>(obj.children[0].get());
+		auto arglist = dynamic_cast<args *>(call->arglist.get());
+		auto stacksize = 1 + arglist->children.size() + (call->methodname ? 1 : 0);
+		auto target = curfunc.gettemp(stacksize);
+
+		auto argpos = target + 1;
+		if (call->methodname) {
+			runexpressionhandler(call->methodname, target, 1);
+			runexpressionhandler(call->funcexpr, target + 1, 1);
+			emit(bytecode::instruction_opcode_INDEX, target, target + 1, target);
+
+			argpos++;
+		}
+		else {
+			runexpressionhandler(call->funcexpr, target, 1);
+		}
+
+		for (auto &child : arglist->children) {
+			runexpressionhandler(child, argpos++, 1);
+		}
+
+		emit(bytecode::instruction_opcode_CALL, target, stacksize - 1, 0);
+
+		curfunc.freetemp(target, stacksize);
 	}
 
 private:
@@ -463,12 +500,12 @@ static void generate_unopexpression(bytecodegenerator &gen, node &_expr, size_t 
 		gen.emit(unoplookup[expr.op], target, target);
 	}
 	else if (unoplookup[expr.op] != bytecode::instruction_opcode_NOT) {
-		auto temp = gen.curfunc.gettemp(1);
+		auto temp = gen.curfunc.gettemp();
 
 		gen.runexpressionhandler(expr.expr, temp, 1);
 		gen.emit(unoplookup[expr.op], temp, temp);
 
-		gen.curfunc.freetemp(temp, 1);
+		gen.curfunc.freetemp(temp);
 	}
 	else {
 		gen.runexpressionhandler(expr.expr, target, 0);
@@ -505,8 +542,8 @@ static void generate_indexexpression(bytecodegenerator &gen, node &_expr, size_t
 	bool is_temp = size == 0;
 
 	if (is_temp) {
-		target = gen.curfunc.gettemp(1);
 		size = 1;
+		target = gen.curfunc.gettemp(size);
 	}
 	gen.runexpressionhandler(expr.prefix, target, 1);
 
@@ -525,8 +562,8 @@ static void generate_dotexpression(bytecodegenerator &gen, node &_expr, size_t t
 	bool is_temp = size == 0;
 
 	if (is_temp) {
-		target = gen.curfunc.gettemp(1);
 		size = 1;
+		target = gen.curfunc.gettemp(size);
 	}
 	gen.runexpressionhandler(expr.prefix, target, 1);
 
@@ -553,13 +590,12 @@ static void generate_nameexpression(bytecodegenerator &gen, node &_expr, size_t 
 	else if(gen.curfunc.hasupvalue(expr.name)) {
 		// TODO
 	}
-	else {
+	else if (expr.name == "_ENV" || expr.name == "_G") {
 		gen.emit(bytecode::instruction_opcode_ENVIRONMENT, target);
-		expressions::stringexpression name(dynamic_cast<expressions::nameexpression *>(&expr)->name);
-		auto temp = gen.curfunc.gettemp();
-		gen.runexpressionhandler(name, temp, 1);
-		gen.emit(bytecode::instruction_opcode_INDEX, target, target, temp);
-		gen.curfunc.freetemp(temp);
+	}
+	else {
+		gen.emit(bytecode::instruction_opcode_ENVIRONMENTGET, target, gen.proto.strings_size(), 1);
+		gen.proto.add_strings(expr.name);
 	}
 }
 
