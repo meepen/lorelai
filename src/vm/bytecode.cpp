@@ -227,12 +227,36 @@ public:
 
 	}
 
+	int add(string str) {
+		auto found = strings.find(str); 
+		if (found != strings.end()) {
+			return found->second;
+		}
+
+		strings[str] = proto.strings_size();
+		proto.add_strings(str);
+	}
+
+	int add(number num) {
+		auto found = numbers.find(num); 
+		if (found != numbers.end()) {
+			return found->second;
+		}
+
+		numbers[num] = proto.numbers_size();
+		proto.add_numbers(num);
+	}
+
 public:
 	stack funcstack;
 	std::shared_ptr<function> parent = nullptr;
 	std::shared_ptr<scope> curscope = std::make_shared<scope>();
 	std::shared_ptr<scope> firstscope = curscope;
 	std::shared_ptr<scope> parentscope = nullptr;
+
+	bytecode::prototype proto;
+	std::unordered_map<string, int> strings;
+	std::unordered_map<number, int> numbers;
 };
 
 class bytecodegenerator;
@@ -257,9 +281,6 @@ public:
 		}
 
 		for (auto &_expr : obj.right) {
-			// generate expression bytecode NOW
-			auto start = proto.instructions_size();
-
 			size_t target = 0;
 			size_t size = 0;
 			if (indexes.size() > 0) {
@@ -301,8 +322,7 @@ public:
 						size_t target = curfunc.gettemp(2);
 
 						pushornil(obj.right, i, target + 1);
-						emit(bytecode::instruction_opcode_ENVIRONMENTSET, target, proto.strings_size(), target + 1);
-						proto.add_strings(name->name);
+						emit(bytecode::instruction_opcode_ENVIRONMENTSET, target, add(name->name), target + 1);
 
 						curfunc.freetemp(target, 2);
 					}
@@ -409,22 +429,22 @@ public:
 
 public:
 	void emit(bytecode::instruction_opcode opcode) {
-		auto instruction = proto.add_instructions();
+		auto instruction = curfunc.proto.add_instructions();
 		instruction->set_op(opcode);
 	}
 	void emit(bytecode::instruction_opcode opcode, std::uint32_t a) {
-		auto instruction = proto.add_instructions();
+		auto instruction = curfunc.proto.add_instructions();
 		instruction->set_op(opcode);
 		instruction->set_a(a);
 	}
 	void emit(bytecode::instruction_opcode opcode, std::uint32_t a, std::uint32_t b) {
-		auto instruction = proto.add_instructions();
+		auto instruction = curfunc.proto.add_instructions();
 		instruction->set_op(opcode);
 		instruction->set_a(a);
 		instruction->set_b(b);
 	}
 	void emit(bytecode::instruction_opcode opcode, std::uint32_t a, std::uint32_t b, std::uint32_t c) {
-		auto instruction = proto.add_instructions();
+		auto instruction = curfunc.proto.add_instructions();
 		instruction->set_op(opcode);
 		instruction->set_a(a);
 		instruction->set_b(b);
@@ -432,24 +452,30 @@ public:
 	}
 
 public:
+	int add(string str) {
+		return curfunc.add(str);
+	}
+
+	int add(number num) {
+		return curfunc.add(num);
+	}
+
+public:
 	function curfunc;
-	bytecode::prototype proto;
 };
 
 static void generate_numberexpression(bytecodegenerator &gen, node &expr, size_t target, size_t size) {
 	if (size == 0) {
 		return;
 	}
-	gen.emit(bytecode::instruction_opcode_NUMBER, target, gen.proto.numbers_size());
-	gen.proto.add_numbers(dynamic_cast<expressions::numberexpression *>(&expr)->data);
+	gen.emit(bytecode::instruction_opcode_NUMBER, target, gen.add(dynamic_cast<expressions::numberexpression *>(&expr)->data));
 }
 
 static void generate_stringexpression(bytecodegenerator &gen, node &expr, size_t target, size_t size) {
 	if (size == 0) {
 		return;
 	}
-	gen.emit(bytecode::instruction_opcode_STRING, target, gen.proto.strings_size());
-	gen.proto.add_strings(dynamic_cast<expressions::stringexpression *>(&expr)->data);
+	gen.emit(bytecode::instruction_opcode_STRING, target, gen.add(dynamic_cast<expressions::stringexpression *>(&expr)->data));
 }
 
 static void generate_enclosedexpression(bytecodegenerator &gen, node &expr, size_t target, size_t size) {
@@ -613,8 +639,7 @@ static void generate_nameexpression(bytecodegenerator &gen, node &_expr, size_t 
 		gen.emit(bytecode::instruction_opcode_ENVIRONMENT, target);
 	}
 	else {
-		gen.emit(bytecode::instruction_opcode_ENVIRONMENTGET, target, gen.proto.strings_size(), 1);
-		gen.proto.add_strings(expr.name);
+		gen.emit(bytecode::instruction_opcode_ENVIRONMENTGET, target, gen.add(expr.name));
 	}
 }
 
@@ -684,5 +709,5 @@ bytecode::prototype lorelai::vm::parse(chunk &data) {
 
 	data.accept(generator, container);
 
-	return generator.proto;
+	return generator.curfunc.proto;
 }
