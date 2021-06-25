@@ -175,7 +175,7 @@ public:
 			throw;
 		}
 
-		for (auto stackpos : curscope->variables) {
+		for (auto &stackpos : curscope->variables) {
 			// erase stack usage for scope now that is gone
 			funcstack.freeslots(stackpos.second, 1);
 		}
@@ -213,6 +213,25 @@ public:
 
 		auto scopeindex = curscope->addvariable(name, funcstack.getslots(1));
 		return scopeindex;
+	}
+
+	size_t createlocals(std::vector<string> names) {
+		if (names.size() == 0) {
+			return 0;
+		}
+
+		auto target = funcstack.getslots(names.size());
+		auto varindex = target;
+
+		for (auto &name : names) {
+			if (curscope->hasvariable(name)) {
+				throw;
+			}
+
+			curscope->addvariable(name, varindex++);
+		}
+
+		return target;
 	}
 
 	size_t gettemp(size_t amount = 1) {
@@ -444,7 +463,8 @@ public:
 private:
 	struct _loopqueue {
 		int startinstr;
-		size_t conditionalstack;
+		size_t stackreserved;
+		size_t extrastack;
 		std::vector<bytecode::instruction *> patches;
 	};
 
@@ -454,10 +474,10 @@ public:
 	LORELAI_VISIT_FUNCTION(statements::whilestatement) {
 		_loopqueue data;
 		data.startinstr = curfunc.proto.instructions_size();
-		data.conditionalstack = curfunc.gettemp(1);
+		data.stackreserved = curfunc.gettemp(1);
 
-		runexpressionhandler(obj.conditional, data.conditionalstack, 1);
-		data.patches.push_back(emit(bytecode::instruction_opcode_JMPIFFALSE, data.conditionalstack));
+		runexpressionhandler(obj.conditional, data.stackreserved, 1);
+		data.patches.push_back(emit(bytecode::instruction_opcode_JMPIFFALSE, data.stackreserved));
 
 		loopqueue.push_back(data);
 		curfunc.pushscope();
@@ -473,7 +493,7 @@ public:
 			patch->set_b(curfunc.proto.instructions_size());
 		}
 
-		curfunc.freetemp(data.conditionalstack, 1);
+		curfunc.freetemp(data.stackreserved, 1);
 		curfunc.popscope();
 		loopqueue.pop_back();
 		return false;
@@ -514,10 +534,65 @@ public:
 	}
 
 	LORELAI_VISIT_FUNCTION(statements::forinstatement) {
+		_loopqueue queue;
+
+		curfunc.pushscope();
+		queue.stackreserved = curfunc.gettemp(3);
+		queue.extrastack = curfunc.gettemp(std::max((size_t)3, obj.iternames.size()));
+		for (int i = 0; i < obj.iternames.size(); i++) {
+			curfunc.curscope->addvariable(dynamic_cast<expressions::nameexpression *>(obj.iternames[i].get())->name, queue.extrastack + i);
+		}
+
+		// loop prep: local f, s, v = inexprs
+		for (int i = 0; i < obj.inexprs.size(); i++) {
+			auto &inexpr = obj.inexprs[i];
+			size_t amount;
+			if (i == obj.inexprs.size() - 1 && i < 3) {
+				amount = 3 - i;
+			}
+			else {
+				amount = i >= 3 ? 0 : 1;
+			}
+
+			runexpressionhandler(inexpr, queue.extrastack + 3 - amount, amount);
+		}
+
+		// begin loop
+		queue.startinstr = curfunc.proto.instructions_size();
+
+		emit(bytecode::instruction_opcode_MOV, queue.extrastack, queue.stackreserved, 3);
+		emit(bytecode::instruction_opcode_CALL, queue.extrastack, 3, obj.iternames.size() + 1);
+		queue.patches.push_back(emit(bytecode::instruction_opcode_JMPIFNIL, queue.extrastack));
+
+		loopqueue.push_back(queue);
 		return false;
 	}
 
 	LORELAI_POSTVISIT_FUNCTION(statements::forinstatement) {
+		auto &queue = loopqueue.back();
+
+		curfunc.freetemp(queue.stackreserved, 3);
+		curfunc.freetemp(queue.extrastack, std::max((size_t)3, obj.iternames.size()));
+
+		emit(bytecode::instruction_opcode_JMP, 0, queue.startinstr);
+
+		for (auto &patch : queue.patches) {
+			patch->set_b(curfunc.proto.instructions_size());
+		}
+
+		// before popping we must delete references to extrastack in the variable list to prevent double free
+		auto start = queue.extrastack;
+		auto ends = start + std::max((size_t)3, obj.iternames.size());
+		for (int i = 0; i < obj.iternames.size(); i++) {
+			auto &name = dynamic_cast<expressions::nameexpression *>(obj.iternames[i].get())->name;
+			auto index = curfunc.curscope->getvariableindex(name);
+			if (index >= start && index < ends) {
+				curfunc.curscope->variables.erase(name);
+			}
+		}
+
+		loopqueue.pop_back();
+		curfunc.popscope();
 		return false;
 	}
 
@@ -754,7 +829,7 @@ static void generate_nameexpression(bytecodegenerator &gen, node &_expr, size_t 
 
 	auto &expr = *dynamic_cast<expressions::nameexpression *>(&_expr);
 	if (auto scope = gen.curfunc.curscope->findvariablescope(expr.name)) {
-		gen.emit(bytecode::instruction_opcode_MOV, target, scope->getvariableindex(expr.name), 0);
+		gen.emit(bytecode::instruction_opcode_MOV, target, scope->getvariableindex(expr.name), 1);
 	}
 	else if(gen.curfunc.hasupvalue(expr.name)) {
 		// TODO
@@ -775,10 +850,10 @@ static void generate_functioncallexpression(bytecodegenerator &gen, node &_expr,
 
 	bool using_temp = stacksize > size || target == -1;
 	auto functionindex = target;
-	auto argsindex = functionindex + 1;
 	if (using_temp) {
 		functionindex = gen.curfunc.gettemp(stacksize);
 	}
+	auto argsindex = functionindex + 1;
 
 	if (expr.methodname) {
 		gen.runexpressionhandler(expr.funcexpr, argsindex, 1);

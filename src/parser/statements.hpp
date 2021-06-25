@@ -130,7 +130,7 @@ namespace lorelai {
 
 			public:
 				std::vector<std::shared_ptr<node>> iternames;
-				std::shared_ptr<node> inexpr;
+				std::vector<std::shared_ptr<node>> inexprs;
 			};
 
 			class breakstatement : public node, public statement {

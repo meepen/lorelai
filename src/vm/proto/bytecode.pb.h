@@ -132,8 +132,9 @@ enum instruction_opcode : int {
   instruction_opcode_JMP = 34,
   instruction_opcode_JMPIFTRUE = 35,
   instruction_opcode_JMPIFFALSE = 36,
-  instruction_opcode_CALLM = 37,
-  instruction_opcode_VARARG = 38,
+  instruction_opcode_JMPIFNIL = 37,
+  instruction_opcode_CALLM = 38,
+  instruction_opcode_VARARG = 39,
   instruction_opcode_instruction_opcode_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<::PROTOBUF_NAMESPACE_ID::int32>::min(),
   instruction_opcode_instruction_opcode_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<::PROTOBUF_NAMESPACE_ID::int32>::max()
 };
@@ -564,6 +565,8 @@ class instruction final :
     instruction_opcode_JMPIFTRUE;
   static constexpr opcode JMPIFFALSE =
     instruction_opcode_JMPIFFALSE;
+  static constexpr opcode JMPIFNIL =
+    instruction_opcode_JMPIFNIL;
   static constexpr opcode CALLM =
     instruction_opcode_CALLM;
   static constexpr opcode VARARG =

@@ -27,3 +27,7 @@ while (a) do
 	print(a, tailcall())
 	break
 end
+
+for i in pairs "a" do
+	print(i)
+end

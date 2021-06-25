@@ -61,9 +61,10 @@ message instruction {
 		JMP           = 34; // JMP(instruction(B))
 		JMPIFTRUE     = 35; // if (A) { JMP(instruction(B)) }
 		JMPIFFALSE    = 36; // if (!A) { JMP(instruction(B)) }
+		JMPIFNIL      = 37; // if (A == nil) { JMP(instruction(B)) }
 
-		CALLM    = 37; // A .. A+C-2 = A(A+1 .. A + B, returns...)
-		VARARG   = 38; // A .. A+C = ...
+		CALLM    = 38; // A .. A+C-2 = A(A+1 .. A + B, returns...)
+		VARARG   = 39; // A .. A+C = ...
 	}
 
 	opcode op = 1;

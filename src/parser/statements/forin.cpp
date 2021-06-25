@@ -25,12 +25,18 @@ forinstatement::forinstatement(std::shared_ptr<node> _itername, lexer &lex) {
 
 	lex.expect("in", "for ..{, ..} in .. do .. end");
 
-	inexpr = expression::read(lex);
+	while (true) {
+		auto inexpr = expression::read(lex);
 
-	if (!inexpr) {
-		lex.wasexpected("<expression>", "for ..{, ..} in .. do .. end");
+		if (!inexpr) {
+			if (inexprs.size() == 0) {
+				lex.wasexpected("<expression>", "for ..{, ..} in .. do .. end");
+			}
+			break;
+		}
+		inexprs.push_back(inexpr);
+		children.push_back(inexpr);
 	}
-	children.push_back(inexpr);
 
 	lex.expect("do", "for ..{, ..} in .. do .. end");
 
@@ -51,8 +57,18 @@ string forinstatement::tostring() {
 		first = false;
 		stream << iter->tostring();
 	}
+	stream << " in ";
 
-	stream << " in " << inexpr->tostring() << "do";
+	first = true;
+	for (auto &inexpr : inexprs) {
+		if (!first) {
+			stream << ", ";
+		}
+		first = false;
+		stream << inexpr->tostring();
+	}
+
+	stream << " do";
 
 	return stream.str();
 }
