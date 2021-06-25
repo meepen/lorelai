@@ -8,11 +8,6 @@ end
 
 print(a)
 
-while (a) do
-	a = false
-	print(a)
-end
-
 a = 0
 
 repeat
@@ -25,4 +20,10 @@ elseif true then
 	itistrue2()
 else
 	itisfalse()
+end
+
+while (a) do
+	a = false
+	print(a)
+	break
 end

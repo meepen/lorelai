@@ -35,25 +35,24 @@ std::string gettypename(T &data) {
 #endif
 
 /*
-#define LORELAI_STATEMENT_BRANCH_CLASS_MACRO(fn) \
+	NOT DONE:
 	fn(lorelai::parser::statements::returnstatement) \
-	fn(lorelai::parser::statements::dostatement) \
-	fn(lorelai::parser::statements::whilestatement) \
-	fn(lorelai::parser::statements::repeatstatement) \
-	fn(lorelai::parser::statements::localassignmentstatement) \
 	fn(lorelai::parser::statements::localfunctionstatement) \
-	fn(lorelai::parser::statements::fornumstatement) \
 	fn(lorelai::parser::statements::forinstatement) \
+	fn(lorelai::parser::statements::functionstatement) \
+	fn(lorelai::parser::statements::functioncallstatement) \
+	fn(lorelai::parser::statements::fornumstatement) \
+	fn(lorelai::parser::statements::breakstatement)
+
+	DONE:
+	fn(lorelai::parser::statements::localassignmentstatement) \
+	fn(lorelai::parser::statements::assignmentstatement)
 	fn(lorelai::parser::statements::ifstatement) \
 	fn(lorelai::parser::statements::elseifstatement) \
 	fn(lorelai::parser::statements::elsestatement) \
-	fn(lorelai::parser::statements::functionstatement) \
-	fn(lorelai::parser::statements::functioncallstatement) \
-	fn(lorelai::parser::statements::assignmentstatement)
-
-#define LORELAI_STATEMENT_CLASS_MACRO(fn) \
-	LORELAI_STATEMENT_BRANCH_CLASS_MACRO(fn) \
-	fn(lorelai::parser::statements::breakstatement)
+	fn(lorelai::parser::statements::dostatement) \
+	fn(lorelai::parser::statements::whilestatement) \
+	fn(lorelai::parser::statements::repeatstatement) \
 */
 
 class stack {
@@ -417,7 +416,7 @@ public:
 	}
 	LORELAI_VISIT_FUNCTION(statements::elseifstatement) {
 		auto &queue = ifqueue.back();
-		queue.jmpends.push_back(emit(bytecode::instruction_opcode_JMP));
+		queue.jmpends.push_back(emit(bytecode::instruction_opcode_JMP, 0));
 
 		curfunc.popscope();
 
@@ -430,7 +429,7 @@ public:
 	}
 	LORELAI_VISIT_FUNCTION(statements::elsestatement) {
 		auto &queue = ifqueue.back();
-		queue.jmpends.push_back(emit(bytecode::instruction_opcode_JMP));
+		queue.jmpends.push_back(emit(bytecode::instruction_opcode_JMP, 0));
 
 		curfunc.popscope();
 
@@ -449,7 +448,7 @@ public:
 		curfunc.freetemp(queue.target, 1);
 
 		for (auto &jmpend : queue.jmpends) {
-			jmpend->set_a(curfunc.proto.instructions_size());
+			jmpend->set_b(curfunc.proto.instructions_size());
 		}
 
 		ifqueue.pop_back();
@@ -467,67 +466,75 @@ public:
 	}
 
 private:
-	struct _whilequeue {
+	struct _loopqueue {
 		int startinstr;
 		size_t conditionalstack;
-		bytecode::instruction *patch;
+		std::vector<bytecode::instruction *> patches;
 	};
 
-	std::vector<_whilequeue> whilequeue;
+	std::vector<_loopqueue> loopqueue;
 public:
 
 	LORELAI_VISIT_FUNCTION(statements::whilestatement) {
-		_whilequeue data;
+		_loopqueue data;
 		data.startinstr = curfunc.proto.instructions_size();
 		data.conditionalstack = curfunc.gettemp(1);
 
 		runexpressionhandler(obj.conditional, data.conditionalstack, 1);
-		data.patch = emit(bytecode::instruction_opcode_JMPIFFALSE, data.conditionalstack);
+		data.patches.push_back(emit(bytecode::instruction_opcode_JMPIFFALSE, data.conditionalstack));
 
-		whilequeue.push_back(data);
+		loopqueue.push_back(data);
 		curfunc.pushscope();
 		return false;
 	}
 
 	LORELAI_POSTVISIT_FUNCTION(statements::whilestatement) {
-		auto data = whilequeue.back();
+		auto data = loopqueue.back();
 
-		emit(bytecode::instruction_opcode_JMP, data.startinstr);
-		data.patch->set_b(curfunc.proto.instructions_size());
+		emit(bytecode::instruction_opcode_JMP, 0, data.startinstr);
+
+		for (auto &patch : data.patches) {
+			patch->set_b(curfunc.proto.instructions_size());
+		}
+
 		curfunc.freetemp(data.conditionalstack, 1);
 		curfunc.popscope();
-		whilequeue.pop_back();
+		loopqueue.pop_back();
 		return false;
 	}
 
-private:
-	struct _repeatqueue {
-		int startinstr;
-	};
-
-	std::vector<_repeatqueue> repeatqueue;
-public:
 
 	LORELAI_VISIT_FUNCTION(statements::repeatstatement) {
-		_repeatqueue data;
+		_loopqueue data;
 		data.startinstr = curfunc.proto.instructions_size();
 
-		repeatqueue.push_back(data);
+		loopqueue.push_back(data);
 		return false;
 	}
 
 	LORELAI_POSTVISIT_FUNCTION(statements::repeatstatement) {
-		auto data = repeatqueue.back();
+		auto data = loopqueue.back();
 
 		auto target = curfunc.gettemp(1);
 
 		runexpressionhandler(obj.conditional, target, 1);
 		emit(bytecode::instruction_opcode_JMPIFFALSE, target, data.startinstr);
+		
+		for (auto &patch : data.patches) {
+			patch->set_b(curfunc.proto.instructions_size());
+		}
 
 		curfunc.freetemp(target, 1);
 
-		repeatqueue.pop_back();
+		loopqueue.pop_back();
 		return false;
+	}
+
+	LORELAI_VISIT_FUNCTION(statements::breakstatement) {
+		if (loopqueue.size() == 0) {
+			throw;
+		}
+		loopqueue.back().patches.push_back(emit(bytecode::instruction_opcode_JMP, 0));
 	}
 
 private:
