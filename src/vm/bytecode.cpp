@@ -303,7 +303,7 @@ public:
 			auto index = indexes[0];
 			indexes.pop_front();
 
-			emit(bytecode::instruction_opcode_CONSTANT, index, 2)->set_allocated_debug();
+			emit(bytecode::instruction_opcode_CONSTANT, index, 2);
 		}
 
 		return false;
