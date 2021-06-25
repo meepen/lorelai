@@ -45,6 +45,8 @@ std::string gettypename(T &data) {
 	fn(lorelai::parser::statements::fornumstatement) \
 	fn(lorelai::parser::statements::forinstatement) \
 	fn(lorelai::parser::statements::ifstatement) \
+	fn(lorelai::parser::statements::elseifstatement) \
+	fn(lorelai::parser::statements::elsestatement) \
 	fn(lorelai::parser::statements::functionstatement) \
 	fn(lorelai::parser::statements::functioncallstatement) \
 	fn(lorelai::parser::statements::assignmentstatement)
@@ -393,6 +395,67 @@ public:
 		return false;
 	}
 
+private:
+	struct _ifqueue {
+		bytecode::instruction *patch = nullptr;
+		std::vector<bytecode::instruction *> jmpends;
+		size_t target;
+	};
+
+	std::vector<_ifqueue> ifqueue;
+public:
+
+	LORELAI_VISIT_FUNCTION(statements::ifstatement) {
+		_ifqueue queue;
+		queue.target = curfunc.gettemp(1);
+		runexpressionhandler(obj.conditional, queue.target, 1);
+		queue.patch = emit(bytecode::instruction_opcode_JMPIFFALSE, queue.target);
+		ifqueue.push_back(queue);
+
+		curfunc.pushscope();
+		return false;
+	}
+	LORELAI_VISIT_FUNCTION(statements::elseifstatement) {
+		auto &queue = ifqueue.back();
+		queue.jmpends.push_back(emit(bytecode::instruction_opcode_JMP));
+
+		curfunc.popscope();
+
+		queue.patch->set_b(curfunc.proto.instructions_size());
+
+		runexpressionhandler(obj.conditional, queue.target, 1);
+		queue.patch = emit(bytecode::instruction_opcode_JMPIFFALSE, queue.target);
+		curfunc.pushscope();
+		return false;
+	}
+	LORELAI_VISIT_FUNCTION(statements::elsestatement) {
+		auto &queue = ifqueue.back();
+		queue.jmpends.push_back(emit(bytecode::instruction_opcode_JMP));
+
+		curfunc.popscope();
+
+		queue.patch->set_b(curfunc.proto.instructions_size());
+		queue.patch = nullptr;
+
+		curfunc.pushscope();
+		return false;
+	}
+	LORELAI_POSTVISIT_FUNCTION(statements::ifstatement) {
+		curfunc.popscope();
+		auto &queue = ifqueue.back();
+		if (queue.patch) {
+			queue.patch->set_b(curfunc.proto.instructions_size());
+		}
+		curfunc.freetemp(queue.target, 1);
+
+		for (auto &jmpend : queue.jmpends) {
+			jmpend->set_a(curfunc.proto.instructions_size());
+		}
+
+		ifqueue.pop_back();
+		return false;
+	}
+
 	LORELAI_VISIT_FUNCTION(statements::dostatement) {
 		curfunc.pushscope();
 		return false;
@@ -419,10 +482,9 @@ public:
 		data.conditionalstack = curfunc.gettemp(1);
 
 		runexpressionhandler(obj.conditional, data.conditionalstack, 1);
-		data.patch = emit(bytecode::instruction_opcode_JMPIFNOTEQUAL, data.conditionalstack);
+		data.patch = emit(bytecode::instruction_opcode_JMPIFFALSE, data.conditionalstack);
 
 		whilequeue.push_back(data);
-
 		curfunc.pushscope();
 		return false;
 	}
@@ -435,6 +497,36 @@ public:
 		curfunc.freetemp(data.conditionalstack, 1);
 		curfunc.popscope();
 		whilequeue.pop_back();
+		return false;
+	}
+
+private:
+	struct _repeatqueue {
+		int startinstr;
+	};
+
+	std::vector<_repeatqueue> repeatqueue;
+public:
+
+	LORELAI_VISIT_FUNCTION(statements::repeatstatement) {
+		_repeatqueue data;
+		data.startinstr = curfunc.proto.instructions_size();
+
+		repeatqueue.push_back(data);
+		return false;
+	}
+
+	LORELAI_POSTVISIT_FUNCTION(statements::repeatstatement) {
+		auto data = repeatqueue.back();
+
+		auto target = curfunc.gettemp(1);
+
+		runexpressionhandler(obj.conditional, target, 1);
+		emit(bytecode::instruction_opcode_JMPIFFALSE, target, data.startinstr);
+
+		curfunc.freetemp(target, 1);
+
+		repeatqueue.pop_back();
 		return false;
 	}
 

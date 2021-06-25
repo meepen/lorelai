@@ -59,8 +59,8 @@ message instruction {
 		ENVIRONMENTSET = 33; // _ENV[str(A)] = B
 
 		JMP           = 34; // JMP(instruction(B))
-		JMPIFEQUAL    = 35; // if (A) { JMP(instruction(B)) }
-		JMPIFNOTEQUAL = 36; // if (!A) { JMP(instruction(B)) }
+		JMPIFTRUE     = 35; // if (A) { JMP(instruction(B)) }
+		JMPIFFALSE    = 36; // if (!A) { JMP(instruction(B)) }
 	}
 
 	opcode op = 1;

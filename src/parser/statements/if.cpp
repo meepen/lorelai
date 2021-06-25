@@ -8,41 +8,47 @@ using namespace lorelai;
 using namespace lorelai::parser;
 using namespace lorelai::parser::statements;
 
+elseifstatement::elseifstatement(lexer &lex) {
+	conditional = expression::read(lex);
+	if (!conditional) {
+		lex.wasexpected("<expression>", "if .. then .. elseif .. end");
+	}
+	children.push_back(conditional);
+
+	lex.expect("then", "if .. then .. elseif .. end");
+	
+	block = std::make_shared<chunk>(lex);
+	children.push_back(block);
+}
+
+elsestatement::elsestatement(lexer &lex) {
+	block = std::make_shared<chunk>(lex);
+	children.push_back(block);
+}
+
 ifstatement::ifstatement(lexer &lex) {
 	lex.expect("if", "if .. then .. end");
 
-	auto conditional = expression::read(lex);
+	conditional = expression::read(lex);
 	if (!conditional) {
 		lex.wasexpected("<expression>", "if .. then .. end");
 	}
 	children.push_back(conditional);
-	conditionals.push_back(conditional);
 
 	lex.expect("then", "if .. then .. end");
 
-	auto block = std::make_shared<chunk>(lex);
+	block = std::make_shared<chunk>(lex);
 	children.push_back(block);
-	blocks.push_back(block);
 
 	while (lex.read("elseif")) {
-		conditional = expression::read(lex);
-		if (!conditional) {
-			lex.wasexpected("<expression>", "if .. then .. elseif .. end");
-		}
-		conditionals.push_back(conditional);
-		children.push_back(conditional);
-
-		lex.expect("then", "if .. then .. elseif .. end");
-		
-		block = std::make_shared<chunk>(lex);
-		children.push_back(block);
-		blocks.push_back(block);
+		auto elseif = std::make_shared<elseifstatement>(lex);
+		elseifs.push_back(elseif);
+		children.push_back(elseif);
 	}
 
 	if (lex.read("else")) {
-		block = std::make_shared<chunk>(lex);
-		children.push_back(block);
-		blocks.push_back(block);
+		elseblock = std::make_shared<elsestatement>(lex);
+		children.push_back(elseblock);
 	}
 
 	lex.expect("end", "if .. then .. end");
@@ -51,13 +57,18 @@ ifstatement::ifstatement(lexer &lex) {
 
 string ifstatement::tostring() {
 	std::stringstream stream;
-	stream << "if " << conditionals[0]->tostring() << " then ";
-
-	for (int i = 1; i < conditionals.size(); i++) {
-		stream << "elseif " << conditionals[i]->tostring() << " then ";
-	}
-
-	stream << "end";
+	stream << "if " << conditional->tostring() << " then";
 
 	return stream.str();
+}
+
+string elseifstatement::tostring() {
+	std::stringstream stream;
+	stream << "elseif " << conditional->tostring() << " then";
+
+	return stream.str();
+}
+
+string elsestatement::tostring() {
+	return "else";
 }

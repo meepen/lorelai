@@ -11,6 +11,8 @@
 	fn(lorelai::parser::statements::fornumstatement) \
 	fn(lorelai::parser::statements::forinstatement) \
 	fn(lorelai::parser::statements::ifstatement) \
+	fn(lorelai::parser::statements::elseifstatement) \
+	fn(lorelai::parser::statements::elsestatement) \
 	fn(lorelai::parser::statements::functionstatement) \
 	fn(lorelai::parser::statements::functioncallstatement) \
 	fn(lorelai::parser::statements::assignmentstatement)
@@ -149,8 +151,33 @@ namespace lorelai {
 				string tostring() override;
 
 			public:
-				std::vector<std::shared_ptr<node>> conditionals;
-				std::vector<std::shared_ptr<node>> blocks;
+				std::shared_ptr<node> conditional;
+				std::shared_ptr<node> block;
+				std::shared_ptr<node> elseblock;
+				std::vector<std::shared_ptr<node>> elseifs;
+			};
+
+			class elseifstatement : public branch, public statement {
+			public:
+				elseifstatement(lexer &lex);
+
+				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				string tostring() override;
+
+			public:
+				std::shared_ptr<node> conditional;
+				std::shared_ptr<node> block;
+			};
+
+			class elsestatement : public branch, public statement {
+			public:
+				elsestatement(lexer &lex);
+
+				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				string tostring() override;
+
+			public:
+				std::shared_ptr<node> block;
 			};
 
 			class functionstatement : public statement, public branch {

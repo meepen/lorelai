@@ -12,3 +12,17 @@ while (a) do
 	a = false
 	print(a)
 end
+
+a = 0
+
+repeat
+	a = a + 1
+until a == 2
+
+if true then
+	itistrue()
+elseif true then
+	itistrue2()
+else
+	itisfalse()
+end
