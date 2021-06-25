@@ -38,11 +38,9 @@ std::string gettypename(T &data) {
 	NOT DONE:
 	fn(lorelai::parser::statements::returnstatement) \
 	fn(lorelai::parser::statements::localfunctionstatement) \
-	fn(lorelai::parser::statements::forinstatement) \
 	fn(lorelai::parser::statements::functionstatement) \
 	fn(lorelai::parser::statements::functioncallstatement) \
 	fn(lorelai::parser::statements::fornumstatement) \
-	fn(lorelai::parser::statements::breakstatement)
 
 	DONE:
 	fn(lorelai::parser::statements::localassignmentstatement) \
@@ -53,6 +51,8 @@ std::string gettypename(T &data) {
 	fn(lorelai::parser::statements::dostatement) \
 	fn(lorelai::parser::statements::whilestatement) \
 	fn(lorelai::parser::statements::repeatstatement) \
+	fn(lorelai::parser::statements::breakstatement) \
+	fn(lorelai::parser::statements::forinstatement) \
 */
 
 class stack {
@@ -366,31 +366,7 @@ public:
 	}
 
 	LORELAI_VISIT_FUNCTION(statements::functioncallstatement) {
-		auto call = dynamic_cast<expressions::functioncallexpression *>(obj.children[0].get());
-		auto arglist = dynamic_cast<args *>(call->arglist.get());
-		auto stacksize = 1 + arglist->children.size() + (call->methodname ? 1 : 0);
-		auto target = curfunc.gettemp(stacksize);
-
-		auto argpos = target + 1;
-		if (call->methodname) {
-			runexpressionhandler(call->methodname, target, 1);
-			runexpressionhandler(call->funcexpr, target + 1, 1);
-			emit(bytecode::instruction_opcode_INDEX, target, target + 1, target);
-
-			argpos++;
-		}
-		else {
-			runexpressionhandler(call->funcexpr, target, 1);
-		}
-
-		for (auto &child : arglist->children) {
-			runexpressionhandler(child, argpos++, 1);
-		}
-
-		emit(bytecode::instruction_opcode_CALL, target, stacksize - 1, 0);
-
-		curfunc.freetemp(target, stacksize);
-
+		runexpressionhandler(obj.children[0], 0, 0);
 		return false;
 	}
 
@@ -535,6 +511,14 @@ public:
 			throw;
 		}
 		loopqueue.back().patches.push_back(emit(bytecode::instruction_opcode_JMP, 0));
+	}
+
+	LORELAI_VISIT_FUNCTION(statements::forinstatement) {
+		return false;
+	}
+
+	LORELAI_POSTVISIT_FUNCTION(statements::forinstatement) {
+		return false;
 	}
 
 private:
@@ -789,7 +773,7 @@ static void generate_functioncallexpression(bytecodegenerator &gen, node &_expr,
 
 	size_t stacksize = std::max(size, arglist.children.size() + 1 + (expr.methodname ? 1 : 0));
 
-	bool using_temp = stacksize > size;
+	bool using_temp = stacksize > size || target == -1;
 	auto functionindex = target;
 	auto argsindex = functionindex + 1;
 	if (using_temp) {
@@ -808,15 +792,30 @@ static void generate_functioncallexpression(bytecodegenerator &gen, node &_expr,
 		gen.runexpressionhandler(expr.funcexpr, functionindex, 1);
 	}
 
+	auto opcode = bytecode::instruction_opcode_CALL;
+
+	auto argsize = arglist.children.size();
+
 	for (int i = 0; i < arglist.children.size(); i++) {
-		// TODO: how vararg
-		gen.runexpressionhandler(arglist.children[i], argsindex + i, 1);
+		auto &arg = arglist.children[i];
+		if (dynamic_cast<expressions::varargexpression *>(arg.get()) && i == arglist.children.size() - 1) {
+			opcode = bytecode::instruction_opcode_CALLV;
+			argsize--;
+		}
+		else if (auto call = dynamic_cast<expressions::functioncallexpression *>(arg.get()) && i == arglist.children.size() - 1) {
+			opcode = bytecode::instruction_opcode_CALLM;
+			gen.runexpressionhandler(arg, -1, 0);
+			argsize--;
+		}
+		else {
+			gen.runexpressionhandler(arg, argsindex + i, 1);
+		}
 	}
 
-	gen.emit(bytecode::instruction_opcode_CALL, functionindex, arglist.children.size(), size);
+	gen.emit(opcode, functionindex, argsize, target == -1 ? 0 : size + 1);
 
 	if (using_temp) {
-		if (size != 0) {
+		if (target != -1 && size != 0) {
 			gen.emit(bytecode::instruction_opcode_MOV, target, functionindex, size);
 		}
 		gen.curfunc.freetemp(functionindex, stacksize);

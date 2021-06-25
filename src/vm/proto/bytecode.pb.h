@@ -101,7 +101,7 @@ enum instruction_opcode : int {
   instruction_opcode_NOT = 3,
   instruction_opcode_RETURN = 4,
   instruction_opcode_CALL = 5,
-  instruction_opcode_TAILCALL = 6,
+  instruction_opcode_CALLV = 6,
   instruction_opcode_UPVALSET = 7,
   instruction_opcode_NEWFUNC = 8,
   instruction_opcode_STRING = 9,
@@ -132,12 +132,14 @@ enum instruction_opcode : int {
   instruction_opcode_JMP = 34,
   instruction_opcode_JMPIFTRUE = 35,
   instruction_opcode_JMPIFFALSE = 36,
+  instruction_opcode_CALLM = 37,
+  instruction_opcode_VARARG = 38,
   instruction_opcode_instruction_opcode_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<::PROTOBUF_NAMESPACE_ID::int32>::min(),
   instruction_opcode_instruction_opcode_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<::PROTOBUF_NAMESPACE_ID::int32>::max()
 };
 bool instruction_opcode_IsValid(int value);
 constexpr instruction_opcode instruction_opcode_opcode_MIN = instruction_opcode_CONSTANT;
-constexpr instruction_opcode instruction_opcode_opcode_MAX = instruction_opcode_JMPIFFALSE;
+constexpr instruction_opcode instruction_opcode_opcode_MAX = instruction_opcode_VARARG;
 constexpr int instruction_opcode_opcode_ARRAYSIZE = instruction_opcode_opcode_MAX + 1;
 
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* instruction_opcode_descriptor();
@@ -500,8 +502,8 @@ class instruction final :
     instruction_opcode_RETURN;
   static constexpr opcode CALL =
     instruction_opcode_CALL;
-  static constexpr opcode TAILCALL =
-    instruction_opcode_TAILCALL;
+  static constexpr opcode CALLV =
+    instruction_opcode_CALLV;
   static constexpr opcode UPVALSET =
     instruction_opcode_UPVALSET;
   static constexpr opcode NEWFUNC =
@@ -562,6 +564,10 @@ class instruction final :
     instruction_opcode_JMPIFTRUE;
   static constexpr opcode JMPIFFALSE =
     instruction_opcode_JMPIFFALSE;
+  static constexpr opcode CALLM =
+    instruction_opcode_CALLM;
+  static constexpr opcode VARARG =
+    instruction_opcode_VARARG;
   static inline bool opcode_IsValid(int value) {
     return instruction_opcode_IsValid(value);
   }

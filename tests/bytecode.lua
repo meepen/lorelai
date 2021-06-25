@@ -24,6 +24,6 @@ end
 
 while (a) do
 	a = false
-	print(a)
+	print(a, tailcall())
 	break
 end

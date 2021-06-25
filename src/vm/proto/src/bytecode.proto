@@ -20,8 +20,8 @@ message instruction {
 
 		NOT      = 3;  // A = not B
 		RETURN   = 4;  // return A .. A+B, vararg(C)
-		CALL     = 5;  // A .. A+C = A(A+1 .. A + B)
-		TAILCALL = 6;  // return A(A+1 .. A + B, vararg(C))
+		CALL     = 5;  // A .. A+C-2 = A(A+1 .. A + B)
+		CALLV    = 6;  // A .. A+C-2 = A(A+1 .. A + B, ...)
 		UPVALSET = 7;  // UP(A)[B] = C
 		NEWFUNC  = 8;  // A = NEWFUNC(prototypes[B], C...)
 		
@@ -61,6 +61,9 @@ message instruction {
 		JMP           = 34; // JMP(instruction(B))
 		JMPIFTRUE     = 35; // if (A) { JMP(instruction(B)) }
 		JMPIFFALSE    = 36; // if (!A) { JMP(instruction(B)) }
+
+		CALLM    = 37; // A .. A+C-2 = A(A+1 .. A + B, returns...)
+		VARARG   = 38; // A .. A+C = ...
 	}
 
 	opcode op = 1;
