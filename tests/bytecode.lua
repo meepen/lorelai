@@ -31,3 +31,7 @@ end
 for i in pairs "a" do
 	print(i)
 end
+
+for i = 1, 2, 0.5 do
+	print(i)
+end

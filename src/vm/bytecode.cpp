@@ -40,7 +40,6 @@ std::string gettypename(T &data) {
 	fn(lorelai::parser::statements::localfunctionstatement) \
 	fn(lorelai::parser::statements::functionstatement) \
 	fn(lorelai::parser::statements::functioncallstatement) \
-	fn(lorelai::parser::statements::fornumstatement) \
 
 	DONE:
 	fn(lorelai::parser::statements::localassignmentstatement) \
@@ -53,6 +52,7 @@ std::string gettypename(T &data) {
 	fn(lorelai::parser::statements::repeatstatement) \
 	fn(lorelai::parser::statements::breakstatement) \
 	fn(lorelai::parser::statements::forinstatement) \
+	fn(lorelai::parser::statements::fornumstatement) \
 */
 
 class stack {
@@ -353,7 +353,7 @@ public:
 					size_t target = curfunc.gettemp(3);
 					
 					runexpressionhandler(index->prefix, target, 1);
-					expressions::stringexpression string(dynamic_cast<expressions::nameexpression *>(index->index.get())->name);
+					expressions::stringexpression string(index->index->tostring());
 					runexpressionhandler(string, target + 1, 1);
 					pushornil(obj.right, i, target + 2);
 
@@ -540,7 +540,7 @@ public:
 		queue.stackreserved = curfunc.gettemp(3);
 		queue.extrastack = curfunc.gettemp(std::max((size_t)3, obj.iternames.size()));
 		for (int i = 0; i < obj.iternames.size(); i++) {
-			curfunc.curscope->addvariable(dynamic_cast<expressions::nameexpression *>(obj.iternames[i].get())->name, queue.extrastack + i);
+			curfunc.curscope->addvariable(obj.iternames[i]->tostring(), queue.extrastack + i);
 		}
 
 		// loop prep: local f, s, v = inexprs
@@ -584,7 +584,7 @@ public:
 		auto start = queue.extrastack;
 		auto ends = start + std::max((size_t)3, obj.iternames.size());
 		for (int i = 0; i < obj.iternames.size(); i++) {
-			auto &name = dynamic_cast<expressions::nameexpression *>(obj.iternames[i].get())->name;
+			auto name = obj.iternames[i]->tostring();
 			auto index = curfunc.curscope->getvariableindex(name);
 			if (index >= start && index < ends) {
 				curfunc.curscope->variables.erase(name);
@@ -593,6 +593,58 @@ public:
 
 		loopqueue.pop_back();
 		curfunc.popscope();
+		return false;
+	}
+
+	LORELAI_VISIT_FUNCTION(statements::fornumstatement) {
+		_loopqueue queue;
+		queue.stackreserved = curfunc.gettemp(4); // var, limit, step, cmp
+		runexpressionhandler(obj.startexpr, queue.stackreserved, 1);
+		runexpressionhandler(obj.endexpr, queue.stackreserved + 1, 1);
+		if (obj.stepexpr) {
+			runexpressionhandler(obj.stepexpr, queue.stackreserved + 2, 1);
+		}
+		else {
+			expressions::numberexpression data(1.0);
+			runexpressionhandler(data, queue.stackreserved + 2, 1);
+		}
+
+		// start loop
+
+		queue.startinstr = curfunc.proto.instructions_size();
+
+		emit(bytecode::instruction_opcode_NUMBER, queue.stackreserved + 3, add(0.0));
+		emit(bytecode::instruction_opcode_GREATERTHAN, queue.stackreserved + 3, queue.stackreserved + 1, queue.stackreserved + 3);
+		auto patch = emit(bytecode::instruction_opcode_JMPIFFALSE, queue.stackreserved + 3);
+		emit(bytecode::instruction_opcode_LESSTHANEQUAL, queue.stackreserved + 3, queue.stackreserved, queue.stackreserved + 1);
+		queue.patches.push_back(emit(bytecode::instruction_opcode_JMPIFFALSE, queue.stackreserved + 3));
+		auto bodypatch = emit(bytecode::instruction_opcode_JMP, 0);
+		patch->set_b(curfunc.proto.instructions_size());
+		emit(bytecode::instruction_opcode_GREATERTHANEQUAL, queue.stackreserved + 3, queue.stackreserved, queue.stackreserved + 1);
+		queue.patches.push_back(emit(bytecode::instruction_opcode_JMPIFFALSE, queue.stackreserved + 3));
+		bodypatch->set_b(curfunc.proto.instructions_size());
+		curfunc.pushscope();
+
+		emit(bytecode::instruction_opcode_MOV, curfunc.createlocal(obj.itername->tostring()), queue.stackreserved, 1);
+
+		// start body
+
+		loopqueue.push_back(queue);
+		return false;
+	}
+
+	LORELAI_POSTVISIT_FUNCTION(statements::fornumstatement) {
+		auto &queue = loopqueue.back();
+
+		emit(bytecode::instruction_opcode_JMP, 0, queue.startinstr);
+
+		for (auto &patch : queue.patches) {
+			patch->set_b(curfunc.proto.instructions_size());
+		}
+
+		curfunc.freetemp(queue.stackreserved, 4);
+		curfunc.popscope();
+		loopqueue.pop_back();
 		return false;
 	}
 
@@ -812,7 +864,7 @@ static void generate_dotexpression(bytecodegenerator &gen, node &_expr, size_t t
 	gen.runexpressionhandler(expr.prefix, target, 1);
 
 	auto temp = gen.curfunc.gettemp();
-	expressions::stringexpression name(dynamic_cast<expressions::nameexpression *>(expr.index.get())->name);
+	expressions::stringexpression name(expr.index->tostring());
 	gen.runexpressionhandler(name, temp, 1);
 	gen.emit(bytecode::instruction_opcode_INDEX, target, target, temp);
 	gen.curfunc.freetemp(temp);
@@ -857,7 +909,7 @@ static void generate_functioncallexpression(bytecodegenerator &gen, node &_expr,
 
 	if (expr.methodname) {
 		gen.runexpressionhandler(expr.funcexpr, argsindex, 1);
-		expressions::stringexpression name(dynamic_cast<expressions::nameexpression *>(expr.methodname.get())->name);
+		expressions::stringexpression name(expr.methodname->tostring());
 		gen.runexpressionhandler(name, functionindex, 1);
 		gen.emit(bytecode::instruction_opcode_INDEX, functionindex, argsindex, functionindex);
 
