@@ -35,3 +35,5 @@ end
 for i = 1, 2, 0.5 do
 	print(i)
 end
+
+return a, i, 1, 2, q()

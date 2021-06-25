@@ -36,7 +36,6 @@ std::string gettypename(T &data) {
 
 /*
 	NOT DONE:
-	fn(lorelai::parser::statements::returnstatement) \
 	fn(lorelai::parser::statements::localfunctionstatement) \
 	fn(lorelai::parser::statements::functionstatement) \
 	fn(lorelai::parser::statements::functioncallstatement) \
@@ -53,6 +52,7 @@ std::string gettypename(T &data) {
 	fn(lorelai::parser::statements::breakstatement) \
 	fn(lorelai::parser::statements::forinstatement) \
 	fn(lorelai::parser::statements::fornumstatement) \
+	fn(lorelai::parser::statements::returnstatement) \
 */
 
 class stack {
@@ -645,6 +645,34 @@ public:
 		curfunc.freetemp(queue.stackreserved, 4);
 		curfunc.popscope();
 		loopqueue.pop_back();
+		return false;
+	}
+
+	LORELAI_VISIT_FUNCTION(statements::returnstatement) {
+		auto realrets = obj.children.size();
+		auto rets = realrets;
+		auto target = curfunc.gettemp(realrets);
+		size_t varargtype = 0;
+		for (int i = 0; i < obj.children.size(); i++) {
+			auto &child = obj.children[i];
+
+			if (i == rets - 1 && dynamic_cast<expressions::varargexpression *>(child.get())) {
+				rets--;
+				varargtype = 2;
+			}
+			else if (i == rets - 1 && dynamic_cast<expressions::functioncallexpression *>(child.get())) {
+				rets--;
+				varargtype = 1;
+				runexpressionhandler(child, -1, 0);
+			}
+			else {
+				runexpressionhandler(child, target + i, 1);
+			}
+		}
+
+		emit(bytecode::instruction_opcode_RETURN, target, rets, varargtype);
+		
+		curfunc.freetemp(target, rets);
 		return false;
 	}
 

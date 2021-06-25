@@ -19,7 +19,7 @@ message instruction {
 		ADD      = 2;  // A = B + C
 
 		NOT      = 3;  // A = not B
-		RETURN   = 4;  // return A .. A+B, vararg(C)
+		RETURN   = 4;  // return A .. A+B-1, C == 1 and ... or C == 2 and returns... or none
 		CALL     = 5;  // A .. A+C-2 = A(A+1 .. A + B)
 		CALLV    = 6;  // A .. A+C-2 = A(A+1 .. A + B, ...)
 		UPVALSET = 7;  // UP(A)[B] = C
