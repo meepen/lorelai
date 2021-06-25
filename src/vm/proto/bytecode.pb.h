@@ -129,12 +129,15 @@ enum instruction_opcode : int {
   instruction_opcode_SETINDEX = 31,
   instruction_opcode_ENVIRONMENTGET = 32,
   instruction_opcode_ENVIRONMENTSET = 33,
+  instruction_opcode_JMP = 34,
+  instruction_opcode_JMPIFEQUAL = 35,
+  instruction_opcode_JMPIFNOTEQUAL = 36,
   instruction_opcode_instruction_opcode_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<::PROTOBUF_NAMESPACE_ID::int32>::min(),
   instruction_opcode_instruction_opcode_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<::PROTOBUF_NAMESPACE_ID::int32>::max()
 };
 bool instruction_opcode_IsValid(int value);
 constexpr instruction_opcode instruction_opcode_opcode_MIN = instruction_opcode_CONSTANT;
-constexpr instruction_opcode instruction_opcode_opcode_MAX = instruction_opcode_ENVIRONMENTSET;
+constexpr instruction_opcode instruction_opcode_opcode_MAX = instruction_opcode_JMPIFNOTEQUAL;
 constexpr int instruction_opcode_opcode_ARRAYSIZE = instruction_opcode_opcode_MAX + 1;
 
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* instruction_opcode_descriptor();
@@ -297,10 +300,15 @@ class debugdata final :
 
   enum : int {
     kFilenameFieldNumber = 3,
+    kNoteFieldNumber = 4,
     kLinenumberFieldNumber = 1,
     kLinecolumnFieldNumber = 2,
   };
-  // string filename = 3;
+  // optional string filename = 3;
+  bool has_filename() const;
+  private:
+  bool _internal_has_filename() const;
+  public:
   void clear_filename();
   const std::string& filename() const;
   template <typename ArgT0 = const std::string&, typename... ArgT>
@@ -312,6 +320,24 @@ class debugdata final :
   const std::string& _internal_filename() const;
   inline PROTOBUF_ALWAYS_INLINE void _internal_set_filename(const std::string& value);
   std::string* _internal_mutable_filename();
+  public:
+
+  // optional string note = 4;
+  bool has_note() const;
+  private:
+  bool _internal_has_note() const;
+  public:
+  void clear_note();
+  const std::string& note() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_note(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_note();
+  PROTOBUF_MUST_USE_RESULT std::string* release_note();
+  void set_allocated_note(std::string* note);
+  private:
+  const std::string& _internal_note() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_note(const std::string& value);
+  std::string* _internal_mutable_note();
   public:
 
   // uint32 linenumber = 1;
@@ -339,10 +365,12 @@ class debugdata final :
   template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
+  ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
+  mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr filename_;
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr note_;
   ::PROTOBUF_NAMESPACE_ID::uint32 linenumber_;
   ::PROTOBUF_NAMESPACE_ID::uint32 linecolumn_;
-  mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_bytecode_2eproto;
 };
 // -------------------------------------------------------------------
@@ -528,6 +556,12 @@ class instruction final :
     instruction_opcode_ENVIRONMENTGET;
   static constexpr opcode ENVIRONMENTSET =
     instruction_opcode_ENVIRONMENTSET;
+  static constexpr opcode JMP =
+    instruction_opcode_JMP;
+  static constexpr opcode JMPIFEQUAL =
+    instruction_opcode_JMPIFEQUAL;
+  static constexpr opcode JMPIFNOTEQUAL =
+    instruction_opcode_JMPIFNOTEQUAL;
   static inline bool opcode_IsValid(int value) {
     return instruction_opcode_IsValid(value);
   }
@@ -1651,9 +1685,17 @@ inline void debugdata::set_linecolumn(::PROTOBUF_NAMESPACE_ID::uint32 value) {
   // @@protoc_insertion_point(field_set:lorelai.vm.bytecode.debugdata.linecolumn)
 }
 
-// string filename = 3;
+// optional string filename = 3;
+inline bool debugdata::_internal_has_filename() const {
+  bool value = (_has_bits_[0] & 0x00000001u) != 0;
+  return value;
+}
+inline bool debugdata::has_filename() const {
+  return _internal_has_filename();
+}
 inline void debugdata::clear_filename() {
   filename_.ClearToEmpty();
+  _has_bits_[0] &= ~0x00000001u;
 }
 inline const std::string& debugdata::filename() const {
   // @@protoc_insertion_point(field_get:lorelai.vm.bytecode.debugdata.filename)
@@ -1662,7 +1704,7 @@ inline const std::string& debugdata::filename() const {
 template <typename ArgT0, typename... ArgT>
 inline PROTOBUF_ALWAYS_INLINE
 void debugdata::set_filename(ArgT0&& arg0, ArgT... args) {
- 
+ _has_bits_[0] |= 0x00000001u;
  filename_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
   // @@protoc_insertion_point(field_set:lorelai.vm.bytecode.debugdata.filename)
 }
@@ -1675,26 +1717,88 @@ inline const std::string& debugdata::_internal_filename() const {
   return filename_.Get();
 }
 inline void debugdata::_internal_set_filename(const std::string& value) {
-  
+  _has_bits_[0] |= 0x00000001u;
   filename_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, value, GetArenaForAllocation());
 }
 inline std::string* debugdata::_internal_mutable_filename() {
-  
+  _has_bits_[0] |= 0x00000001u;
   return filename_.Mutable(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, GetArenaForAllocation());
 }
 inline std::string* debugdata::release_filename() {
   // @@protoc_insertion_point(field_release:lorelai.vm.bytecode.debugdata.filename)
-  return filename_.Release(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArenaForAllocation());
+  if (!_internal_has_filename()) {
+    return nullptr;
+  }
+  _has_bits_[0] &= ~0x00000001u;
+  return filename_.ReleaseNonDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArenaForAllocation());
 }
 inline void debugdata::set_allocated_filename(std::string* filename) {
   if (filename != nullptr) {
-    
+    _has_bits_[0] |= 0x00000001u;
   } else {
-    
+    _has_bits_[0] &= ~0x00000001u;
   }
   filename_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), filename,
       GetArenaForAllocation());
   // @@protoc_insertion_point(field_set_allocated:lorelai.vm.bytecode.debugdata.filename)
+}
+
+// optional string note = 4;
+inline bool debugdata::_internal_has_note() const {
+  bool value = (_has_bits_[0] & 0x00000002u) != 0;
+  return value;
+}
+inline bool debugdata::has_note() const {
+  return _internal_has_note();
+}
+inline void debugdata::clear_note() {
+  note_.ClearToEmpty();
+  _has_bits_[0] &= ~0x00000002u;
+}
+inline const std::string& debugdata::note() const {
+  // @@protoc_insertion_point(field_get:lorelai.vm.bytecode.debugdata.note)
+  return _internal_note();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void debugdata::set_note(ArgT0&& arg0, ArgT... args) {
+ _has_bits_[0] |= 0x00000002u;
+ note_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:lorelai.vm.bytecode.debugdata.note)
+}
+inline std::string* debugdata::mutable_note() {
+  std::string* _s = _internal_mutable_note();
+  // @@protoc_insertion_point(field_mutable:lorelai.vm.bytecode.debugdata.note)
+  return _s;
+}
+inline const std::string& debugdata::_internal_note() const {
+  return note_.Get();
+}
+inline void debugdata::_internal_set_note(const std::string& value) {
+  _has_bits_[0] |= 0x00000002u;
+  note_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, value, GetArenaForAllocation());
+}
+inline std::string* debugdata::_internal_mutable_note() {
+  _has_bits_[0] |= 0x00000002u;
+  return note_.Mutable(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, GetArenaForAllocation());
+}
+inline std::string* debugdata::release_note() {
+  // @@protoc_insertion_point(field_release:lorelai.vm.bytecode.debugdata.note)
+  if (!_internal_has_note()) {
+    return nullptr;
+  }
+  _has_bits_[0] &= ~0x00000002u;
+  return note_.ReleaseNonDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArenaForAllocation());
+}
+inline void debugdata::set_allocated_note(std::string* note) {
+  if (note != nullptr) {
+    _has_bits_[0] |= 0x00000002u;
+  } else {
+    _has_bits_[0] &= ~0x00000002u;
+  }
+  note_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), note,
+      GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set_allocated:lorelai.vm.bytecode.debugdata.note)
 }
 
 // -------------------------------------------------------------------

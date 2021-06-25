@@ -2,6 +2,7 @@
 #include "lexer.hpp"
 #include "args.hpp"
 #include "visitor.hpp"
+#include <sstream>
 
 using namespace lorelai;
 using namespace lorelai::parser;
@@ -33,3 +34,16 @@ functioncallexpression::functioncallexpression(std::shared_ptr<node> prefixexp, 
 }
 
 LORELAI_VISIT_BRANCH_DEFINE(functioncallexpression)
+
+string functioncallexpression::tostring() {
+	std::stringstream stream;
+
+	stream << funcexpr->tostring();
+	if (methodname) {
+		stream << ":" << methodname->tostring();
+	}
+
+	stream << "(" << arglist->tostring() << ")";
+
+	return stream.str();
+}

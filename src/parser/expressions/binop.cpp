@@ -1,6 +1,7 @@
 #include "expressions.hpp"
 #include "lexer.hpp"
 #include "visitor.hpp"
+#include <sstream>
 
 using namespace lorelai;
 using namespace lorelai::parser;
@@ -44,3 +45,9 @@ const std::unordered_map<string, int> binopexpression::prioritymap = {
 
 	{ "or", 7 }
 };
+
+string binopexpression::tostring() {
+	std::stringstream stream;
+	stream << lhs->tostring() << " " << op << " " << rhs->tostring();
+	return stream.str();
+}

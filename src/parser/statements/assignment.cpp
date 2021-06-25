@@ -2,6 +2,7 @@
 #include "visitor.hpp"
 #include "expressions.hpp"
 #include "lexer.hpp"
+#include <sstream>
 
 using namespace lorelai;
 using namespace lorelai::parser;
@@ -32,4 +33,31 @@ assignmentstatement::assignmentstatement(std::shared_ptr<node> prefix, lexer &le
 		children.push_back(expr);
 	}
 	while(lex.read(","));
+}
+
+string assignmentstatement::tostring() {
+	std::stringstream stream;
+	bool first = true;
+	for (auto &lhs : left) {
+		if (!first) {
+			stream << ", ";
+		}
+		first = false;
+		stream << lhs->tostring();
+	}
+
+	if (right.size() > 0) {
+		stream << " = ";
+
+		first = true;
+		for (auto &rhs : right) {
+			if (!first) {
+				stream << ", ";
+			}
+			first = false;
+			stream << rhs->tostring();
+		}
+	}
+
+	return stream.str();
 }

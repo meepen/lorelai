@@ -49,22 +49,6 @@ const static std::unordered_map<string, std::shared_ptr<node>(*)(lexer &lex)> lo
 	} } */
 };
 
-returnstatement::returnstatement(lexer &lex) {
-	// consume return
-	lex.read();
-
-	// try to read explist
-	while (std::shared_ptr<node> exp = expression::read(lex)) {
-		children.push_back(exp);
-		auto next = lex.lookahead().value_or("");
-		if (next != ",") {
-			break;
-		}
-		// consume ','
-		lex.read();
-	}
-}
-
 std::shared_ptr<node> statement::read(lexer &lex) {
 	/*
 	stat ::=

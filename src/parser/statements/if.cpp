@@ -2,6 +2,7 @@
 #include "expressions.hpp"
 #include "chunks.hpp"
 #include "lexer.hpp"
+#include <sstream>
 
 using namespace lorelai;
 using namespace lorelai::parser;
@@ -45,4 +46,18 @@ ifstatement::ifstatement(lexer &lex) {
 	}
 
 	lex.expect("end", "if .. then .. end");
+}
+
+
+string ifstatement::tostring() {
+	std::stringstream stream;
+	stream << "if " << conditionals[0]->tostring() << " then ";
+
+	for (int i = 1; i < conditionals.size(); i++) {
+		stream << "elseif " << conditionals[i]->tostring() << " then ";
+	}
+
+	stream << "end";
+
+	return stream.str();
 }

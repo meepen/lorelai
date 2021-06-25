@@ -5,7 +5,8 @@ package lorelai.vm.bytecode;
 message debugdata {
 	uint32 linenumber = 1;
 	uint32 linecolumn = 2;
-	string filename = 3;
+	optional string filename = 3;
+	optional string note = 4;
 }
 
 message instruction {
@@ -56,6 +57,10 @@ message instruction {
 
 		ENVIRONMENTGET = 32; // A = _ENV[str(B)]
 		ENVIRONMENTSET = 33; // _ENV[str(A)] = B
+
+		JMP           = 34; // JMP(instruction(B))
+		JMPIFEQUAL    = 35; // if (A) { JMP(instruction(B)) }
+		JMPIFNOTEQUAL = 36; // if (!A) { JMP(instruction(B)) }
 	}
 
 	opcode op = 1;

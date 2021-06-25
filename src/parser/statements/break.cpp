@@ -11,3 +11,7 @@ breakstatement::breakstatement(lexer &lex) {
 }
 
 LORELAI_VISIT_NODE_DEFINE(breakstatement)
+
+string breakstatement::tostring() {
+	return "break";
+}

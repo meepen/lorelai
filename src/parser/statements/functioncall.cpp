@@ -6,4 +6,6 @@ using namespace lorelai::parser;
 using namespace lorelai::parser::statements;
 using namespace lorelai::parser::expressions;
 
-LORELAI_VISIT_BRANCH_DEFINE(functioncallstatement)
+string functioncallstatement::tostring() {
+	return children[0]->tostring();
+}

@@ -14,3 +14,7 @@ functionexpression::functionexpression(lexer &lex) {
 }
 
 LORELAI_VISIT_BRANCH_DEFINE(functionexpression)
+
+string functionexpression::tostring() {
+	return "function";
+}

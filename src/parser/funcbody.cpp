@@ -3,6 +3,7 @@
 #include "expressions.hpp"
 #include "chunks.hpp"
 #include "visitor.hpp"
+#include <sstream>
 
 using namespace lorelai;
 using namespace lorelai::parser;
@@ -53,3 +54,18 @@ funcbody::funcbody(lexer &lex) {
 
 
 LORELAI_VISIT_BRANCH_DEFINE(funcbody)
+
+string funcbody::tostring() {
+	std::stringstream stream;
+	stream << "(";
+	bool first = true;
+	for (auto &param : params) {
+		if (!first) {
+			stream << ", ";
+		}
+		first = false;
+		stream << param->tostring();
+	}
+
+	return stream.str();
+}

@@ -1,6 +1,7 @@
 #include "expressions.hpp"
 #include "lexer.hpp"
 #include "visitor.hpp"
+#include <sstream>
 
 using namespace lorelai;
 using namespace lorelai::parser;
@@ -32,3 +33,17 @@ dotexpression::dotexpression(std::shared_ptr<node> _prefix, lexer &lex) {
 
 LORELAI_VISIT_BRANCH_DEFINE(indexexpression)
 LORELAI_VISIT_BRANCH_DEFINE(dotexpression)
+
+string dotexpression::tostring() {
+	std::stringstream stream;
+	stream << prefix->tostring() << "." << index->tostring();
+
+	return stream.str();
+}
+
+string indexexpression::tostring() {
+	std::stringstream stream;
+	stream << prefix->tostring() << "[" << index->tostring() << "]";
+
+	return stream.str();
+}

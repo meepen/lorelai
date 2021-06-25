@@ -3,6 +3,7 @@
 #include "lexer.hpp"
 #include "funcbody.hpp"
 #include "chunks.hpp"
+#include <sstream>
 
 using namespace lorelai;
 using namespace lorelai::parser;
@@ -35,4 +36,16 @@ fornumstatement::fornumstatement(std::shared_ptr<node> _itername, lexer &lex) {
 	children.push_back(block);
 	
 	lex.expect("end", "for .. = .., ..[, ..] do .. end");
+}
+
+string fornumstatement::tostring() {
+	std::stringstream stream;
+	stream << "for " << itername->tostring() << " = " << startexpr->tostring() << ", " << endexpr->tostring();
+	if (stepexpr) {
+		stream << ", " << stepexpr->tostring();
+	}
+
+	stream << "do";
+
+	return stream.str();
 }

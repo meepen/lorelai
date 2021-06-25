@@ -2,6 +2,7 @@
 #include "expressions.hpp"
 #include "chunks.hpp"
 #include "lexer.hpp"
+#include <sstream>
 
 using namespace lorelai;
 using namespace lorelai::parser;
@@ -22,4 +23,13 @@ whilestatement::whilestatement(lexer &lex) {
 	children.push_back(block);
 
 	lex.expect("end", "while .. do .. end");
+}
+
+string whilestatement::tostring() {
+	std::stringstream stream;
+	stream << "while " << conditional->tostring() << " do";
+
+	// do we want to add the child nodes here?
+
+	return stream.str();
 }

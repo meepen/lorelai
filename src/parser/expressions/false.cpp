@@ -9,3 +9,7 @@ using namespace lorelai::parser::expressions;
 falseexpression::falseexpression(lexer &lex) {
 	lex.expect("false", "false");
 }
+
+string falseexpression::tostring() {
+	return "false";
+}

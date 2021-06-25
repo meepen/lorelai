@@ -9,3 +9,7 @@ using namespace lorelai::parser::expressions;
 trueexpression::trueexpression(lexer &lex) {
 	lex.expect("true", "true");
 }
+
+string trueexpression::tostring() {
+	return "true";
+}

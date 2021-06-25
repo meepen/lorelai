@@ -2,6 +2,7 @@
 #include "expressions.hpp"
 #include "lexer.hpp"
 #include "funcbody.hpp"
+#include <sstream>
 
 using namespace lorelai;
 using namespace lorelai::parser;
@@ -18,4 +19,13 @@ localfunctionstatement::localfunctionstatement(lexer &lex) {
 
 	body = std::make_shared<funcbody>(lex);
 	children.push_back(body);
+}
+
+string localfunctionstatement::tostring() {
+	std::stringstream stream;
+	stream << "local function " << name->tostring();
+
+	// do we want to add the child nodes here?
+
+	return stream.str();
 }

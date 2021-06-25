@@ -2,6 +2,7 @@
 #include "expressions.hpp"
 #include "lexer.hpp"
 #include <iostream>
+#include <sstream>
 
 using namespace lorelai;
 using namespace lorelai::parser;
@@ -29,4 +30,34 @@ localassignmentstatement::localassignmentstatement(lexer &lex) {
 		children.push_back(expr);
 	}
 	while(lex.read(","));
+}
+
+string localassignmentstatement::tostring() {
+	std::stringstream stream;
+	stream << "local ";
+
+	bool first = true;
+
+	for (auto &child : left) {
+		if (!first) {
+			stream << ", ";
+		}
+		first = false;
+		stream << child->tostring();
+	}
+	
+	if (right.size() > 0) {
+		first = true;
+		stream << " = ";
+
+		for (auto &child : right) {
+			if (!first) {
+				stream << ", ";
+			}
+			first = false;
+			stream << child->tostring();
+		}
+	}
+
+	return stream.str();
 }

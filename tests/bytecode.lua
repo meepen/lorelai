@@ -7,3 +7,8 @@ do
 end
 
 print(a)
+
+while (a) do
+	a = false
+	print(a)
+end

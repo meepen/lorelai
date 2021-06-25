@@ -3,6 +3,7 @@
 #include "lexer.hpp"
 #include "funcbody.hpp"
 #include "chunks.hpp"
+#include <sstream>
 
 using namespace lorelai;
 using namespace lorelai::parser;
@@ -31,10 +32,27 @@ forinstatement::forinstatement(std::shared_ptr<node> _itername, lexer &lex) {
 	}
 	children.push_back(inexpr);
 
-	lex.expect("do", "for .. = .., ..[, ..] do .. end");
+	lex.expect("do", "for ..{, ..} in .. do .. end");
 
 	block = std::make_shared<chunk>(lex);
 	children.push_back(block);
 	
-	lex.expect("end", "for .. = .., ..[, ..] do .. end");
+	lex.expect("end", "for ..{, ..} in .. do .. end");
+}
+
+string forinstatement::tostring() {
+	std::stringstream stream;
+	stream << "for ";
+	bool first = true;
+	for (auto &iter : iternames) {
+		if (!first) {
+			stream << ", ";
+		}
+		first = false;
+		stream << iter->tostring();
+	}
+
+	stream << " in " << inexpr->tostring() << "do";
+
+	return stream.str();
 }

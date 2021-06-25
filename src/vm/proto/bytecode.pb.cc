@@ -22,6 +22,7 @@ namespace bytecode {
 constexpr debugdata::debugdata(
   ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized)
   : filename_(&::PROTOBUF_NAMESPACE_ID::internal::fixed_address_empty_string)
+  , note_(&::PROTOBUF_NAMESPACE_ID::internal::fixed_address_empty_string)
   , linenumber_(0u)
   , linecolumn_(0u){}
 struct debugdataDefaultTypeInternal {
@@ -129,7 +130,7 @@ static const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* file_level_enum_descriptor
 static constexpr ::PROTOBUF_NAMESPACE_ID::ServiceDescriptor const** file_level_service_descriptors_bytecode_2eproto = nullptr;
 
 const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_bytecode_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) = {
-  ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::lorelai::vm::bytecode::debugdata, _has_bits_),
   PROTOBUF_FIELD_OFFSET(::lorelai::vm::bytecode::debugdata, _internal_metadata_),
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
@@ -137,6 +138,11 @@ const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_bytecode_2eproto::offsets[] PR
   PROTOBUF_FIELD_OFFSET(::lorelai::vm::bytecode::debugdata, linenumber_),
   PROTOBUF_FIELD_OFFSET(::lorelai::vm::bytecode::debugdata, linecolumn_),
   PROTOBUF_FIELD_OFFSET(::lorelai::vm::bytecode::debugdata, filename_),
+  PROTOBUF_FIELD_OFFSET(::lorelai::vm::bytecode::debugdata, note_),
+  ~0u,
+  ~0u,
+  0,
+  1,
   PROTOBUF_FIELD_OFFSET(::lorelai::vm::bytecode::instruction, _has_bits_),
   PROTOBUF_FIELD_OFFSET(::lorelai::vm::bytecode::instruction, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -203,13 +209,13 @@ const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_bytecode_2eproto::offsets[] PR
   0,
 };
 static const ::PROTOBUF_NAMESPACE_ID::internal::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) = {
-  { 0, -1, sizeof(::lorelai::vm::bytecode::debugdata)},
-  { 8, 18, sizeof(::lorelai::vm::bytecode::instruction)},
-  { 23, 30, sizeof(::lorelai::vm::bytecode::tablevalue)},
-  { 32, -1, sizeof(::lorelai::vm::bytecode::tablekeyvalue)},
-  { 39, -1, sizeof(::lorelai::vm::bytecode::table)},
-  { 46, -1, sizeof(::lorelai::vm::bytecode::upvaluereference)},
-  { 53, 65, sizeof(::lorelai::vm::bytecode::prototype)},
+  { 0, 9, sizeof(::lorelai::vm::bytecode::debugdata)},
+  { 13, 23, sizeof(::lorelai::vm::bytecode::instruction)},
+  { 28, 35, sizeof(::lorelai::vm::bytecode::tablevalue)},
+  { 37, -1, sizeof(::lorelai::vm::bytecode::tablekeyvalue)},
+  { 44, -1, sizeof(::lorelai::vm::bytecode::table)},
+  { 51, -1, sizeof(::lorelai::vm::bytecode::upvaluereference)},
+  { 58, 70, sizeof(::lorelai::vm::bytecode::prototype)},
 };
 
 static ::PROTOBUF_NAMESPACE_ID::Message const * const file_default_instances[] = {
@@ -223,49 +229,51 @@ static ::PROTOBUF_NAMESPACE_ID::Message const * const file_default_instances[] =
 };
 
 const char descriptor_table_protodef_bytecode_2eproto[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) =
-  "\n\016bytecode.proto\022\023lorelai.vm.bytecode\"E\n"
+  "\n\016bytecode.proto\022\023lorelai.vm.bytecode\"s\n"
   "\tdebugdata\022\022\n\nlinenumber\030\001 \001(\r\022\022\n\nlineco"
-  "lumn\030\002 \001(\r\022\020\n\010filename\030\003 \001(\t\"\216\005\n\013instruc"
-  "tion\0223\n\002op\030\001 \001(\0162\'.lorelai.vm.bytecode.i"
-  "nstruction.opcode\022\016\n\001a\030\002 \001(\rH\000\210\001\001\022\016\n\001b\030\003"
-  " \001(\rH\001\210\001\001\022\016\n\001c\030\004 \001(\rH\002\210\001\001\0222\n\005debug\030\005 \001(\013"
-  "2\036.lorelai.vm.bytecode.debugdataH\003\210\001\001\"\311\003"
-  "\n\006opcode\022\014\n\010CONSTANT\020\000\022\007\n\003MOV\020\001\022\007\n\003ADD\020\002"
-  "\022\007\n\003NOT\020\003\022\n\n\006RETURN\020\004\022\010\n\004CALL\020\005\022\014\n\010TAILC"
-  "ALL\020\006\022\014\n\010UPVALSET\020\007\022\013\n\007NEWFUNC\020\010\022\n\n\006STRI"
-  "NG\020\t\022\n\n\006NUMBER\020\n\022\014\n\010FUNCTION\020\013\022\t\n\005TABLE\020"
-  "\014\022\014\n\010SUBTRACT\020\r\022\n\n\006DIVIDE\020\016\022\014\n\010MULTIPLY\020"
-  "\017\022\t\n\005POWER\020\020\022\n\n\006MODULO\020\021\022\n\n\006CONCAT\020\022\022\t\n\005"
-  "INDEX\020\023\022\006\n\002OR\020\024\022\007\n\003AND\020\025\022\014\n\010LESSTHAN\020\026\022\021"
-  "\n\rLESSTHANEQUAL\020\027\022\017\n\013GREATERTHAN\020\030\022\024\n\020GR"
-  "EATERTHANEQUAL\020\031\022\n\n\006EQUALS\020\032\022\r\n\tNOTEQUAL"
-  "S\020\033\022\t\n\005MINUS\020\034\022\n\n\006LENGTH\020\035\022\017\n\013ENVIRONMEN"
-  "T\020\036\022\014\n\010SETINDEX\020\037\022\022\n\016ENVIRONMENTGET\020 \022\022\n"
-  "\016ENVIRONMENTSET\020!B\004\n\002_aB\004\n\002_bB\004\n\002_cB\010\n\006_"
-  "debug\"\252\001\n\ntablevalue\0227\n\004type\030\001 \001(\0162).lor"
-  "elai.vm.bytecode.tablevalue.valuetype\022\022\n"
-  "\005index\030\002 \001(\rH\000\210\001\001\"E\n\tvaluetype\022\007\n\003NIL\020\000\022"
-  "\n\n\006NUMBER\020\001\022\n\n\006STRING\020\002\022\t\n\005TABLE\020\003\022\014\n\010FU"
-  "NCTION\020\004B\010\n\006_index\"m\n\rtablekeyvalue\022,\n\003k"
-  "ey\030\001 \001(\0132\037.lorelai.vm.bytecode.tablevalu"
-  "e\022.\n\005value\030\002 \001(\0132\037.lorelai.vm.bytecode.t"
-  "ablevalue\"r\n\005table\0222\n\tarraypart\030\001 \003(\0132\037."
-  "lorelai.vm.bytecode.tablevalue\0225\n\014keyval"
-  "uepart\030\002 \003(\0132\037.lorelai.vm.bytecode.table"
-  "value\"7\n\020upvaluereference\022\017\n\007protoup\030\001 \001"
-  "(\r\022\022\n\nstackindex\030\002 \001(\r\"\241\002\n\tprototype\0226\n\014"
-  "instructions\030\001 \003(\0132 .lorelai.vm.bytecode"
-  ".instruction\022\017\n\007numbers\030\002 \003(\001\022\017\n\007strings"
-  "\030\003 \003(\t\022*\n\006tables\030\004 \003(\0132\032.lorelai.vm.byte"
-  "code.table\022.\n\006protos\030\005 \003(\0132\036.lorelai.vm."
-  "bytecode.prototype\0226\n\007upvalue\030\007 \003(\0132%.lo"
-  "relai.vm.bytecode.upvaluereference\022\027\n\nid"
-  "entifier\030\006 \001(\tH\000\210\001\001B\r\n\013_identifierb\006prot"
-  "o3"
+  "lumn\030\002 \001(\r\022\025\n\010filename\030\003 \001(\tH\000\210\001\001\022\021\n\004not"
+  "e\030\004 \001(\tH\001\210\001\001B\013\n\t_filenameB\007\n\005_note\"\272\005\n\013i"
+  "nstruction\0223\n\002op\030\001 \001(\0162\'.lorelai.vm.byte"
+  "code.instruction.opcode\022\016\n\001a\030\002 \001(\rH\000\210\001\001\022"
+  "\016\n\001b\030\003 \001(\rH\001\210\001\001\022\016\n\001c\030\004 \001(\rH\002\210\001\001\0222\n\005debug"
+  "\030\005 \001(\0132\036.lorelai.vm.bytecode.debugdataH\003"
+  "\210\001\001\"\365\003\n\006opcode\022\014\n\010CONSTANT\020\000\022\007\n\003MOV\020\001\022\007\n"
+  "\003ADD\020\002\022\007\n\003NOT\020\003\022\n\n\006RETURN\020\004\022\010\n\004CALL\020\005\022\014\n"
+  "\010TAILCALL\020\006\022\014\n\010UPVALSET\020\007\022\013\n\007NEWFUNC\020\010\022\n"
+  "\n\006STRING\020\t\022\n\n\006NUMBER\020\n\022\014\n\010FUNCTION\020\013\022\t\n\005"
+  "TABLE\020\014\022\014\n\010SUBTRACT\020\r\022\n\n\006DIVIDE\020\016\022\014\n\010MUL"
+  "TIPLY\020\017\022\t\n\005POWER\020\020\022\n\n\006MODULO\020\021\022\n\n\006CONCAT"
+  "\020\022\022\t\n\005INDEX\020\023\022\006\n\002OR\020\024\022\007\n\003AND\020\025\022\014\n\010LESSTH"
+  "AN\020\026\022\021\n\rLESSTHANEQUAL\020\027\022\017\n\013GREATERTHAN\020\030"
+  "\022\024\n\020GREATERTHANEQUAL\020\031\022\n\n\006EQUALS\020\032\022\r\n\tNO"
+  "TEQUALS\020\033\022\t\n\005MINUS\020\034\022\n\n\006LENGTH\020\035\022\017\n\013ENVI"
+  "RONMENT\020\036\022\014\n\010SETINDEX\020\037\022\022\n\016ENVIRONMENTGE"
+  "T\020 \022\022\n\016ENVIRONMENTSET\020!\022\007\n\003JMP\020\"\022\016\n\nJMPI"
+  "FEQUAL\020#\022\021\n\rJMPIFNOTEQUAL\020$B\004\n\002_aB\004\n\002_bB"
+  "\004\n\002_cB\010\n\006_debug\"\252\001\n\ntablevalue\0227\n\004type\030\001"
+  " \001(\0162).lorelai.vm.bytecode.tablevalue.va"
+  "luetype\022\022\n\005index\030\002 \001(\rH\000\210\001\001\"E\n\tvaluetype"
+  "\022\007\n\003NIL\020\000\022\n\n\006NUMBER\020\001\022\n\n\006STRING\020\002\022\t\n\005TAB"
+  "LE\020\003\022\014\n\010FUNCTION\020\004B\010\n\006_index\"m\n\rtablekey"
+  "value\022,\n\003key\030\001 \001(\0132\037.lorelai.vm.bytecode"
+  ".tablevalue\022.\n\005value\030\002 \001(\0132\037.lorelai.vm."
+  "bytecode.tablevalue\"r\n\005table\0222\n\tarraypar"
+  "t\030\001 \003(\0132\037.lorelai.vm.bytecode.tablevalue"
+  "\0225\n\014keyvaluepart\030\002 \003(\0132\037.lorelai.vm.byte"
+  "code.tablevalue\"7\n\020upvaluereference\022\017\n\007p"
+  "rotoup\030\001 \001(\r\022\022\n\nstackindex\030\002 \001(\r\"\241\002\n\tpro"
+  "totype\0226\n\014instructions\030\001 \003(\0132 .lorelai.v"
+  "m.bytecode.instruction\022\017\n\007numbers\030\002 \003(\001\022"
+  "\017\n\007strings\030\003 \003(\t\022*\n\006tables\030\004 \003(\0132\032.lorel"
+  "ai.vm.bytecode.table\022.\n\006protos\030\005 \003(\0132\036.l"
+  "orelai.vm.bytecode.prototype\0226\n\007upvalue\030"
+  "\007 \003(\0132%.lorelai.vm.bytecode.upvaluerefer"
+  "ence\022\027\n\nidentifier\030\006 \001(\tH\000\210\001\001B\r\n\013_identi"
+  "fierb\006proto3"
   ;
 static ::PROTOBUF_NAMESPACE_ID::internal::once_flag descriptor_table_bytecode_2eproto_once;
 const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_bytecode_2eproto = {
-  false, false, 1522, descriptor_table_protodef_bytecode_2eproto, "bytecode.proto", 
+  false, false, 1612, descriptor_table_protodef_bytecode_2eproto, "bytecode.proto", 
   &descriptor_table_bytecode_2eproto_once, nullptr, 0, 7,
   schemas, file_default_instances, TableStruct_bytecode_2eproto::offsets,
   file_level_metadata_bytecode_2eproto, file_level_enum_descriptors_bytecode_2eproto, file_level_service_descriptors_bytecode_2eproto,
@@ -319,6 +327,9 @@ bool instruction_opcode_IsValid(int value) {
     case 31:
     case 32:
     case 33:
+    case 34:
+    case 35:
+    case 36:
       return true;
     default:
       return false;
@@ -360,6 +371,9 @@ constexpr instruction_opcode instruction::ENVIRONMENT;
 constexpr instruction_opcode instruction::SETINDEX;
 constexpr instruction_opcode instruction::ENVIRONMENTGET;
 constexpr instruction_opcode instruction::ENVIRONMENTSET;
+constexpr instruction_opcode instruction::JMP;
+constexpr instruction_opcode instruction::JMPIFEQUAL;
+constexpr instruction_opcode instruction::JMPIFNOTEQUAL;
 constexpr instruction_opcode instruction::opcode_MIN;
 constexpr instruction_opcode instruction::opcode_MAX;
 constexpr int instruction::opcode_ARRAYSIZE;
@@ -396,6 +410,13 @@ constexpr int tablevalue::valuetype_ARRAYSIZE;
 
 class debugdata::_Internal {
  public:
+  using HasBits = decltype(std::declval<debugdata>()._has_bits_);
+  static void set_has_filename(HasBits* has_bits) {
+    (*has_bits)[0] |= 1u;
+  }
+  static void set_has_note(HasBits* has_bits) {
+    (*has_bits)[0] |= 2u;
+  }
 };
 
 debugdata::debugdata(::PROTOBUF_NAMESPACE_ID::Arena* arena,
@@ -408,11 +429,17 @@ debugdata::debugdata(::PROTOBUF_NAMESPACE_ID::Arena* arena,
   // @@protoc_insertion_point(arena_constructor:lorelai.vm.bytecode.debugdata)
 }
 debugdata::debugdata(const debugdata& from)
-  : ::PROTOBUF_NAMESPACE_ID::Message() {
+  : ::PROTOBUF_NAMESPACE_ID::Message(),
+      _has_bits_(from._has_bits_) {
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
   filename_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-  if (!from._internal_filename().empty()) {
+  if (from._internal_has_filename()) {
     filename_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, from._internal_filename(), 
+      GetArenaForAllocation());
+  }
+  note_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  if (from._internal_has_note()) {
+    note_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, from._internal_note(), 
       GetArenaForAllocation());
   }
   ::memcpy(&linenumber_, &from.linenumber_,
@@ -423,6 +450,7 @@ debugdata::debugdata(const debugdata& from)
 
 inline void debugdata::SharedCtor() {
 filename_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+note_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
 ::memset(reinterpret_cast<char*>(this) + static_cast<size_t>(
     reinterpret_cast<char*>(&linenumber_) - reinterpret_cast<char*>(this)),
     0, static_cast<size_t>(reinterpret_cast<char*>(&linecolumn_) -
@@ -439,6 +467,7 @@ debugdata::~debugdata() {
 inline void debugdata::SharedDtor() {
   GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
   filename_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  note_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
 }
 
 void debugdata::ArenaDtor(void* object) {
@@ -457,15 +486,25 @@ void debugdata::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  filename_.ClearToEmpty();
+  cached_has_bits = _has_bits_[0];
+  if (cached_has_bits & 0x00000003u) {
+    if (cached_has_bits & 0x00000001u) {
+      filename_.ClearNonDefaultToEmpty();
+    }
+    if (cached_has_bits & 0x00000002u) {
+      note_.ClearNonDefaultToEmpty();
+    }
+  }
   ::memset(&linenumber_, 0, static_cast<size_t>(
       reinterpret_cast<char*>(&linecolumn_) -
       reinterpret_cast<char*>(&linenumber_)) + sizeof(linecolumn_));
+  _has_bits_.Clear();
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
 const char* debugdata::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) {
 #define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  _Internal::HasBits has_bits{};
   while (!ctx->Done(&ptr)) {
     ::PROTOBUF_NAMESPACE_ID::uint32 tag;
     ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
@@ -484,12 +523,21 @@ const char* debugdata::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::
           CHK_(ptr);
         } else goto handle_unusual;
         continue;
-      // string filename = 3;
+      // optional string filename = 3;
       case 3:
         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 26)) {
           auto str = _internal_mutable_filename();
           ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
           CHK_(::PROTOBUF_NAMESPACE_ID::internal::VerifyUTF8(str, "lorelai.vm.bytecode.debugdata.filename"));
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // optional string note = 4;
+      case 4:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 34)) {
+          auto str = _internal_mutable_note();
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(::PROTOBUF_NAMESPACE_ID::internal::VerifyUTF8(str, "lorelai.vm.bytecode.debugdata.note"));
           CHK_(ptr);
         } else goto handle_unusual;
         continue;
@@ -509,6 +557,7 @@ const char* debugdata::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::
     }  // switch
   }  // while
 success:
+  _has_bits_.Or(has_bits);
   return ptr;
 failure:
   ptr = nullptr;
@@ -534,14 +583,24 @@ failure:
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32ToArray(2, this->_internal_linecolumn(), target);
   }
 
-  // string filename = 3;
-  if (!this->_internal_filename().empty()) {
+  // optional string filename = 3;
+  if (_internal_has_filename()) {
     ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
       this->_internal_filename().data(), static_cast<int>(this->_internal_filename().length()),
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
       "lorelai.vm.bytecode.debugdata.filename");
     target = stream->WriteStringMaybeAliased(
         3, this->_internal_filename(), target);
+  }
+
+  // optional string note = 4;
+  if (_internal_has_note()) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->_internal_note().data(), static_cast<int>(this->_internal_note().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "lorelai.vm.bytecode.debugdata.note");
+    target = stream->WriteStringMaybeAliased(
+        4, this->_internal_note(), target);
   }
 
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
@@ -560,13 +619,23 @@ size_t debugdata::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // string filename = 3;
-  if (!this->_internal_filename().empty()) {
-    total_size += 1 +
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
-        this->_internal_filename());
-  }
+  cached_has_bits = _has_bits_[0];
+  if (cached_has_bits & 0x00000003u) {
+    // optional string filename = 3;
+    if (cached_has_bits & 0x00000001u) {
+      total_size += 1 +
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+          this->_internal_filename());
+    }
 
+    // optional string note = 4;
+    if (cached_has_bits & 0x00000002u) {
+      total_size += 1 +
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+          this->_internal_note());
+    }
+
+  }
   // uint32 linenumber = 1;
   if (this->_internal_linenumber() != 0) {
     total_size += 1 +
@@ -609,8 +678,14 @@ void debugdata::MergeFrom(const debugdata& from) {
   ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  if (!from._internal_filename().empty()) {
-    _internal_set_filename(from._internal_filename());
+  cached_has_bits = from._has_bits_[0];
+  if (cached_has_bits & 0x00000003u) {
+    if (cached_has_bits & 0x00000001u) {
+      _internal_set_filename(from._internal_filename());
+    }
+    if (cached_has_bits & 0x00000002u) {
+      _internal_set_note(from._internal_note());
+    }
   }
   if (from._internal_linenumber() != 0) {
     _internal_set_linenumber(from._internal_linenumber());
@@ -635,10 +710,16 @@ bool debugdata::IsInitialized() const {
 void debugdata::InternalSwap(debugdata* other) {
   using std::swap;
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  swap(_has_bits_[0], other->_has_bits_[0]);
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
       &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
       &filename_, GetArenaForAllocation(),
       &other->filename_, other->GetArenaForAllocation()
+  );
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
+      &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
+      &note_, GetArenaForAllocation(),
+      &other->note_, other->GetArenaForAllocation()
   );
   ::PROTOBUF_NAMESPACE_ID::internal::memswap<
       PROTOBUF_FIELD_OFFSET(debugdata, linecolumn_)

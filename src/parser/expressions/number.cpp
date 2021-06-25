@@ -33,3 +33,7 @@ numberexpression::numberexpression(lexer &lex) {
 		lex.wasexpected("<number>", "number");
 	}
 }
+
+string numberexpression::tostring() {
+	return std::to_string(data);
+}

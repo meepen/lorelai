@@ -1,7 +1,8 @@
 #include "args.hpp"
 #include "expressions.hpp"
 #include "lexer.hpp"
-#include  "visitor.hpp"
+#include "visitor.hpp"
+#include <sstream>
 
 using namespace lorelai;
 using namespace lorelai::parser;
@@ -58,3 +59,18 @@ args::args(lexer &lex) {
 }
 
 LORELAI_VISIT_BRANCH_DEFINE(args)
+
+string args::tostring() {
+	std::stringstream stream;
+
+	bool first = true;
+	for (auto &arg : children) {
+		if (!first) {
+			stream << ", ";
+		}
+		first = false;
+		stream << arg->tostring();
+	}
+
+	return stream.str();
+}

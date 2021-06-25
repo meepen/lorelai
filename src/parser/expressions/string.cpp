@@ -187,3 +187,7 @@ bool stringexpression::applicable(lexer &lex) {
 	}
 	return false;
 }
+
+string stringexpression::tostring() {
+	return data;
+}

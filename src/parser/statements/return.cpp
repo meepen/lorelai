@@ -1,6 +1,7 @@
 #include "statements.hpp"
 #include "expressions.hpp"
 #include "lexer.hpp"
+#include <sstream>
 
 using namespace lorelai;
 using namespace lorelai::parser;
@@ -16,4 +17,23 @@ returnstatement::returnstatement(lexer &lex) {
 			break;
 		}
 	}
+}
+
+string returnstatement::tostring() {
+	std::stringstream stream;
+	stream << "return";
+	if (children.size() > 0) {
+		stream << " ";
+		bool first = true;
+
+		for (auto &child : children) {
+			if (!first) {
+				stream << ", ";
+			}
+			first = false;
+			stream << child->tostring();
+		}
+	}
+
+	return stream.str();
 }

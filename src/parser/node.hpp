@@ -3,6 +3,8 @@
 
 #include <vector>
 #include <memory>
+#include <string>
+#include "types.hpp"
 
 namespace lorelai {
 	namespace parser {
@@ -10,6 +12,7 @@ namespace lorelai {
 		class node {
 		public:
 			virtual bool accept(visitor &visit, std::shared_ptr<node> &container) = 0;
+			virtual string tostring() = 0;
 		};
 
 		class branch : public node {

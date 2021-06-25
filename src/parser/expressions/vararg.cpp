@@ -9,3 +9,7 @@ using namespace lorelai::parser::expressions;
 varargexpression::varargexpression(lexer &lex) {
 	lex.expect("...", "...");
 }
+
+string varargexpression::tostring() {
+	return "...";
+}

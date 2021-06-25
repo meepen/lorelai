@@ -13,3 +13,7 @@ nameexpression::nameexpression(lexer &lex) {
 		lex.wasexpected("<name>", "name");
 	}
 }
+
+string nameexpression::tostring() {
+	return name;
+}

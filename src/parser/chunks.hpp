@@ -16,6 +16,7 @@ namespace lorelai {
 			chunk(string data, bool expect_eof = false);
 
 			bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+			string tostring() override { return ""; }
 		};
 	}
 }

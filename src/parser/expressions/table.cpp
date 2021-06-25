@@ -127,3 +127,7 @@ bool tableexpression::accept(visitor &visit, std::shared_ptr<node> &container) {
 
 	return r || r2;
 }
+
+string tableexpression::tostring() {
+	return "{lol}";
+}

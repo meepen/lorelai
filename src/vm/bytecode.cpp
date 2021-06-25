@@ -233,8 +233,9 @@ public:
 			return found->second;
 		}
 
-		strings[str] = proto.strings_size();
+		auto ret = strings[str] = proto.strings_size();
 		proto.add_strings(str);
+		return ret;
 	}
 
 	int add(number num) {
@@ -243,8 +244,9 @@ public:
 			return found->second;
 		}
 
-		numbers[num] = proto.numbers_size();
+		auto ret = numbers[num] = proto.numbers_size();
 		proto.add_numbers(num);
+		return ret;
 	}
 
 public:
@@ -301,7 +303,7 @@ public:
 			auto index = indexes[0];
 			indexes.pop_front();
 
-			emit(bytecode::instruction_opcode_CONSTANT, index, 2);
+			emit(bytecode::instruction_opcode_CONSTANT, index, 2)->set_allocated_debug();
 		}
 
 		return false;
@@ -402,6 +404,41 @@ public:
 	}
 
 private:
+	struct _whilequeue {
+		int startinstr;
+		size_t conditionalstack;
+		bytecode::instruction *patch;
+	};
+
+	std::vector<_whilequeue> whilequeue;
+public:
+
+	LORELAI_VISIT_FUNCTION(statements::whilestatement) {
+		_whilequeue data;
+		data.startinstr = curfunc.proto.instructions_size();
+		data.conditionalstack = curfunc.gettemp(1);
+
+		runexpressionhandler(obj.conditional, data.conditionalstack, 1);
+		data.patch = emit(bytecode::instruction_opcode_JMPIFNOTEQUAL, data.conditionalstack);
+
+		whilequeue.push_back(data);
+
+		curfunc.pushscope();
+		return false;
+	}
+
+	LORELAI_POSTVISIT_FUNCTION(statements::whilestatement) {
+		auto data = whilequeue.back();
+
+		emit(bytecode::instruction_opcode_JMP, data.startinstr);
+		data.patch->set_b(curfunc.proto.instructions_size());
+		curfunc.freetemp(data.conditionalstack, 1);
+		curfunc.popscope();
+		whilequeue.pop_back();
+		return false;
+	}
+
+private:
 	void pushornil(std::vector<std::shared_ptr<node>> &v, int index, size_t target) {
 		if (index < v.size()) {
 			runexpressionhandler(v[index], target, 1);
@@ -428,27 +465,31 @@ public:
 	}
 
 public:
-	void emit(bytecode::instruction_opcode opcode) {
+	bytecode::instruction *emit(bytecode::instruction_opcode opcode) {
 		auto instruction = curfunc.proto.add_instructions();
 		instruction->set_op(opcode);
+		return instruction;
 	}
-	void emit(bytecode::instruction_opcode opcode, std::uint32_t a) {
+	bytecode::instruction *emit(bytecode::instruction_opcode opcode, std::uint32_t a) {
 		auto instruction = curfunc.proto.add_instructions();
 		instruction->set_op(opcode);
 		instruction->set_a(a);
+		return instruction;
 	}
-	void emit(bytecode::instruction_opcode opcode, std::uint32_t a, std::uint32_t b) {
+	bytecode::instruction *emit(bytecode::instruction_opcode opcode, std::uint32_t a, std::uint32_t b) {
 		auto instruction = curfunc.proto.add_instructions();
 		instruction->set_op(opcode);
 		instruction->set_a(a);
 		instruction->set_b(b);
+		return instruction;
 	}
-	void emit(bytecode::instruction_opcode opcode, std::uint32_t a, std::uint32_t b, std::uint32_t c) {
+	bytecode::instruction *emit(bytecode::instruction_opcode opcode, std::uint32_t a, std::uint32_t b, std::uint32_t c) {
 		auto instruction = curfunc.proto.add_instructions();
 		instruction->set_op(opcode);
 		instruction->set_a(a);
 		instruction->set_b(b);
 		instruction->set_c(c);
+		return instruction;
 	}
 
 public:
@@ -629,8 +670,8 @@ static void generate_nameexpression(bytecodegenerator &gen, node &_expr, size_t 
 	}
 
 	auto &expr = *dynamic_cast<expressions::nameexpression *>(&_expr);
-	if (gen.curfunc.haslocal(expr.name)) {
-		gen.emit(bytecode::instruction_opcode_MOV, target, gen.curfunc.findlocal(expr.name), 0);
+	if (auto scope = gen.curfunc.curscope->findvariablescope(expr.name)) {
+		gen.emit(bytecode::instruction_opcode_MOV, target, scope->getvariableindex(expr.name), 0);
 	}
 	else if(gen.curfunc.hasupvalue(expr.name)) {
 		// TODO

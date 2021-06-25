@@ -15,3 +15,7 @@ dostatement::dostatement(lexer &lex) {
 
 	lex.expect("end", "do .. end");
 }
+
+string dostatement::tostring() {
+	return "do";
+}

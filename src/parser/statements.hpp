@@ -54,6 +54,7 @@ namespace lorelai {
 				bool isfinal() override { return true; }
 
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				string tostring() override;
 			};
 			
 			class dostatement : public blockstatement {
@@ -63,6 +64,7 @@ namespace lorelai {
 				dostatement(lexer &lex);
 
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				string tostring() override;
 			};
 
 			class whilestatement : public loopstatement {
@@ -70,6 +72,7 @@ namespace lorelai {
 				whilestatement(lexer &lex);
 
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				string tostring() override;
 			};
 
 			class repeatstatement : public loopstatement {
@@ -77,6 +80,7 @@ namespace lorelai {
 				repeatstatement(lexer &lex);
 
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				string tostring() override;
 			};
 
 			class localassignmentstatement : public branch, public statement {
@@ -84,6 +88,7 @@ namespace lorelai {
 				localassignmentstatement(lexer &lex);
 
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				string tostring() override;
 
 			public:
 				std::vector<std::shared_ptr<node>> left;
@@ -95,6 +100,7 @@ namespace lorelai {
 				localfunctionstatement(lexer &lex);
 
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				string tostring() override;
 
 			public:
 				std::shared_ptr<node> name;
@@ -106,6 +112,7 @@ namespace lorelai {
 				fornumstatement(std::shared_ptr<node> name, lexer &lex);
 
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				string tostring() override;
 
 			public:
 				std::shared_ptr<node> itername;
@@ -117,6 +124,7 @@ namespace lorelai {
 				forinstatement(std::shared_ptr<node> name, lexer &lex);
 
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				string tostring() override;
 
 			public:
 				std::vector<std::shared_ptr<node>> iternames;
@@ -130,6 +138,7 @@ namespace lorelai {
 				bool isfinal() override { return true; }
 
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				string tostring() override;
 			};
 			
 			class ifstatement : public branch, public statement {
@@ -137,6 +146,7 @@ namespace lorelai {
 				ifstatement(lexer &lex);
 
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				string tostring() override;
 
 			public:
 				std::vector<std::shared_ptr<node>> conditionals;
@@ -148,9 +158,10 @@ namespace lorelai {
 				functionstatement(lexer &lex);
 
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				string tostring() override;
 
 			public:
-				std::vector<std::shared_ptr<node>> names;
+				std::shared_ptr<node> name;
 				std::shared_ptr<node> method;
 				std::shared_ptr<node> body;
 			};
@@ -162,6 +173,7 @@ namespace lorelai {
 				}
 
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				string tostring() override;
 			};
 
 			class assignmentstatement : public branch, public statement {
@@ -169,6 +181,7 @@ namespace lorelai {
 				assignmentstatement(std::shared_ptr<node> exp, lexer &lex);
 
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				string tostring() override;
 
 			public:
 				std::vector<std::shared_ptr<node>> left;

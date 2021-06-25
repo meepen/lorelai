@@ -9,3 +9,7 @@ using namespace lorelai::parser::expressions;
 nilexpression::nilexpression(lexer &lex) {
 	lex.expect("nil", "nil");
 }
+
+string nilexpression::tostring() {
+	return "nil";
+}
