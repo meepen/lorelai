@@ -1,2 +1,4 @@
 proj
 bin
+*.pb.cc
+*.pb.h
