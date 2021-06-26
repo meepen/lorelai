@@ -1,3 +1,8 @@
+newoption {
+	trigger     = "with-jit",
+	description = "Enables JIT state runtime (if available)"
+}
+
 local libs = {
 	lexer = {
 		includes = {
@@ -190,16 +195,23 @@ workspace "lorelai"
 		files {
 			"src/vm/**.cc",
 			"src/vm/*.cpp",
+			"src/vm/software/**.cpp"
 		}
 
-		filter "platforms:x86 or x86-64"
-			files {
-				"src/vm/x86/**.cpp"
-			}
-		filter "platforms:not x86 and not x86-64"
-			files {
-				"src/vm/software/**.cpp"
-			}
+		filter { "platforms:x86 or x86-64" }
+			configuration "with-jit"
+				defines { "LORELAI_X86_FASTEST" }
+				files {
+					"src/vm/x86/**.cpp"
+				}
+
+		filter {"platforms:not x86 and not x86-64"}
+			configuration "with-jit"
+				defines { "LORELAI_SOFTWARE_FASTEST" }
+
+		filter {}
+			configuration "not with-jit"
+				defines { "LORELAI_SOFTWARE_FASTEST" }
 
 	project "lorelai"
 		kind "ConsoleApp"

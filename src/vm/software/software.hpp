@@ -7,7 +7,10 @@ namespace lorelai {
 	namespace vm {
 		class softwarestate : public state {
 		public:
-			const char *backend() override { return "software"; }
+			const char *backend() const override { return "software"; }
+			void loadstring(const std::string &code) override;
+
+			static std::shared_ptr<state> create();
 		};
 	}
 }

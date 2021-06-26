@@ -63,7 +63,9 @@
 			"thread": "cpp",
 			"*.inc": "cpp",
 			"typeindex": "cpp",
-			"list": "cpp"
+			"list": "cpp",
+			"strstream": "cpp",
+			"iomanip": "cpp"
 		}
 	}
 }
