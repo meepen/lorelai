@@ -12,7 +12,10 @@
 			"windows": {
 				"command": ".\\scripts\\build.bat"
 			},
-			"group": "build"
+			"group": "build",
+			"problemMatcher": [
+				"$eslint-compact"
+			]
 		}
 	]
 }

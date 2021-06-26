@@ -63,12 +63,12 @@ int softwarestate::_stack<size>::poppointer(const stackpos old, const state::_re
 		data[to + i - 1] = data[retdata.retbase + i - 1];
 	}
 
-	for (int i = std::min(amount, retdata.retsize); i <= amount; i++) {
-		data[i] = std::make_shared<nilobject>();
+	for (int i = std::min(amount, retdata.retsize) + 1; i <= amount; i++) {
+		data[to + i - 1] = std::make_shared<nilobject>();
 	}
 
-	top = old.top + retdata.retsize;
+	top = old.top;
 	base = old.base;
 
-	return retdata.retsize;
+	return amount;
 }

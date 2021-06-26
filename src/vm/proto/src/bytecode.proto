@@ -110,5 +110,7 @@ message prototype {
 	repeated prototype protos = 5;
 	repeated upvaluereference upvalue = 7;
 
+	uint32 stacksize = 8;
+
 	optional string identifier = 6;
 }

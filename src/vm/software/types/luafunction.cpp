@@ -37,15 +37,37 @@ OPCODE_FUNCTION(opnumber) {
 }
 
 OPCODE_FUNCTION(opcall) {
-	 // A .. A+C-2 = A(A+1 .. A + B)
+	// A .. A+C-2 = A(A+1 .. A + B)
 	auto old = run.state->pushpointer(run.state->base + instr.a());
 	auto data = run.state[0];
 	auto nret = data->call(run.state, instr.c() - 1, instr.b());
 	if (instr.c() >= 1) {
-		run.state->poppointer(old, nret, run.state->base + instr.a(), instr.c() - 1);
+		run.state->poppointer(old, nret, old.base + instr.a(), instr.c() - 1);
 	}
 	else {
-		run.state->poppointer(old, nret, run.state->base + run.state->top, -1);
+		run.multres = run.state->poppointer(old, nret, old.base + old.top, -1);
+	}
+
+	return nullptr;
+}
+
+OPCODE_FUNCTION(opcallm) {
+	// A .. A+C-2 = A(A+1 .. A + B, ...)
+	for (int i = run.multres - 1; i >= 0; i--) {
+		run.state[run.state->top + i + instr.b() + 1] = run.state[run.state->top + i];
+	}
+	for (int i = 0; i <= instr.b(); i++) {
+		run.state[run.state->top + i] = run.state[instr.a() + i];
+	}
+
+	auto old = run.state->pushpointer(run.state->base + run.state->top);
+	auto data = run.state[0];
+	auto nret = data->call(run.state, instr.c() - 1, instr.b() + run.multres);
+	if (instr.c() >= 1) {
+		run.state->poppointer(old, nret, old.base + instr.a(), instr.c() - 1);
+	}
+	else {
+		run.multres = run.state->poppointer(old, nret, old.base + old.top, -1);
 	}
 
 	return nullptr;
@@ -66,6 +88,7 @@ static std::map<bytecode::instruction_opcode, func> opcode_map = {
 	{ bytecode::instruction_opcode_ENVIRONMENTGET, openvironmentget },
 	{ bytecode::instruction_opcode_NUMBER, opnumber },
 	{ bytecode::instruction_opcode_CALL, opcall },
+	{ bytecode::instruction_opcode_CALLM, opcallm },
 	{ bytecode::instruction_opcode_MOV, opmov },
 };
 
@@ -83,6 +106,8 @@ public:
 
 state::_retdata luafunctionobject::call(softwarestate &state, int nrets, int nargs) {
 	_running run { state, nrets, nargs, data };
+
+	state->top = state->base + data->stacksize();
 
 	size_t nextinstruction = 0;
 	auto max = data->instructions_size();

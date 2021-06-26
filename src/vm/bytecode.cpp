@@ -1001,9 +1001,12 @@ std::unordered_map<std::type_index, expressiongenerator> expressionmap = {
 
 std::shared_ptr<bytecode::prototype> lorelai::vm::parse(chunk &data) {
 	bytecodegenerator generator;
+	auto r = generator.curfunc.proto;
 	std::shared_ptr<node> container = std::make_shared<chunk>(data);
 
 	data.accept(generator, container);
 
-	return generator.curfunc.proto;
+	r->set_stacksize(generator.curfunc.funcstack.maxsize);
+
+	return r;
 }

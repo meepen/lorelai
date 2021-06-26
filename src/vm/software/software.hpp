@@ -22,11 +22,6 @@ namespace lorelai {
 						data[i] = std::make_shared<nilobject>();
 					}
 				}
-				~_stack() {
-					for (size_t i = 0; i < sizeof(data) / sizeof(*data); i++) {
-						data[i] = nullptr;
-					}
-				}
 
 				std::shared_ptr<object> &operator[](const int index) {
 					if (index >= 0) {

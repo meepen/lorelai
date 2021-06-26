@@ -1488,6 +1488,7 @@ class prototype final :
     kProtosFieldNumber = 5,
     kUpvalueFieldNumber = 7,
     kIdentifierFieldNumber = 6,
+    kStacksizeFieldNumber = 8,
   };
   // repeated .lorelai.vm.bytecode.instruction instructions = 1;
   int instructions_size() const;
@@ -1625,6 +1626,15 @@ class prototype final :
   std::string* _internal_mutable_identifier();
   public:
 
+  // uint32 stacksize = 8;
+  void clear_stacksize();
+  ::PROTOBUF_NAMESPACE_ID::uint32 stacksize() const;
+  void set_stacksize(::PROTOBUF_NAMESPACE_ID::uint32 value);
+  private:
+  ::PROTOBUF_NAMESPACE_ID::uint32 _internal_stacksize() const;
+  void _internal_set_stacksize(::PROTOBUF_NAMESPACE_ID::uint32 value);
+  public:
+
   // @@protoc_insertion_point(class_scope:lorelai.vm.bytecode.prototype)
  private:
   class _Internal;
@@ -1641,6 +1651,7 @@ class prototype final :
   ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::lorelai::vm::bytecode::prototype > protos_;
   ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::lorelai::vm::bytecode::upvaluereference > upvalue_;
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr identifier_;
+  ::PROTOBUF_NAMESPACE_ID::uint32 stacksize_;
   friend struct ::TableStruct_bytecode_2eproto;
 };
 // ===================================================================
@@ -2656,6 +2667,26 @@ inline const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::lorelai::vm::bytecode:
 prototype::upvalue() const {
   // @@protoc_insertion_point(field_list:lorelai.vm.bytecode.prototype.upvalue)
   return upvalue_;
+}
+
+// uint32 stacksize = 8;
+inline void prototype::clear_stacksize() {
+  stacksize_ = 0u;
+}
+inline ::PROTOBUF_NAMESPACE_ID::uint32 prototype::_internal_stacksize() const {
+  return stacksize_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::uint32 prototype::stacksize() const {
+  // @@protoc_insertion_point(field_get:lorelai.vm.bytecode.prototype.stacksize)
+  return _internal_stacksize();
+}
+inline void prototype::_internal_set_stacksize(::PROTOBUF_NAMESPACE_ID::uint32 value) {
+  
+  stacksize_ = value;
+}
+inline void prototype::set_stacksize(::PROTOBUF_NAMESPACE_ID::uint32 value) {
+  _internal_set_stacksize(value);
+  // @@protoc_insertion_point(field_set:lorelai.vm.bytecode.prototype.stacksize)
 }
 
 // optional string identifier = 6;
