@@ -21,7 +21,7 @@ OPCODE_FUNCTION(openvironmentget) {
 }
 
 OPCODE_FUNCTION(opnumber) {
-	state->at(instr.a()) = std::make_shared<numberobject>(proto->numbers(instr.b()));
+	state[instr.a()] = std::make_shared<numberobject>(proto->numbers(instr.b()));
 
 	return nullptr;
 }
@@ -29,7 +29,7 @@ OPCODE_FUNCTION(opnumber) {
 OPCODE_FUNCTION(opcall) {
 	 // A .. A+C-2 = A(A+1 .. A + B)
 	auto old = state->pushpointer(instr.a());
-	auto data = state->at(instr.a());
+	auto data = state[instr.a()];
 	auto nret = data->call(state, instr.c() - 1, instr.b());
 
 	return nullptr;

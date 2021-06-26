@@ -37,10 +37,6 @@ namespace lorelai {
 					}
 				}
 
-				std::shared_ptr<object> &at(const int index) {
-					return data[base + index];
-				}
-
 				stackpos pushpointer(int _base) {
 					stackpos old = {base, top};
 					base = _base;
