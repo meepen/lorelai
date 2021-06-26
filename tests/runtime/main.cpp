@@ -3,6 +3,10 @@
 #include "bytecode.hpp"
 #include <iostream>
 #include <fstream>
+#include "tclap/CmdLine.h"
+#include "tclap/ValueArg.h"
+
+using namespace TCLAP;
 
 #ifdef __linux__
 #include <cxxabi.h>
@@ -39,24 +43,34 @@ static void print_branch(size_t idx, lorelai::parser::node &node) {
 	}
 }
 
-int main(int argc, char *argv[]) {
-	if (argc != 2) {
-		std::cerr << "Error: no argument for file" << std::endl;
-		return 1;
+class exception : public std::exception {
+public:
+	exception(std::string what) : _what(what) { }
+
+	const char *what() const noexcept override {
+		return _what.c_str();
 	}
 
-	std::ifstream luafile(argv[1]);
-	auto inputcode = std::string(
-		std::istreambuf_iterator<char>(luafile),
-		std::istreambuf_iterator<char>()
-	);
+	std::string _what;
+};
 
-	lorelai::parser::chunk mainchunk(inputcode);
-	print_branch(0, mainchunk);
-	auto bytecode = lorelai::vm::parse(mainchunk);
+static std::string getcode(ValueArg<std::string> &filename, ValueArg<std::string> &code) {
+	if (code.isSet()) {
+		return code.getValue();
+	}
+	else if (filename.isSet()) {
+		std::ifstream luafile(filename.getValue());
+		return std::string(
+			std::istreambuf_iterator<char>(luafile),
+			std::istreambuf_iterator<char>()
+		);
+	}
+	else {
+		throw exception("no code provided");
+	}
+}
 
-	std::cout << "Code evaluated: " << inputcode << std::endl;
-
+static void printproto(lorelai::vm::bytecode::prototype &bytecode) {
 	std::cout << "Bytecode evaluated: " << std::endl;
 	std::cout << "    Instructions: " << bytecode.instructions_size() << std::endl;
 	std::cout << "    Prototypes:   " << bytecode.protos_size() << std::endl;
@@ -96,6 +110,54 @@ int main(int argc, char *argv[]) {
 		}
 
 		std::cout << std::endl;
+	}
+}
+
+int main(int argc, char *argv[]) {
+	
+	try {
+		// Define the command line object.
+		CmdLine cmd("lorelai", ' ', "0.0");
+		ValueArg<std::string> filename("f", "file", "File to load code from", false, "-", "string");
+		cmd.add(filename);
+		ValueArg<std::string> code("l", "lua", "Lua code to load", false, "", "string");
+		cmd.add(code);
+
+		SwitchArg bytecodeonly("b", "bytecode", "Print bytecode", false);
+		cmd.add(bytecodeonly);
+		SwitchArg raw("r", "raw", "Raw output", false);
+		cmd.add(raw);
+		SwitchArg astonly("a", "ast", "Print ast structure", false);
+		cmd.add(astonly);
+
+		cmd.parse(argc, argv);
+
+		auto luacode = getcode(filename, code);
+		lorelai::parser::chunk mainchunk(luacode);
+		if (astonly.getValue()) {
+			print_branch(0, mainchunk);
+			return 0;
+		}
+
+		auto bytecode = lorelai::vm::parse(mainchunk);
+
+		if (bytecodeonly.getValue()) {
+			if (raw.getValue()) {
+				std::cout << bytecode.SerializeAsString();
+				return 0;
+			}
+
+			printproto(bytecode);
+			return 0;
+		}
+	}
+	catch (ArgException &e) {
+		std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl;
+		return 1;
+	}
+	catch (std::exception &e) {
+		std::cerr << "error: " << e.what() << std::endl;
+		return 1;
 	}
 
 	return 0;

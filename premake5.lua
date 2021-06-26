@@ -207,6 +207,12 @@ workspace "lorelai"
 			"liblorelai",
 		}
 		files "tests/runtime/main.cpp"
+		includedirs {
+			"tclap/include"
+		}
+		files {
+			"tclap/include/**.h"
+		}
 
 	project "test-parser"
 		kind "ConsoleApp"

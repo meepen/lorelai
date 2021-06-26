@@ -1,3 +1,6 @@
 [submodule "asmjit"]
 	path = asmjit
 	url = https://github.com/asmjit/asmjit.git
+[submodule "tclap"]
+	path = tclap
+	url = https://github.com/mirror/tclap.git
