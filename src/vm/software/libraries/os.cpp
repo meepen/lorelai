@@ -6,7 +6,7 @@ using namespace lorelai;
 using namespace lorelai::vm;
 
 static int os_clock(softwarestate &state, int nrets, int nargs) {
-	state.loadnumber(clock());
+	state.loadnumber(static_cast<number>(clock()) / CLOCKS_PER_SEC);
 
 	return 1;
 }

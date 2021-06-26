@@ -638,6 +638,7 @@ public:
 	LORELAI_POSTVISIT_FUNCTION(statements::fornumstatement) {
 		auto &queue = loopqueue.back();
 
+		emit(bytecode::instruction_opcode_ADD, queue.stackreserved, queue.stackreserved, queue.stackreserved + 2);
 		emit(bytecode::instruction_opcode_JMP, 0, queue.startinstr);
 
 		for (auto &patch : queue.patches) {

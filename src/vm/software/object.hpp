@@ -27,7 +27,6 @@ namespace lorelai {
 		public:
 			virtual ~object() { }
 			virtual const char *type() const = 0;
-			virtual bool equals(const object &b) const { return this == &b; }
 
 			virtual size_t hash() const {
 				return std::hash<uintptr_t>()(reinterpret_cast<uintptr_t>(this));
@@ -37,21 +36,29 @@ namespace lorelai {
 				return type();
 			}
 
+			virtual bool tobool(softwarestate &state) {
+				return true;
+			}
+
 			virtual number          LORELAI_SOFTWARE_DEFAULT_FUNCTION(tonumber,    softwarestate &state)
-			virtual void            LORELAI_SOFTWARE_DEFAULT_FUNCTION(lessthan,    softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs)
-			virtual void            LORELAI_SOFTWARE_DEFAULT_FUNCTION(greaterthan, softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs)
-			virtual void            LORELAI_SOFTWARE_DEFAULT_FUNCTION(concat,      softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs)
 			virtual bool            LORELAI_SOFTWARE_DEFAULT_FUNCTION(rawget,      softwarestate &state, objectcontainer &out, objectcontainer rhs)
 			virtual void            LORELAI_SOFTWARE_DEFAULT_FUNCTION(rawset,      softwarestate &state, objectcontainer lhs, objectcontainer rhs)
 			virtual void            LORELAI_SOFTWARE_DEFAULT_FUNCTION(length,      softwarestate &state, objectcontainer &out, objectcontainer &obj)
 			virtual state::_retdata LORELAI_SOFTWARE_DEFAULT_FUNCTION(call,        softwarestate &state, int nrets, int nargs)
 
-			void add(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs);
-			void subtract(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs);
-			void divide(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs);
-			void multiply(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs);
-			void power(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs);
-			void modulo(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs);
+			virtual bool equals      (const object &b) const { return this == &b; }
+
+			bool equals      (softwarestate &state, objectcontainer rhs) { return equals(*rhs.get()); }
+			bool lessthan    (softwarestate &state, objectcontainer rhs);
+			bool greaterthan (softwarestate &state, objectcontainer rhs);
+
+			void concat        (softwarestate &state, objectcontainer &out, objectcontainer rhs);
+			void add           (softwarestate &state, objectcontainer &out, objectcontainer rhs);
+			void subtract      (softwarestate &state, objectcontainer &out, objectcontainer rhs);
+			void divide        (softwarestate &state, objectcontainer &out, objectcontainer rhs);
+			void multiply      (softwarestate &state, objectcontainer &out, objectcontainer rhs);
+			void power         (softwarestate &state, objectcontainer &out, objectcontainer rhs);
+			void modulo        (softwarestate &state, objectcontainer &out, objectcontainer rhs);
 
 			virtual bool index(softwarestate &state, objectcontainer &out, objectcontainer rhs) {
 				if (!rawget(state, out, rhs)) {
@@ -100,6 +107,9 @@ namespace lorelai {
 			std::shared_ptr<object> metatable() const override {
 				return nil_metatable;
 			}
+			bool tobool(softwarestate &state) override {
+				return false;
+			}
 
 		private:
 			static std::shared_ptr<object> nil_metatable;
@@ -110,14 +120,14 @@ namespace lorelai {
 			numberobject(number num) : data(num) { }
 		public:
 			const char *type() const override { return "number"; }
+			size_t hash() const override {
+				return std::hash<number>()(data);
+			}
 			bool equals(const object & b) const override {
 				return metatable() == b.metatable() && dynamic_cast<const numberobject &>(b).data == data;
 			}
-			std::shared_ptr<object> metatable()const  override {
+			std::shared_ptr<object> metatable() const override {
 				return number_metatable;
-			}
-			size_t hash() const override {
-				return std::hash<number>()(data);
 			}
 
 			string tostring(softwarestate &state) override {
@@ -136,6 +146,36 @@ namespace lorelai {
 
 		private:
 			static std::shared_ptr<object> number_metatable;
+		};
+
+		class boolobject : public object {
+		public:
+			boolobject(bool b) : data(b) { }
+
+		public:
+			const char *type() const override { return "boolean"; }
+			size_t hash() const override {
+				return std::hash<bool>()(data);
+			}
+
+			bool equals(const object & b) const override {
+				return metatable() == b.metatable() && dynamic_cast<const boolobject &>(b).data == data;
+			}
+			bool tobool(softwarestate &state) override {
+				return data;
+			}
+			std::shared_ptr<object> metatable() const override {
+				return boolean_metatable;
+			}
+			string tostring(softwarestate &state) override {
+				return data ? "true" : "false";
+			}
+
+		public:
+			bool data;
+
+		private:
+			static std::shared_ptr<object> boolean_metatable;
 		};
 
 		class stringobject : public object {

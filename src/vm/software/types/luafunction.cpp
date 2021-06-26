@@ -34,7 +34,7 @@ using func = state::_retdata *(*)(_running &run, const bytecode::instruction &in
 // A = B - C
 #define MATHFUNC(opcode, name) \
 OPCODE_FUNCTION(op##name) { \
-	run.state[instr.b()]->name(run.state, run.state[instr.a()], run.state[instr.b()], run.state[instr.c()]); \
+	run.state[instr.b()]-> name (run.state, run.state[instr.a()], run.state[instr.c()]); \
  \
 	return nullptr; \
 }
@@ -43,11 +43,48 @@ MATHOPS(MATHFUNC)
 
 #define COMPAREOPS(fn) \
 	fn(LESSTHAN, lessthan) \
-	fn(LESSTHANEQUAL, lessthanequal) \
 	fn(GREATERTHAN, greaterthan) \
-	fn(GREATERTHANEQUAL, greaterthanequal) \
-	fn(EQUALS, equals) \
-	fn(NOTEQUALS, notequals)
+	fn(EQUALS, equals)
+
+#define OPFUNC(opcode, name) \
+OPCODE_FUNCTION(op##name) { \
+	run.state[instr.a()] = std::make_shared<boolobject>(run.state[instr.b()]-> name (run.state, run.state[instr.c()])); \
+ \
+	return nullptr; \
+}
+
+
+OPCODE_FUNCTION(opgreaterthanequal) {
+	run.state[instr.a()] = std::make_shared<boolobject>(!run.state[instr.c()]->greaterthan(run.state, run.state[instr.b()]));
+
+	return nullptr;
+}
+
+OPCODE_FUNCTION(oplessthanequal) {
+	run.state[instr.a()] = std::make_shared<boolobject>(!run.state[instr.c()]->lessthan(run.state, run.state[instr.b()]));
+
+	return nullptr;
+}
+
+OPCODE_FUNCTION(opnotequals) {
+	run.state[instr.a()] = std::make_shared<boolobject>(!run.state[instr.c()]->equals(run.state, run.state[instr.b()]));
+
+	return nullptr;
+}
+
+OPCODE_FUNCTION(opnot) {
+	run.state[instr.a()] = std::make_shared<boolobject>(!run.state[instr.b()]->tobool(run.state));
+
+	return nullptr;
+}
+
+OPCODE_FUNCTION(opminus) {
+	run.state[instr.a()] = std::make_shared<numberobject>(-run.state[instr.b()]->tonumber(run.state));
+
+	return nullptr;
+}
+
+COMPAREOPS(OPFUNC)
 
 #define LOGICOPS(fn) \
 	fn(and, AND, and, &&) \
@@ -128,6 +165,53 @@ OPCODE_FUNCTION(opmov) {
 		run.state[a + i] = run.state[b + i];
 	}
 	
+	return nullptr;
+}
+
+// ({true, false, nil})[B]
+OPCODE_FUNCTION(opconstant) {
+	switch (instr.b()) {
+	case 0:
+		run.state[instr.a()] = std::make_shared<boolobject>(true);
+		break;
+	case 1:
+		run.state[instr.a()] = std::make_shared<boolobject>(false);
+		break;
+	default:
+		run.state[instr.a()] = std::make_shared<nilobject>();
+		break;
+	}
+
+	return nullptr;
+}
+
+/*
+		JMP           = 34; // JMP(instruction(B))
+		JMPIFTRUE     = 35; // if (A) { JMP(instruction(B)) }
+		JMPIFFALSE    = 36; // if (!A) { JMP(instruction(B)) }
+		JMPIFNIL      = 37; // if (A == nil) { JMP(instruction(B)) }
+*/
+
+OPCODE_FUNCTION(opjmp) {
+	run.nextinstruction = instr.b();
+
+	return nullptr;
+}
+
+OPCODE_FUNCTION(opjmpiffalse) {
+	if (!run.state[instr.a()]->tobool(run.state)) {
+		run.nextinstruction = instr.b();
+	}
+
+	return nullptr;
+}
+
+OPCODE_FUNCTION(opjmpiftrue) {
+	if (run.state[instr.a()]->tobool(run.state)) {
+		run.nextinstruction = instr.b();
+	}
+
+	return nullptr;
 }
 
 static std::map<bytecode::instruction_opcode, func> opcode_map = {
@@ -138,7 +222,17 @@ static std::map<bytecode::instruction_opcode, func> opcode_map = {
 	{ bytecode::instruction_opcode_MOV, opmov },
 	{ bytecode::instruction_opcode_STRING, opstring },
 	{ bytecode::instruction_opcode_INDEX, opindex },
+	{ bytecode::instruction_opcode_GREATERTHANEQUAL, opgreaterthanequal },
+	{ bytecode::instruction_opcode_LESSTHANEQUAL, oplessthanequal },
+	{ bytecode::instruction_opcode_NOTEQUALS, opnotequals },
+	{ bytecode::instruction_opcode_NOT, opnot },
+	{ bytecode::instruction_opcode_MINUS, opminus },
+	{ bytecode::instruction_opcode_CONSTANT, opconstant },
+	{ bytecode::instruction_opcode_JMP, opjmp },
+	{ bytecode::instruction_opcode_JMPIFFALSE, opjmpiffalse },
+	{ bytecode::instruction_opcode_JMPIFTRUE, opjmpiftrue },
 	MATHOPS(OPMAPFUNC)
+	COMPAREOPS(OPMAPFUNC)
 };
 
 class exception : public std::exception {
@@ -158,11 +252,10 @@ state::_retdata luafunctionobject::call(softwarestate &state, int nrets, int nar
 
 	state->top = state->base + data->stacksize();
 
-	size_t nextinstruction = 0;
 	auto max = data->instructions_size();
 	
-	while (nextinstruction < max) {
-		auto &instr = data->instructions(nextinstruction++);
+	while (run.nextinstruction < max) {
+		auto &instr = data->instructions(run.nextinstruction++);
 		auto found = opcode_map.find(instr.op());
 		if (found == opcode_map.end()) {
 			throw exception("Unknown opcode " + bytecode::instruction_opcode_Name(instr.op()));

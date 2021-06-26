@@ -53,8 +53,7 @@ state::_retdata softwarestate::call(int nargs, int nrets) {
 	};
 }
 
-template <int size>
-int softwarestate::_stack<size>::poppointer(const stackpos old, const state::_retdata retdata, int to, int amount) {
+int softwarestate::_stack::poppointer(const stackpos old, const state::_retdata retdata, int to, int amount) {
 	if (amount == -1) {
 		amount = retdata.retsize;
 	}

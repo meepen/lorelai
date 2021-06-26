@@ -134,15 +134,19 @@ workspace "lorelai"
 	location "proj"
 	characterset "MBCS"
 	warnings "Default"
+	symbols "On"
 
 	filter "configurations:debug"
 		defines "DEBUG"
-		symbols "On"
 		optimize "Off"
 
 	filter {"configurations:debug", "action:gmake" }
 		buildoptions { "-fsanitize=address" }
 		linkoptions { "-fsanitize=address", "-static-libasan" }
+
+	filter {"configurations:release", "action:gmake" }
+		buildoptions { "-pg" }
+		linkoptions { "-pg" }
 
 	filter "configurations:release"
 		defines "NDEBUG"
@@ -199,7 +203,8 @@ workspace "lorelai"
 		files {
 			"src/vm/**.cc",
 			"src/vm/*.cpp",
-			"src/vm/software/**.cpp"
+			"src/vm/software/**.cpp",
+			"src/vm/software/*.cpp"
 		}
 
 		filter { "platforms:x86 or x86-64" }

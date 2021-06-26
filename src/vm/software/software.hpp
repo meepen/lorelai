@@ -10,15 +10,14 @@ namespace lorelai {
 
 		class softwarestate : public state {
 		public:
-			template <int size>
 			class _stack {
 				struct stackpos {
 					int base;
 					int top;
 				};
 			public:
-				_stack(state *_st) : st(_st) {
-					for (size_t i = 0; i < sizeof(data) / sizeof(*data); i++) {
+				_stack(state *_st, int size) : st(_st), data(size) {
+					for (int i = 0; i < size; i++) {
 						data[i] = std::make_shared<nilobject>();
 					}
 				}
@@ -44,12 +43,10 @@ namespace lorelai {
 			public:
 				state *st = nullptr;
 
-				std::shared_ptr<object> data[size];
+				std::vector<std::shared_ptr<object>> data;
 				int base = 0;
 				int top = 0;
 			};
-
-			using stacktype = _stack<256>;
 		public:
 			softwarestate() {
 				initlibs();
@@ -73,7 +70,7 @@ namespace lorelai {
 			std::shared_ptr<object> &operator[](int index) {
 				return stack[index];
 			}
-			stacktype *operator->() {
+			_stack *operator->() {
 				return &stack;
 			}
 
@@ -83,7 +80,7 @@ namespace lorelai {
 			std::shared_ptr<tableobject> registry = std::make_shared<tableobject>();
 		
 		public:
-			stacktype stack = stacktype(this);
+			_stack stack = _stack(this, 256);
 		};
 	}
 }

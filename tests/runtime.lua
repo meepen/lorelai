@@ -2,7 +2,7 @@ print [[-- The Computer Language Shootout
 -- http://shootout.alioth.debian.org/
 -- contributed by Mike Pall]]
 
-local width = 3000
+local width = 350
 local height, wscale = width, 2/width
 local m, limit2 = 50, 4.0
 local write = io.write
