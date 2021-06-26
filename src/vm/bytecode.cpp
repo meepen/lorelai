@@ -531,6 +531,8 @@ public:
 			throw;
 		}
 		loopqueue.back().patches.push_back(emit(bytecode::instruction_opcode_JMP, 0));
+
+		return false;
 	}
 
 	LORELAI_VISIT_FUNCTION(statements::forinstatement) {
