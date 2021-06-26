@@ -1,5 +1,4 @@
 #include "state.hpp"
-#include "object.hpp"
 #include "bytecode.hpp"
 #include <iostream>
 #include <fstream>
@@ -153,6 +152,10 @@ int main(int argc, char *argv[]) {
 			printproto(bytecode);
 			return 0;
 		}
+
+		auto state = lorelai::vm::state::create();
+		state->loadfunction(bytecode);
+		state->call(0, 0);
 	}
 	catch (ArgException &e) {
 		std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl;

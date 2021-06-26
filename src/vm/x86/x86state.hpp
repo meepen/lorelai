@@ -40,7 +40,6 @@ namespace lorelai {
 			}
 		public:
 			const char *backend() const override { return "x86 JIT"; }
-			void loadstring(const std::string &code) override;
 
 			void *compile() {
 				using namespace asmjit;

@@ -20,8 +20,3 @@ std::shared_ptr<state> state::createfastest() {
 }
 
 #endif // LORELAI_X86_FASTEST
-
-
-void softwarestate::loadstring(const std::string &code) {
-	throw std::exception();
-}
