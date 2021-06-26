@@ -12,11 +12,24 @@ namespace lorelai {
 
 		class state {
 		public:
+			class _retdata {
+			public:
+				_retdata() { }
+				_retdata(int base, int size) : retbase(base), retsize(size) { }
+				_retdata(const _retdata &r) : retbase(r.retbase), retsize(r.retsize) { }
+
+			public:
+				int retbase;
+				int retsize;
+			};
+
+		public:
+			virtual ~state() { }
 			virtual const char *backend() const = 0;
 			virtual void loadfunction(std::shared_ptr<bytecode::prototype> code) = 0;
 			void loadfunction(const std::string &code);
 
-			virtual size_t call(size_t nargs, size_t nrets) = 0;
+			virtual _retdata call(int nargs, int nrets) = 0;
 
 
 			static std::shared_ptr<state> create();

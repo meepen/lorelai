@@ -1,10 +1,15 @@
 #include "../object.hpp"
+#include "../software.hpp"
 #include <exception>
 #include <string>
 
 using namespace lorelai;
 using namespace lorelai::vm;
 
-size_t cfunctionobject::call(softwarestate &state, std::shared_ptr<object> *out, size_t nrets, size_t nargs) {
-	return data(state, out, nrets, nargs);
+state::_retdata cfunctionobject::call(softwarestate &state, int nrets, int nargs) {
+	auto retsize = data(state, nrets, nargs);
+	return state::_retdata(
+		state->base + state->top - retsize,
+		retsize
+	);
 }

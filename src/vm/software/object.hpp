@@ -5,6 +5,7 @@
 #include <memory>
 #include <sstream>
 
+#include "state.hpp"
 #include "types.hpp"
 #include "bytecode.hpp"
 #include <memory>
@@ -17,7 +18,7 @@ namespace lorelai {
 		struct object;
 		class softwarestate;
 		using objectcontainer = std::shared_ptr<object>;
-		using luafunction = size_t (*)(softwarestate &state, objectcontainer *out, size_t nrets, size_t nargs);
+		using luafunction = int (*)(softwarestate &state, int nrets, int nargs);
 
 		class object {
 		protected:
@@ -32,23 +33,33 @@ namespace lorelai {
 				return std::hash<uintptr_t>()(reinterpret_cast<uintptr_t>(this));
 			}
 
-			virtual string tostring(softwarestate &state, objectcontainer &obj) {
+			virtual string tostring(softwarestate &state) {
 				return type();
 			}
 
-			virtual void add         LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs)
-			virtual void sub         LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs)
-			virtual void div         LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs)
-			virtual void mul         LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs)
-			virtual void pow         LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs)
-			virtual void mod         LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs)
-			virtual void lessthan    LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs)
-			virtual void greaterthan LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs)
-			virtual void concat      LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs)
-			virtual void rawget      LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer rhs)
-			virtual void rawset      LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer lhs, objectcontainer rhs)
-			virtual void len         LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer &obj)
-			virtual size_t call      LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer *out, size_t nrets, size_t nargs)
+			virtual void add                   LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs)
+			virtual void sub                   LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs)
+			virtual void div                   LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs)
+			virtual void mul                   LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs)
+			virtual void pow                   LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs)
+			virtual void mod                   LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs)
+			virtual void lessthan              LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs)
+			virtual void greaterthan           LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs)
+			virtual void concat                LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs)
+			virtual bool rawget                LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer rhs)
+			virtual void rawset                LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer lhs, objectcontainer rhs)
+			virtual void len                   LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer &obj)
+			virtual state::_retdata  call      LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, int nrets, int nargs)
+			virtual bool index(softwarestate &state, objectcontainer &out, objectcontainer rhs) {
+				if (!rawget(state, out, rhs)) {
+					// TODO: metatable access
+					auto mt = metatable();
+
+					return false;
+				}
+
+				return true;
+			}
 
 			virtual std::shared_ptr<object> metatable() const = 0;
 
@@ -106,7 +117,7 @@ namespace lorelai {
 				return std::hash<number>()(data);
 			}
 
-			string tostring(softwarestate &state, objectcontainer &obj) override {
+			string tostring(softwarestate &state) override {
 				std::ostringstream stream;
 				stream.precision(13);
 				stream << data;
@@ -137,7 +148,7 @@ namespace lorelai {
 				return std::hash<string>()(data);
 			}
 
-			string tostring(softwarestate &state, objectcontainer &obj) override {
+			string tostring(softwarestate &state) override {
 				return data;
 			}
 
@@ -167,7 +178,7 @@ namespace lorelai {
 		public:
 			luafunctionobject(std::shared_ptr<bytecode::prototype> proto) : data(proto) { }
 			
-			size_t call(softwarestate &state, objectcontainer *out, size_t nrets, size_t nargs) override;
+			state::_retdata call(softwarestate &state, int nrets, int nargs) override;
 		public:
 			std::shared_ptr<bytecode::prototype> data;
 		};
@@ -181,7 +192,7 @@ namespace lorelai {
 				return &b == this;
 			}
 
-			size_t call(softwarestate &state, objectcontainer *out, size_t nrets, size_t nargs) override;
+			state::_retdata call(softwarestate &state, int nrets, int nargs) override;
 		public:
 			luafunction data;
 		};
@@ -196,7 +207,7 @@ namespace lorelai {
 			void rawset(softwarestate &state, objectcontainer lhs, objectcontainer rhs) override {
 				data[lhs] = rhs;
 			}
-			void rawget(softwarestate &state, objectcontainer &out, objectcontainer index) override {
+			bool rawget(softwarestate &state, objectcontainer &out, objectcontainer index) override {
 				auto found = data.find(index);
 				if (found == data.end()) {
 					out = std::make_shared<nilobject>();

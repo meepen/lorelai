@@ -138,7 +138,8 @@ workspace "lorelai"
 	filter "configurations:debug"
 		defines "DEBUG"
 		symbols "On"
-		optimize "Debug"
+		optimize "Off"
+
 	filter {"configurations:debug", "action:gmake" }
 		buildoptions { "-fsanitize=address" }
 		linkoptions { "-fsanitize=address", "-static-libasan" }

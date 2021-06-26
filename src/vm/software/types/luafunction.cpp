@@ -8,34 +8,31 @@ using namespace lorelai::vm;
 
 std::shared_ptr<object> lorelai::vm::function_metatable = nullptr;
 
-using func = bool (*)(softwarestate &state, size_t &nextinstruction, std::shared_ptr<object> *stack, size_t nrets, size_t nargs, const bytecode::instruction &instr, const std::shared_ptr<bytecode::prototype> proto);
+using func = state::_retdata *(*)(softwarestate &state, size_t &nextinstruction, int nrets, int nargs, const bytecode::instruction &instr, const std::shared_ptr<bytecode::prototype> proto, state::_retdata &retdata);
 
-#define OPCODE_FUNCTION(t) bool t(softwarestate &state, size_t &nextinstruction, std::shared_ptr<object> *stack, size_t nrets, size_t nargs, const bytecode::instruction &instr, const std::shared_ptr<bytecode::prototype> proto)
+#define OPCODE_FUNCTION(t) state::_retdata *t(softwarestate &state, size_t &nextinstruction, int nrets, int nargs, const bytecode::instruction &instr, const std::shared_ptr<bytecode::prototype> proto, state::_retdata &retdata)
 
 OPCODE_FUNCTION(openvironmentget) {
 	objectcontainer index = std::make_shared<stringobject>(proto->strings(instr.b()));
 
-	state.registry->rawget(state, stack[instr.a()], index);
+	state.registry->rawget(state, state[instr.a()], index);
 
-	return false;
+	return nullptr;
 }
 
 OPCODE_FUNCTION(opnumber) {
-	stack[instr.a()] = std::make_shared<numberobject>(proto->numbers(instr.b()));
+	state->at(instr.a()) = std::make_shared<numberobject>(proto->numbers(instr.b()));
 
-	return false;
+	return nullptr;
 }
 
 OPCODE_FUNCTION(opcall) {
 	 // A .. A+C-2 = A(A+1 .. A + B)
-	auto data = stack[instr.a()];
-	auto nret = data->call(state, &stack[instr.a()], instr.c() - 1, instr.b());
+	auto old = state->pushpointer(instr.a());
+	auto data = state->at(instr.a());
+	auto nret = data->call(state, instr.c() - 1, instr.b());
 
-	for (auto i = nret; i < instr.b(); i++) {
-		stack[i] = std::make_shared<nilobject>();
-	}
-
-	return false;
+	return nullptr;
 }
 
 static std::map<bytecode::instruction_opcode, func> opcode_map = {
@@ -56,7 +53,10 @@ public:
 	std::string err;
 };
 
-size_t luafunctionobject::call(softwarestate &state, objectcontainer *out, size_t nrets, size_t nargs) {
+state::_retdata luafunctionobject::call(softwarestate &state, int nrets, int nargs) {
+	auto oldtop = state->top;
+	state::_retdata retdata { 0, 0 };
+
 	size_t nextinstruction = 0;
 	auto max = data->instructions_size();
 	
@@ -66,8 +66,10 @@ size_t luafunctionobject::call(softwarestate &state, objectcontainer *out, size_
 		if (found == opcode_map.end()) {
 			throw exception("Unknown opcode " + bytecode::instruction_opcode_Name(instr.op()));
 		}
-		if (found->second(state, nextinstruction, out, nrets, nargs, instr, data)) {
+		if (found->second(state, nextinstruction, nrets, nargs, instr, data, retdata)) {
 			break;
 		}
 	}
+
+	return retdata;
 }

@@ -1,13 +1,15 @@
 #include "../libraries.hpp"
+#include "../software.hpp"
+#include "../object.hpp"
 
 #include <iostream>
 
 using namespace lorelai;
 using namespace lorelai::vm;
 
-size_t print(softwarestate &state, objectcontainer *out, size_t nrets, size_t nargs) {
+static int print(softwarestate &state, int nrets, int nargs) {
 	for (size_t i = 1; i <= nargs; i++) {
-		std::cout << out[i]->tostring(state, out[nargs]);
+		std::cout << state[i]->tostring(state);
 	}
 	std::cout << std::endl;
 
