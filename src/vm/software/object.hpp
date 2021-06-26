@@ -108,6 +108,7 @@ namespace lorelai {
 
 			string tostring(softwarestate &state, objectcontainer &obj) override {
 				std::ostringstream stream;
+				stream.precision(13);
 				stream << data;
 				return stream.str();
 			}
