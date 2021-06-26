@@ -1,7 +1,7 @@
 #include "bytecode.hpp"
 #include "software.hpp"
 #include "object.hpp"
-#include <iostream>
+#include "libraries.hpp"
 
 using namespace lorelai;
 using namespace lorelai::vm;
@@ -23,15 +23,21 @@ std::shared_ptr<state> state::createfastest() {
 
 #endif // LORELAI_X86_FASTEST
 
-size_t print(softwarestate &state, objectcontainer *out, size_t nrets, size_t nargs) {
-	for (size_t i = 1; i <= nargs; i++) {
-		std::cout << out[i]->type();
-	}
-	std::cout << std::endl;
-
-	return 0;
-}
-
 void softwarestate::initlibs() {
-	registry->rawset(*this, std::make_shared<stringobject>("print"), std::make_shared<cfunctionobject>(print));
+	for (size_t i = 0; i < sizeof(libraries) / sizeof(*libraries); i++) {
+		auto &namedlib = libraries[i];
+
+		auto target = registry;
+		if (namedlib.name) {
+			auto newtarget = std::make_shared<tableobject>();
+			target->rawset(*this, std::make_shared<stringobject>(namedlib.name), newtarget);
+			target = newtarget;
+		}
+
+		auto lib = namedlib.lib;
+		while (lib->name) {
+			target->rawset(*this, std::make_shared<stringobject>(lib->name), std::make_shared<cfunctionobject>(lib->func));
+			lib++;
+		}
+	}
 }
