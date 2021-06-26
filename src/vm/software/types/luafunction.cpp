@@ -17,10 +17,42 @@ struct _running {
 	int multres = 0;
 	size_t nextinstruction = 0;
 };
-
 using func = state::_retdata *(*)(_running &run, const bytecode::instruction &instr);
 
 #define OPCODE_FUNCTION(t) static state::_retdata *t(_running &run, const bytecode::instruction &instr)
+
+#define MATHOPS(fn) \
+	fn(MODULO, modulo) \
+	fn(SUBTRACT, subtract) \
+	fn(ADD, add) \
+	fn(DIVIDE, divide) \
+	fn(MULTIPLY, multiply) \
+	fn(CONCAT, concat) \
+	fn(POWER, power)
+#define OPMAPFUNC(opcode, name, arg...) { bytecode::instruction_opcode_##opcode, op##name },
+
+// A = B - C
+#define MATHFUNC(opcode, name) \
+OPCODE_FUNCTION(op##name) { \
+	run.state[instr.b()]->name(run.state, run.state[instr.a()], run.state[instr.b()], run.state[instr.c()]); \
+ \
+	return nullptr; \
+}
+
+MATHOPS(MATHFUNC)
+
+#define COMPAREOPS(fn) \
+	fn(LESSTHAN, lessthan) \
+	fn(LESSTHANEQUAL, lessthanequal) \
+	fn(GREATERTHAN, greaterthan) \
+	fn(GREATERTHANEQUAL, greaterthanequal) \
+	fn(EQUALS, equals) \
+	fn(NOTEQUALS, notequals)
+
+#define LOGICOPS(fn) \
+	fn(and, AND, and, &&) \
+	fn(or, OR, or, ||)
+
 
 OPCODE_FUNCTION(openvironmentget) {
 	objectcontainer index = std::make_shared<stringobject>(run.proto->strings(instr.b()));
@@ -97,6 +129,7 @@ static std::map<bytecode::instruction_opcode, func> opcode_map = {
 	{ bytecode::instruction_opcode_CALLM, opcallm },
 	{ bytecode::instruction_opcode_MOV, opmov },
 	{ bytecode::instruction_opcode_STRING, opstring },
+	MATHOPS(OPMAPFUNC)
 };
 
 class exception : public std::exception {

@@ -768,6 +768,8 @@ std::unordered_map<string, bytecode::instruction_opcode> binoplookup = {
 	{ "%", bytecode::instruction_opcode_MODULO },
 	{ "-", bytecode::instruction_opcode_SUBTRACT },
 	{ "+", bytecode::instruction_opcode_ADD },
+	{ "/", bytecode::instruction_opcode_DIVIDE },
+	{ "*", bytecode::instruction_opcode_MULTIPLY },
 	{ "..", bytecode::instruction_opcode_CONCAT },
 	{ "^", bytecode::instruction_opcode_POWER },
 	{ "and", bytecode::instruction_opcode_AND },
@@ -786,7 +788,11 @@ std::unordered_map<string, bytecode::instruction_opcode> binoplookup = {
 static void generate_binopexpression(bytecodegenerator &gen, node &_expr, size_t target, size_t size) {
 	auto &expr = *dynamic_cast<expressions::binopexpression *>(&_expr);
 	if (size == 0) {
-		auto opcode = binoplookup[expr.op];
+		auto find = binoplookup.find(expr.op);
+		if (find == binoplookup.end()) {
+			throw;
+		}
+		auto opcode = find->second;
 		if (opcode == bytecode::instruction_opcode_AND || opcode == bytecode::instruction_opcode_OR) {
 			// these do not have overloads, can ignore binop part
 			auto temp = gen.curfunc.gettemp();

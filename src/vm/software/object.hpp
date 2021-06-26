@@ -37,19 +37,25 @@ namespace lorelai {
 				return type();
 			}
 
-			virtual void add                   LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs)
-			virtual void sub                   LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs)
-			virtual void div                   LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs)
-			virtual void mul                   LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs)
-			virtual void pow                   LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs)
-			virtual void mod                   LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs)
+			virtual number tonumber(softwarestate &state) {
+				except();
+			}
+
 			virtual void lessthan              LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs)
 			virtual void greaterthan           LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs)
 			virtual void concat                LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs)
 			virtual bool rawget                LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer rhs)
 			virtual void rawset                LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer lhs, objectcontainer rhs)
-			virtual void len                   LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer &obj)
+			virtual void length                LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer &obj)
 			virtual state::_retdata  call      LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, int nrets, int nargs)
+
+			void add(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs);
+			void subtract(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs);
+			void divide(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs);
+			void multiply(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs);
+			void power(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs);
+			void modulo(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs);
+
 			virtual bool index(softwarestate &state, objectcontainer &out, objectcontainer rhs) {
 				if (!rawget(state, out, rhs)) {
 					// TODO: metatable access
@@ -124,6 +130,10 @@ namespace lorelai {
 				return stream.str();
 			}
 
+			number tonumber(softwarestate &state) override {
+				return data;
+			}
+
 		public:
 			number data = 0;
 
@@ -150,6 +160,10 @@ namespace lorelai {
 
 			string tostring(softwarestate &state) override {
 				return data;
+			}
+
+			number tonumber(softwarestate &state) override {
+				return lorelai::tonumber(data);
 			}
 
 		public:
