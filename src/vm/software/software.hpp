@@ -10,39 +10,40 @@ namespace lorelai {
 		public:
 			softwarestate() {
 				for (size_t i = 0; i < sizeof(stack) / sizeof(*stack); i++) {
-					stack[i] = new object();
+					stack[i] = std::make_shared<nilobject>();
 				}
-			}
-			~softwarestate() {
-				for (size_t i = 0; i < sizeof(stack) / sizeof(*stack); i++) {
-					delete stack[i];
-				}
+
+				initlibs();
 			}
 
+			void initlibs();
+
 			const char *backend() const override { return "software"; }
-			void loadfunction(const bytecode::prototype &code) override {
-				set(incrtop(), new functionobject(code));
+			void loadfunction(std::shared_ptr<bytecode::prototype> code) override {
+				set(incrtop(), std::make_shared<luafunctionobject>(code));
 			}
 
 			// for now we are just putting these in here to test the api
 			void loadnumber(number num) {
-				set(incrtop(), new numberobject(num));
+				set(incrtop(), std::make_shared<numberobject>(num));
 			}
 
 			size_t call(size_t nargs, size_t nrets) override {
 				assert(nargs + 1 >= top);
 
-				auto &tocall = stack[top - nargs - 1];
-				tocall->call(&tocall, nrets, nargs);
+				auto tocall = stack[top - nargs - 1];
+				tocall->call(*this, &stack[top - nargs - 1], nrets, nargs);
 			}
 
 			static std::shared_ptr<state> create();
+
+		public:
+			std::shared_ptr<tableobject> registry = std::make_shared<tableobject>();
 		
 		private:
-			object *stack[256];
+			std::shared_ptr<object> stack[256];
 
-			void set(int where, object *what) {
-				delete stack[where];
+			void set(int where, std::shared_ptr<object> what) {
 				stack[where] = what;
 			}
 

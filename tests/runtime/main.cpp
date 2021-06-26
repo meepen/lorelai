@@ -145,11 +145,11 @@ int main(int argc, char *argv[]) {
 
 		if (bytecodeonly.getValue()) {
 			if (raw.getValue()) {
-				std::cout << bytecode.SerializeAsString();
+				std::cout << bytecode->SerializeAsString();
 				return 0;
 			}
 
-			printproto(bytecode);
+			printproto(*bytecode);
 			return 0;
 		}
 

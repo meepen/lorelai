@@ -13,7 +13,7 @@ namespace lorelai {
 		class state {
 		public:
 			virtual const char *backend() const = 0;
-			virtual void loadfunction(const bytecode::prototype &proto) = 0;
+			virtual void loadfunction(std::shared_ptr<bytecode::prototype> code) = 0;
 			void loadfunction(const std::string &code);
 
 			virtual size_t call(size_t nargs, size_t nrets) = 0;

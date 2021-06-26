@@ -6,9 +6,9 @@
 
 namespace lorelai {
 	namespace vm {
-		bytecode::prototype parse(parser::chunk &chunk);
+		std::shared_ptr<bytecode::prototype> parse(parser::chunk &chunk);
 
-		static bytecode::prototype parse(string code, bool expect_eof = true) {
+		static std::shared_ptr<bytecode::prototype> parse(string code, bool expect_eof = true) {
 			parser::chunk mainchunk(code, expect_eof);
 			return parse(mainchunk);
 		}

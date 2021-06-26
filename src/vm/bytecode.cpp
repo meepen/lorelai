@@ -253,8 +253,8 @@ public:
 			return found->second;
 		}
 
-		auto ret = strings[str] = proto.strings_size();
-		proto.add_strings(str);
+		auto ret = strings[str] = proto->strings_size();
+		proto->add_strings(str);
 		return ret;
 	}
 
@@ -264,8 +264,8 @@ public:
 			return found->second;
 		}
 
-		auto ret = numbers[num] = proto.numbers_size();
-		proto.add_numbers(num);
+		auto ret = numbers[num] = proto->numbers_size();
+		proto->add_numbers(num);
 		return ret;
 	}
 
@@ -276,7 +276,7 @@ public:
 	std::shared_ptr<scope> firstscope = curscope;
 	std::shared_ptr<scope> parentscope = nullptr;
 
-	bytecode::prototype proto;
+	std::shared_ptr<bytecode::prototype> proto = std::make_shared<bytecode::prototype>();
 	std::unordered_map<string, int> strings;
 	std::unordered_map<number, int> numbers;
 };
@@ -415,7 +415,7 @@ public:
 
 		curfunc.popscope();
 
-		queue.patch->set_b(curfunc.proto.instructions_size());
+		queue.patch->set_b(curfunc.proto->instructions_size());
 
 		runexpressionhandler(obj.conditional, queue.target, 1);
 		queue.patch = emit(bytecode::instruction_opcode_JMPIFFALSE, queue.target);
@@ -428,7 +428,7 @@ public:
 
 		curfunc.popscope();
 
-		queue.patch->set_b(curfunc.proto.instructions_size());
+		queue.patch->set_b(curfunc.proto->instructions_size());
 		queue.patch = nullptr;
 
 		curfunc.pushscope();
@@ -438,12 +438,12 @@ public:
 		curfunc.popscope();
 		auto &queue = ifqueue.back();
 		if (queue.patch) {
-			queue.patch->set_b(curfunc.proto.instructions_size());
+			queue.patch->set_b(curfunc.proto->instructions_size());
 		}
 		curfunc.freetemp(queue.target, 1);
 
 		for (auto &jmpend : queue.jmpends) {
-			jmpend->set_b(curfunc.proto.instructions_size());
+			jmpend->set_b(curfunc.proto->instructions_size());
 		}
 
 		ifqueue.pop_back();
@@ -473,7 +473,7 @@ public:
 
 	LORELAI_VISIT_FUNCTION(statements::whilestatement) {
 		_loopqueue data;
-		data.startinstr = curfunc.proto.instructions_size();
+		data.startinstr = curfunc.proto->instructions_size();
 		data.stackreserved = curfunc.gettemp(1);
 
 		runexpressionhandler(obj.conditional, data.stackreserved, 1);
@@ -490,7 +490,7 @@ public:
 		emit(bytecode::instruction_opcode_JMP, 0, data.startinstr);
 
 		for (auto &patch : data.patches) {
-			patch->set_b(curfunc.proto.instructions_size());
+			patch->set_b(curfunc.proto->instructions_size());
 		}
 
 		curfunc.freetemp(data.stackreserved, 1);
@@ -502,7 +502,7 @@ public:
 
 	LORELAI_VISIT_FUNCTION(statements::repeatstatement) {
 		_loopqueue data;
-		data.startinstr = curfunc.proto.instructions_size();
+		data.startinstr = curfunc.proto->instructions_size();
 
 		loopqueue.push_back(data);
 		return false;
@@ -517,7 +517,7 @@ public:
 		emit(bytecode::instruction_opcode_JMPIFFALSE, target, data.startinstr);
 		
 		for (auto &patch : data.patches) {
-			patch->set_b(curfunc.proto.instructions_size());
+			patch->set_b(curfunc.proto->instructions_size());
 		}
 
 		curfunc.freetemp(target, 1);
@@ -560,7 +560,7 @@ public:
 		}
 
 		// begin loop
-		queue.startinstr = curfunc.proto.instructions_size();
+		queue.startinstr = curfunc.proto->instructions_size();
 
 		emit(bytecode::instruction_opcode_MOV, queue.extrastack, queue.stackreserved, 3);
 		emit(bytecode::instruction_opcode_CALL, queue.extrastack, 3, obj.iternames.size() + 1);
@@ -579,7 +579,7 @@ public:
 		emit(bytecode::instruction_opcode_JMP, 0, queue.startinstr);
 
 		for (auto &patch : queue.patches) {
-			patch->set_b(curfunc.proto.instructions_size());
+			patch->set_b(curfunc.proto->instructions_size());
 		}
 
 		// before popping we must delete references to extrastack in the variable list to prevent double free
@@ -613,7 +613,7 @@ public:
 
 		// start loop
 
-		queue.startinstr = curfunc.proto.instructions_size();
+		queue.startinstr = curfunc.proto->instructions_size();
 
 		emit(bytecode::instruction_opcode_NUMBER, queue.stackreserved + 3, add(0.0));
 		emit(bytecode::instruction_opcode_GREATERTHAN, queue.stackreserved + 3, queue.stackreserved + 1, queue.stackreserved + 3);
@@ -621,10 +621,10 @@ public:
 		emit(bytecode::instruction_opcode_LESSTHANEQUAL, queue.stackreserved + 3, queue.stackreserved, queue.stackreserved + 1);
 		queue.patches.push_back(emit(bytecode::instruction_opcode_JMPIFFALSE, queue.stackreserved + 3));
 		auto bodypatch = emit(bytecode::instruction_opcode_JMP, 0);
-		patch->set_b(curfunc.proto.instructions_size());
+		patch->set_b(curfunc.proto->instructions_size());
 		emit(bytecode::instruction_opcode_GREATERTHANEQUAL, queue.stackreserved + 3, queue.stackreserved, queue.stackreserved + 1);
 		queue.patches.push_back(emit(bytecode::instruction_opcode_JMPIFFALSE, queue.stackreserved + 3));
-		bodypatch->set_b(curfunc.proto.instructions_size());
+		bodypatch->set_b(curfunc.proto->instructions_size());
 		curfunc.pushscope();
 
 		emit(bytecode::instruction_opcode_MOV, curfunc.createlocal(obj.itername->tostring()), queue.stackreserved, 1);
@@ -641,7 +641,7 @@ public:
 		emit(bytecode::instruction_opcode_JMP, 0, queue.startinstr);
 
 		for (auto &patch : queue.patches) {
-			patch->set_b(curfunc.proto.instructions_size());
+			patch->set_b(curfunc.proto->instructions_size());
 		}
 
 		curfunc.freetemp(queue.stackreserved, 4);
@@ -706,25 +706,25 @@ public:
 
 public:
 	bytecode::instruction *emit(bytecode::instruction_opcode opcode) {
-		auto instruction = curfunc.proto.add_instructions();
+		auto instruction = curfunc.proto->add_instructions();
 		instruction->set_op(opcode);
 		return instruction;
 	}
 	bytecode::instruction *emit(bytecode::instruction_opcode opcode, std::uint32_t a) {
-		auto instruction = curfunc.proto.add_instructions();
+		auto instruction = curfunc.proto->add_instructions();
 		instruction->set_op(opcode);
 		instruction->set_a(a);
 		return instruction;
 	}
 	bytecode::instruction *emit(bytecode::instruction_opcode opcode, std::uint32_t a, std::uint32_t b) {
-		auto instruction = curfunc.proto.add_instructions();
+		auto instruction = curfunc.proto->add_instructions();
 		instruction->set_op(opcode);
 		instruction->set_a(a);
 		instruction->set_b(b);
 		return instruction;
 	}
 	bytecode::instruction *emit(bytecode::instruction_opcode opcode, std::uint32_t a, std::uint32_t b, std::uint32_t c) {
-		auto instruction = curfunc.proto.add_instructions();
+		auto instruction = curfunc.proto->add_instructions();
 		instruction->set_op(opcode);
 		instruction->set_a(a);
 		instruction->set_b(b);
@@ -999,7 +999,7 @@ std::unordered_map<std::type_index, expressiongenerator> expressionmap = {
 #undef ADD
 
 
-bytecode::prototype lorelai::vm::parse(chunk &data) {
+std::shared_ptr<bytecode::prototype> lorelai::vm::parse(chunk &data) {
 	bytecodegenerator generator;
 	std::shared_ptr<node> container = std::make_shared<chunk>(data);
 
