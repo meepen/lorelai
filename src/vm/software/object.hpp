@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <sstream>
 
 #include "types.hpp"
 #include "bytecode.hpp"
@@ -106,7 +107,9 @@ namespace lorelai {
 			}
 
 			string tostring(softwarestate &state, objectcontainer &obj) override {
-				return std::to_string(data);
+				std::ostringstream stream;
+				stream << data;
+				return stream.str();
 			}
 
 		public:
