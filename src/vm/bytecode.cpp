@@ -38,7 +38,6 @@ std::string gettypename(T &data) {
 	NOT DONE:
 	fn(lorelai::parser::statements::localfunctionstatement) \
 	fn(lorelai::parser::statements::functionstatement) \
-	fn(lorelai::parser::statements::functioncallstatement) \
 
 	DONE:
 	fn(lorelai::parser::statements::localassignmentstatement) \
@@ -53,6 +52,7 @@ std::string gettypename(T &data) {
 	fn(lorelai::parser::statements::forinstatement) \
 	fn(lorelai::parser::statements::fornumstatement) \
 	fn(lorelai::parser::statements::returnstatement) \
+	fn(lorelai::parser::statements::functioncallstatement) \
 */
 
 class stack {
