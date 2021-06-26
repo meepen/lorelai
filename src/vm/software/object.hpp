@@ -31,6 +31,10 @@ namespace lorelai {
 				return std::hash<uintptr_t>()(reinterpret_cast<uintptr_t>(this));
 			}
 
+			virtual string tostring(softwarestate &state, objectcontainer &obj) {
+				return type();
+			}
+
 			virtual void add         LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs)
 			virtual void sub         LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs)
 			virtual void div         LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs)
@@ -42,7 +46,7 @@ namespace lorelai {
 			virtual void concat      LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs)
 			virtual void rawget      LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer rhs)
 			virtual void rawset      LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer lhs, objectcontainer rhs)
-			virtual void len         LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer obj)
+			virtual void len         LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer &obj)
 			virtual size_t call      LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer *out, size_t nrets, size_t nargs)
 
 			virtual std::shared_ptr<object> metatable() const = 0;
@@ -101,6 +105,10 @@ namespace lorelai {
 				return std::hash<number>()(data);
 			}
 
+			string tostring(softwarestate &state, objectcontainer &obj) override {
+				return std::to_string(data);
+			}
+
 		public:
 			number data = 0;
 
@@ -123,6 +131,10 @@ namespace lorelai {
 
 			size_t hash() const override {
 				return std::hash<string>()(data);
+			}
+
+			string tostring(softwarestate &state, objectcontainer &obj) override {
+				return data;
 			}
 
 		public:
