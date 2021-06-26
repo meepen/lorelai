@@ -11,7 +11,7 @@
 #include <memory>
 #include <unordered_map>
 
-#define LORELAI_SOFTWARE_DEFAULT_FUNCTION(args...) (args) { except(); }
+#define LORELAI_SOFTWARE_DEFAULT_FUNCTION(name, args...) name (args) { except(#name); }
 
 namespace lorelai {
 	namespace vm {
@@ -22,7 +22,7 @@ namespace lorelai {
 
 		class object {
 		protected:
-			void except() const { throw; }
+			void except(string str) const { throw exception(string("cannot ")  + str + " a " + type()); }
 
 		public:
 			virtual ~object() { }
@@ -37,17 +37,14 @@ namespace lorelai {
 				return type();
 			}
 
-			virtual number tonumber(softwarestate &state) {
-				except();
-			}
-
-			virtual void lessthan              LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs)
-			virtual void greaterthan           LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs)
-			virtual void concat                LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs)
-			virtual bool rawget                LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer rhs)
-			virtual void rawset                LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer lhs, objectcontainer rhs)
-			virtual void length                LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, objectcontainer &out, objectcontainer &obj)
-			virtual state::_retdata  call      LORELAI_SOFTWARE_DEFAULT_FUNCTION(softwarestate &state, int nrets, int nargs)
+			virtual number          LORELAI_SOFTWARE_DEFAULT_FUNCTION(tonumber,    softwarestate &state)
+			virtual void            LORELAI_SOFTWARE_DEFAULT_FUNCTION(lessthan,    softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs)
+			virtual void            LORELAI_SOFTWARE_DEFAULT_FUNCTION(greaterthan, softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs)
+			virtual void            LORELAI_SOFTWARE_DEFAULT_FUNCTION(concat,      softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs)
+			virtual bool            LORELAI_SOFTWARE_DEFAULT_FUNCTION(rawget,      softwarestate &state, objectcontainer &out, objectcontainer rhs)
+			virtual void            LORELAI_SOFTWARE_DEFAULT_FUNCTION(rawset,      softwarestate &state, objectcontainer lhs, objectcontainer rhs)
+			virtual void            LORELAI_SOFTWARE_DEFAULT_FUNCTION(length,      softwarestate &state, objectcontainer &out, objectcontainer &obj)
+			virtual state::_retdata LORELAI_SOFTWARE_DEFAULT_FUNCTION(call,        softwarestate &state, int nrets, int nargs)
 
 			void add(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs);
 			void subtract(softwarestate &state, objectcontainer &out, objectcontainer lhs, objectcontainer rhs);

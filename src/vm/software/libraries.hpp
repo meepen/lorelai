@@ -12,9 +12,13 @@ namespace lorelai {
 		};
 
 		extern library global[];
+		extern library io[];
+		extern library os[];
 
 		static namedlibrary libraries[] = {
 			{ nullptr, global },
+			{ "io", io },
+			{ "os", os },
 		};
 	}
 }

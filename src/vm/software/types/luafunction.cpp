@@ -53,6 +53,14 @@ MATHOPS(MATHFUNC)
 	fn(and, AND, and, &&) \
 	fn(or, OR, or, ||)
 
+OPCODE_FUNCTION(opindex) {
+	// A = B [ C ]
+
+	auto ref = run.state[instr.b()];
+	ref->index(run.state, run.state[instr.a()], run.state[instr.c()]);
+
+	return nullptr;
+}
 
 OPCODE_FUNCTION(openvironmentget) {
 	objectcontainer index = std::make_shared<stringobject>(run.proto->strings(instr.b()));
@@ -129,6 +137,7 @@ static std::map<bytecode::instruction_opcode, func> opcode_map = {
 	{ bytecode::instruction_opcode_CALLM, opcallm },
 	{ bytecode::instruction_opcode_MOV, opmov },
 	{ bytecode::instruction_opcode_STRING, opstring },
+	{ bytecode::instruction_opcode_INDEX, opindex },
 	MATHOPS(OPMAPFUNC)
 };
 

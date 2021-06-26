@@ -161,9 +161,8 @@ stringexpression::stringexpression(lexer &lex) {
 
 				break;
 			}
+			contents.push_back(chr);
 		}
-
-		contents.push_back(chr);
 	}
 
 	data = std::string(contents.begin(), contents.end());
