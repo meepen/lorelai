@@ -60,6 +60,9 @@ static std::string getcode(ValueArg<std::string> &filename, ValueArg<std::string
 	}
 	else if (filename.isSet()) {
 		std::ifstream luafile(filename.getValue());
+		if (!luafile.good()) {
+			throw exception("file does not exist");
+		}
 		return std::string(
 			std::istreambuf_iterator<char>(luafile),
 			std::istreambuf_iterator<char>()
