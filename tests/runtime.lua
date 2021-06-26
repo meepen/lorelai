@@ -1,1 +1,2 @@
-print(print(3.1415926535))
+local a = 1
+print("a", print(a))

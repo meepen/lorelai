@@ -36,6 +36,12 @@ OPCODE_FUNCTION(opnumber) {
 	return nullptr;
 }
 
+OPCODE_FUNCTION(opstring) {
+	run.state[instr.a()] = std::make_shared<stringobject>(run.proto->strings(instr.b()));
+
+	return nullptr;
+}
+
 OPCODE_FUNCTION(opcall) {
 	// A .. A+C-2 = A(A+1 .. A + B)
 	auto old = run.state->pushpointer(run.state->base + instr.a());
@@ -90,6 +96,7 @@ static std::map<bytecode::instruction_opcode, func> opcode_map = {
 	{ bytecode::instruction_opcode_CALL, opcall },
 	{ bytecode::instruction_opcode_CALLM, opcallm },
 	{ bytecode::instruction_opcode_MOV, opmov },
+	{ bytecode::instruction_opcode_STRING, opstring },
 };
 
 class exception : public std::exception {
