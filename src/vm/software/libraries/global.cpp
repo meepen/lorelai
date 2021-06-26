@@ -13,7 +13,9 @@ static int print(softwarestate &state, int nrets, int nargs) {
 	}
 	std::cout << std::endl;
 
-	return 0;
+	state.loadnumber(2.0);
+
+	return 1;
 }
 
 library vm::global[] = {

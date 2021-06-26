@@ -45,10 +45,30 @@ void softwarestate::initlibs() {
 state::_retdata softwarestate::call(int nargs, int nrets) {
 	auto old = stack.pushpointer(stack.base + stack.top - nargs - 1);
 	auto tocall = stack[0];
-	auto rets = stack.poppointer(old, tocall->call(*this, nrets, nargs));
+	auto rets = stack.poppointer(old, tocall->call(*this, nrets, nargs), stack.base + stack.top - nargs - 1, nrets);
 
-	return state::_retdata(
-		stack.base + stack.top - rets,
+	return {
+		stack.base + stack.top - nargs - 1 + nrets,
 		rets
-	);
+	};
+}
+
+template <int size>
+int softwarestate::_stack<size>::poppointer(const stackpos old, const state::_retdata retdata, int to, int amount) {
+	if (amount == -1) {
+		amount = retdata.retsize;
+	}
+
+	for (int i = 1; i <= std::min(amount, retdata.retsize); i++) {
+		data[to + i - 1] = data[retdata.retbase + i - 1];
+	}
+
+	for (int i = std::min(amount, retdata.retsize); i <= amount; i++) {
+		data[i] = std::make_shared<nilobject>();
+	}
+
+	top = old.top + retdata.retsize;
+	base = old.base;
+
+	return retdata.retsize;
 }

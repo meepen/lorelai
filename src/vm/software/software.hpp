@@ -10,7 +10,7 @@ namespace lorelai {
 
 		class softwarestate : public state {
 		public:
-			template <size_t size>
+			template <int size>
 			class _stack {
 				struct stackpos {
 					int base;
@@ -44,16 +44,7 @@ namespace lorelai {
 					return old;
 				}
 
-				int poppointer(const stackpos old, const state::_retdata retdata) {
-					for (int i = 1; i <= retdata.retsize; i++) {
-						data[old.base + old.top + i - 1] = data[retdata.retbase + i - 1];
-					}
-
-					top = old.top + retdata.retsize;
-					base = old.base;
-
-					return retdata.retsize;
-				}
+				int poppointer(const stackpos old, const state::_retdata retdata, int to = 0, int amount = 0);
 
 			public:
 				state *st = nullptr;

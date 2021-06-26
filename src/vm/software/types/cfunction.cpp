@@ -8,8 +8,8 @@ using namespace lorelai::vm;
 
 state::_retdata cfunctionobject::call(softwarestate &state, int nrets, int nargs) {
 	auto retsize = data(state, nrets, nargs);
-	return state::_retdata(
+	return {
 		state->base + state->top - retsize,
 		retsize
-	);
+	};
 }
