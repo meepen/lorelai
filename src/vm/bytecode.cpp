@@ -315,6 +315,7 @@ public:
 				size = 0;
 			}
 
+			// bug: local a; a = b-a
 			runexpressionhandler(_expr, target, size);
 		}
 
@@ -786,36 +787,92 @@ std::unordered_map<string, bytecode::instruction_opcode> binoplookup = {
 	{ "!=", bytecode::instruction_opcode_NOTEQUALS },
 };
 
-static void generate_binopexpression(bytecodegenerator &gen, node &_expr, size_t target, size_t size) {
-	auto &expr = *dynamic_cast<expressions::binopexpression *>(&_expr);
-	if (size == 0) {
-		auto find = binoplookup.find(expr.op);
-		if (find == binoplookup.end()) {
-			throw;
-		}
-		auto opcode = find->second;
-		if (opcode == bytecode::instruction_opcode_AND || opcode == bytecode::instruction_opcode_OR) {
-			// these do not have overloads, can ignore binop part
-			auto temp = gen.curfunc.gettemp();
-			gen.runexpressionhandler(expr.lhs, temp, 1);
-			gen.runexpressionhandler(expr.rhs, temp, 1);
-			gen.curfunc.freetemp(temp);
+/*
+given
+
+local _0, _1, _2, _3
+
+_0 = _1 - _2 + _3
+
+
+the ideal output would be
+
+#1 | MOV              | 4, 1, 1
+#2 | SUBTRACT         | 4, 4, 2
+#3 | ADD              | 4, 4, 3
+#4 | MOV              | 0, 4, 1
+
+currently:
+
+#4 | MOV              | 0, 1, 1
+#5 | MOV              | 4, 2, 1
+#6 | SUBTRACT         | 0, 0, 4
+#7 | MOV              | 4, 3, 1
+#8 | ADD              | 0, 0, 4
+
+*/
+
+
+class binopsimplifier {
+public:
+	binopsimplifier(bytecodegenerator &_gen, expressions::binopexpression &expr, size_t target, size_t size) : gen(_gen) {
+		if (size == 0) {
+			auto find = binoplookup.find(expr.op);
+			if (find == binoplookup.end()) {
+				throw;
+			}
+			auto opcode = find->second;
+			if (opcode == bytecode::instruction_opcode_AND || opcode == bytecode::instruction_opcode_OR) {
+				// these do not have overloads, can ignore binop part
+				auto temp = gen.curfunc.gettemp();
+				gen.runexpressionhandler(expr.lhs, temp, 1);
+				gen.runexpressionhandler(expr.rhs, temp, 1);
+				gen.curfunc.freetemp(temp);
+			}
+			else {
+				auto temp = gen.curfunc.gettemp(2);
+				gen.runexpressionhandler(expr.lhs, temp, 1);
+				gen.runexpressionhandler(expr.rhs, temp + 1, 1);
+				gen.emit(opcode, temp, temp, temp + 1);
+				gen.curfunc.freetemp(temp, 2);
+			}
 		}
 		else {
-			auto temp = gen.curfunc.gettemp(2);
-			gen.runexpressionhandler(expr.lhs, temp, 1);
-			gen.runexpressionhandler(expr.rhs, temp + 1, 1);
-			gen.emit(opcode, temp, temp, temp + 1);
-			gen.curfunc.freetemp(temp, 2);
+			size_t rhs_stack;
+			bool free_right = false;
+			gen.runexpressionhandler(expr.lhs, target, 1);
+
+			if (free_right = !get(expr.rhs, &rhs_stack, false)) {
+				rhs_stack = gen.curfunc.gettemp();
+				gen.runexpressionhandler(expr.rhs, rhs_stack, 1);
+			}
+
+			gen.emit(binoplookup[expr.op], target, target, rhs_stack);
+
+			if (free_right) {
+				gen.curfunc.freetemp(rhs_stack);
+			}
 		}
 	}
-	else {
-		gen.runexpressionhandler(expr.lhs, target, 1);
-		auto temp = gen.curfunc.gettemp();
-		gen.runexpressionhandler(expr.rhs, temp, 1);
-		gen.emit(binoplookup[expr.op], target, target, temp);
-		gen.curfunc.freetemp(temp);
+
+	bool get(std::shared_ptr<node> &expr, size_t *stackposout, bool leftside) {
+		if (auto name = dynamic_cast<expressions::nameexpression *>(expr.get())) {
+			if (auto scope = gen.curfunc.curscope->findvariablescope(name->name)) {
+				*stackposout = scope->getvariableindex(name->name);
+				return true;
+			}
+		}
+
+		return false;
 	}
+
+public:
+	bytecodegenerator &gen;
+};
+
+static void generate_binopexpression(bytecodegenerator &gen, node &_expr, size_t target, size_t size) {
+	auto &expr = *dynamic_cast<expressions::binopexpression *>(&_expr);
+	binopsimplifier simplify(gen, expr, target, size);
 }
 
 std::unordered_map<string, bytecode::instruction_opcode> unoplookup = {
