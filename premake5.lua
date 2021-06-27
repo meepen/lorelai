@@ -191,6 +191,9 @@ workspace "lorelai"
 			"protoc --proto_path=../src/vm/proto/src --cpp_out=../src/vm/proto ../src/vm/proto/src/bytecode.proto"
 		}
 
+		pchheader "../src/vm/stdafx.h"
+		pchsource "../src/vm/stdafx.cpp"
+
 		links {
 			"protobuf",
 		}
