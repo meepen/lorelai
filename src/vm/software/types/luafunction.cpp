@@ -6,7 +6,7 @@
 using namespace lorelai;
 using namespace lorelai::vm;
 
-std::shared_ptr<object> lorelai::vm::function_metatable = nullptr;
+objectcontainer lorelai::vm::function_metatable = nullptr;
 
 struct _running {
 	softwarestate &state;
@@ -48,38 +48,38 @@ MATHOPS(MATHFUNC)
 
 #define OPFUNC(opcode, name) \
 OPCODE_FUNCTION(op##name) { \
-	run.state[instr.a()] = std::make_shared<boolobject>(run.state[instr.b()]-> name (run.state, run.state[instr.c()])); \
+	run.state[instr.a()] = boolobject::create(run.state, run.state[instr.b()]-> name (run.state, run.state[instr.c()])); \
  \
 	return nullptr; \
 }
 
 
 OPCODE_FUNCTION(opgreaterthanequal) {
-	run.state[instr.a()] = std::make_shared<boolobject>(!run.state[instr.c()]->greaterthan(run.state, run.state[instr.b()]));
+	run.state[instr.a()] = boolobject::create(run.state, !run.state[instr.c()]->greaterthan(run.state, run.state[instr.b()]));
 
 	return nullptr;
 }
 
 OPCODE_FUNCTION(oplessthanequal) {
-	run.state[instr.a()] = std::make_shared<boolobject>(!run.state[instr.c()]->lessthan(run.state, run.state[instr.b()]));
+	run.state[instr.a()] = boolobject::create(run.state, !run.state[instr.c()]->lessthan(run.state, run.state[instr.b()]));
 
 	return nullptr;
 }
 
 OPCODE_FUNCTION(opnotequals) {
-	run.state[instr.a()] = std::make_shared<boolobject>(!run.state[instr.c()]->equals(run.state, run.state[instr.b()]));
+	run.state[instr.a()] = boolobject::create(run.state, !run.state[instr.c()]->equals(run.state, run.state[instr.b()]));
 
 	return nullptr;
 }
 
 OPCODE_FUNCTION(opnot) {
-	run.state[instr.a()] = std::make_shared<boolobject>(!run.state[instr.b()]->tobool(run.state));
+	run.state[instr.a()] = boolobject::create(run.state, !run.state[instr.b()]->tobool(run.state));
 
 	return nullptr;
 }
 
 OPCODE_FUNCTION(opminus) {
-	run.state[instr.a()] = std::make_shared<numberobject>(-run.state[instr.b()]->tonumber(run.state));
+	run.state[instr.a()] = numberobject::create(run.state, -run.state[instr.b()]->tonumber(run.state));
 
 	return nullptr;
 }
@@ -100,21 +100,21 @@ OPCODE_FUNCTION(opindex) {
 }
 
 OPCODE_FUNCTION(openvironmentget) {
-	objectcontainer index = std::make_shared<stringobject>(run.proto->strings(instr.b()));
+	objectcontainer index = stringobject::create(run.state, run.proto->strings(instr.b()));\
 
-	run.state.registry->rawget(run.state, run.state[instr.a()], index);
+	run.state.registry->index(run.state, run.state[instr.a()], index);\
 
 	return nullptr;
 }
 
 OPCODE_FUNCTION(opnumber) {
-	run.state[instr.a()] = std::make_shared<numberobject>(run.proto->numbers(instr.b()));
+	run.state[instr.a()] = numberobject::create(run.state, run.proto->numbers(instr.b()));
 
 	return nullptr;
 }
 
 OPCODE_FUNCTION(opstring) {
-	run.state[instr.a()] = std::make_shared<stringobject>(run.proto->strings(instr.b()));
+	run.state[instr.a()] = stringobject::create(run.state, run.proto->strings(instr.b()));
 
 	return nullptr;
 }
@@ -159,10 +159,10 @@ OPCODE_FUNCTION(opcallm) {
 OPCODE_FUNCTION(opmov) {
 	// A .. A+C = B .. B+C
 
-	int a = instr.a(), b = instr.b();
+	int a = instr.a(), b = instr.b(), c = instr.c();
 
-	for (int i = 0; i < instr.c(); i++) {
-		run.state[a + i] = run.state[b + i];
+	while (c--) {
+		run.state[a++] = run.state[b++];
 	}
 	
 	return nullptr;
@@ -172,13 +172,13 @@ OPCODE_FUNCTION(opmov) {
 OPCODE_FUNCTION(opconstant) {
 	switch (instr.b()) {
 	case 0:
-		run.state[instr.a()] = std::make_shared<boolobject>(true);
+		run.state[instr.a()] = boolobject::create(run.state, true);
 		break;
 	case 1:
-		run.state[instr.a()] = std::make_shared<boolobject>(false);
+		run.state[instr.a()] = boolobject::create(run.state, false);
 		break;
 	default:
-		run.state[instr.a()] = std::make_shared<nilobject>();
+		run.state[instr.a()] = nilobject::create(run.state);
 		break;
 	}
 
@@ -253,7 +253,7 @@ state::_retdata luafunctionobject::call(softwarestate &state, int nrets, int nar
 	state->top = state->base + data->stacksize();
 
 	auto max = data->instructions_size();
-	
+
 	while (run.nextinstruction < max) {
 		auto &instr = data->instructions(run.nextinstruction++);
 		auto found = opcode_map.find(instr.op());
@@ -266,4 +266,8 @@ state::_retdata luafunctionobject::call(softwarestate &state, int nrets, int nar
 	}
 
 	return run.retdata;
+}
+
+objectcontainer luafunctionobject::create(softwarestate &state, std::shared_ptr<bytecode::prototype> proto) {
+	return state.luafunctionallocator.take(proto);
 }

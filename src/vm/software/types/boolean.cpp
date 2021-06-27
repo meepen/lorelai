@@ -3,4 +3,6 @@
 using namespace lorelai;
 using namespace lorelai::vm;
 
-std::shared_ptr<object> boolobject::boolean_metatable = nullptr;
+objectcontainer boolobject::create(softwarestate &state, bool b) {
+	return b ? state.trueobj : state.falseobj;
+}

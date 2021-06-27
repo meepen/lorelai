@@ -27,16 +27,14 @@ void softwarestate::initlibs() {
 	for (size_t i = 0; i < sizeof(libraries) / sizeof(*libraries); i++) {
 		auto &namedlib = libraries[i];
 
-		auto target = registry;
+		auto libt = namedlib.name ? tableobject::create(*this) : registry;
 		if (namedlib.name) {
-			auto newtarget = std::make_shared<tableobject>();
-			target->rawset(*this, std::make_shared<stringobject>(namedlib.name), newtarget);
-			target = newtarget;
+			registry->rawset(*this, stringobject::create(*this, namedlib.name), libt);
 		}
 
 		auto lib = namedlib.lib;
 		while (lib->name) {
-			target->rawset(*this, std::make_shared<stringobject>(lib->name), std::make_shared<cfunctionobject>(lib->func));
+			libt->rawset(*this, stringobject::create(*this, lib->name), cfunctionobject::create(*this, lib->func));
 			lib++;
 		}
 	}
@@ -63,11 +61,37 @@ int softwarestate::_stack::poppointer(const stackpos old, const state::_retdata 
 	}
 
 	for (int i = std::min(amount, retdata.retsize) + 1; i <= amount; i++) {
-		data[to + i - 1] = std::make_shared<nilobject>();
+		data[to + i - 1] = nilobject::create(*st);
 	}
 
 	top = old.top;
 	base = old.base;
 
 	return amount;
+}
+
+softwarestate::softwarestate() {
+	initallocators();
+	registry = tableobject::create(*this);
+	initlibs();
+}
+
+void softwarestate::initallocators() {
+	trueobj = boolallocator.take(true);
+	falseobj = boolallocator.take(false);
+
+	nil = nilallocator.take();
+}
+
+void softwarestate::loadfunction(std::shared_ptr<bytecode::prototype> code) {
+	stack[stack.top++] = luafunctionobject::create(*this, code);
+} 
+void softwarestate::loadnumber(number num) {
+	stack[stack.top++] = numberobject::create(*this, num);
+}
+
+void softwarestate::_stack::initstack() {
+	for (auto &stackpos : data) {
+		stackpos = nilobject::create(*st);
+	}
 }

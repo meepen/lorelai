@@ -3,4 +3,6 @@
 using namespace lorelai;
 using namespace lorelai::vm;
 
-std::shared_ptr<object> nilobject::nil_metatable = nullptr;
+objectcontainer nilobject::create(softwarestate &state) {
+	return state.nil;
+}

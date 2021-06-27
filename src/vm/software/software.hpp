@@ -2,11 +2,21 @@
 #define SOFTWARE_HPP_
 
 #include "state.hpp"
-#include "object.hpp"
+#include "container.hpp"
+#include "types.hpp"
+#include <vector>
 
 namespace lorelai {
 	namespace vm {
 		class object;
+		using objectcontainer = software::container<object>;
+		class boolobject;
+		class nilobject;
+		class numberobject;
+		class stringobject;
+		class tableobject;
+		class luafunctionobject;
+		class cfunctionobject;
 
 		class softwarestate : public state {
 		public:
@@ -16,13 +26,12 @@ namespace lorelai {
 					int top;
 				};
 			public:
-				_stack(state *_st, int size) : st(_st), data(size) {
-					for (int i = 0; i < size; i++) {
-						data[i] = std::make_shared<nilobject>();
-					}
+				_stack(softwarestate *_st, int size) : st(_st), data(size) {
+					initstack();
 				}
+				void initstack();
 
-				std::shared_ptr<object> &operator[](const int index) {
+				objectcontainer &operator[](const int index) {
 					if (index >= 0) {
 						return data[base + index];
 					}
@@ -41,33 +50,25 @@ namespace lorelai {
 				int poppointer(const stackpos old, const state::_retdata retdata, int to = 0, int amount = 0);
 
 			public:
-				state *st = nullptr;
+				softwarestate *st = nullptr;
 
-				std::vector<std::shared_ptr<object>> data;
+				std::vector<objectcontainer> data;
 				int base = 0;
 				int top = 0;
 			};
 		public:
-			softwarestate() {
-				initlibs();
-			}
+			softwarestate();
 			virtual ~softwarestate() override { }
 
 			void initlibs();
+			void initallocators();
 
 			const char *backend() const override { return "software"; }
-			void loadfunction(std::shared_ptr<bytecode::prototype> code) override {
-				stack[stack.top++] = std::make_shared<luafunctionobject>(code);
-			}
-
-			// for now we are just putting these in here to test the api
-			void loadnumber(number num) {
-				stack[stack.top++] = std::make_shared<numberobject>(num);
-			}
-
+			void loadfunction(std::shared_ptr<bytecode::prototype> code) override;
+			void loadnumber(number num) override;
 			_retdata call(int nargs, int nrets) override;
 
-			std::shared_ptr<object> &operator[](int index) {
+			objectcontainer &operator[](int index) {
 				return stack[index];
 			}
 			_stack *operator->() {
@@ -77,7 +78,28 @@ namespace lorelai {
 			static std::shared_ptr<state> create();
 
 		public:
-			std::shared_ptr<tableobject> registry = std::make_shared<tableobject>();
+			objectcontainer registry;
+
+		public:
+			objectcontainer boolean_metatable = nullptr;
+			objectcontainer nil_metatable = nullptr;
+			objectcontainer string_metatable = nullptr;
+			objectcontainer function_metatable = nullptr;
+			objectcontainer number_metatable = nullptr;
+
+		public:
+			software::allocator<boolobject, 2> boolallocator;
+			software::allocator<nilobject, 1> nilallocator;
+			software::allocator<numberobject> numberallocator;
+			software::allocator<stringobject> stringallocator;
+			software::allocator<tableobject> tableallocator;
+			software::allocator<luafunctionobject> luafunctionallocator;
+			software::allocator<cfunctionobject> cfunctionallocator;
+
+		public:
+			objectcontainer nil;
+			objectcontainer trueobj;
+			objectcontainer falseobj;
 		
 		public:
 			_stack stack = _stack(this, 256);

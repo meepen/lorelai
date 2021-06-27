@@ -3,6 +3,7 @@
 
 #include <string>
 #include <memory>
+#include "types.hpp"
 
 namespace lorelai {
 	namespace vm {
@@ -27,6 +28,8 @@ namespace lorelai {
 			virtual ~state() { }
 			virtual const char *backend() const = 0;
 			virtual void loadfunction(std::shared_ptr<bytecode::prototype> code) = 0;
+			virtual void loadnumber(number num) = 0;
+
 			void loadfunction(const std::string &code);
 
 			virtual _retdata call(int nargs, int nrets) = 0;

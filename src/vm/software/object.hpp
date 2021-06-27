@@ -1,13 +1,14 @@
-#ifndef JIT_TYPES_HPP_
-#define JIT_TYPES_HPP_
+#ifndef OBJECT_HPP_
+#define OBJECT_HPP_
 
 #include <cstdint>
 #include <memory>
 #include <sstream>
 
-#include "state.hpp"
+#include "software.hpp"
 #include "types.hpp"
 #include "bytecode.hpp"
+#include "container.hpp"
 #include <memory>
 #include <unordered_map>
 
@@ -15,18 +16,25 @@
 
 namespace lorelai {
 	namespace vm {
-		struct object;
-		class softwarestate;
-		using objectcontainer = std::shared_ptr<object>;
 		using luafunction = int (*)(softwarestate &state, int nrets, int nargs);
 
 		class object {
 		protected:
 			void except(string str) const { throw exception(string("cannot ")  + str + " a " + type()); }
+			enum _type {
+				NIL,
+				BOOL,
+				LUAFUNCTION,
+				CFUNCTION,
+				STRING,
+				NUMBER,
+				TABLE
+			};
 
 		public:
 			virtual ~object() { }
 			virtual const char *type() const = 0;
+			virtual _type _typeid() const = 0;
 
 			virtual size_t hash() const {
 				return std::hash<uintptr_t>()(reinterpret_cast<uintptr_t>(this));
@@ -63,7 +71,7 @@ namespace lorelai {
 			virtual bool index(softwarestate &state, objectcontainer &out, objectcontainer rhs) {
 				if (!rawget(state, out, rhs)) {
 					// TODO: metatable access
-					auto mt = metatable();
+					auto mt = metatable(state);
 
 					return false;
 				}
@@ -71,12 +79,12 @@ namespace lorelai {
 				return true;
 			}
 
-			virtual std::shared_ptr<object> metatable() const = 0;
+			virtual objectcontainer metatable(softwarestate &state) const = 0;
 
 		public:
 			struct equals_to {
-				bool operator()(const std::shared_ptr<lorelai::vm::object> &obj1, const std::shared_ptr<lorelai::vm::object> &obj2) const {
-					return obj1->equals(*obj2);
+				bool operator()(const objectcontainer &obj1, const objectcontainer &obj2) const {
+					return obj1->equals(*obj2.get());
 				}
 			};
 		};
@@ -96,38 +104,49 @@ namespace lorelai {
 	namespace vm {
 		class nilobject : public object {
 		public:
+			static objectcontainer create(softwarestate &state);
 			const char *type() const override { return "nil"; }
 			bool equals(const object & b) const override {
-				return metatable() == b.metatable();
+				return this == &b;
 			}
 			size_t hash() const override {
-				return std::hash<uintptr_t>()(reinterpret_cast<uintptr_t>(&nil_metatable));
+				return std::hash<uintptr_t>()(reinterpret_cast<uintptr_t>(this));
 			}
 
-			std::shared_ptr<object> metatable() const override {
-				return nil_metatable;
+			_type _typeid() const override {
+				return NIL;
+			}
+
+			objectcontainer metatable(softwarestate &state) const override {
+				return state.nil_metatable;
 			}
 			bool tobool(softwarestate &state) override {
 				return false;
 			}
 
 		private:
-			static std::shared_ptr<object> nil_metatable;
+			static objectcontainer nil_metatable;
 		};
 
 		class numberobject : public object {
 		public:
+			static objectcontainer create(softwarestate &state, number n);
 			numberobject(number num) : data(num) { }
+			numberobject() : data(0.0) { }
 		public:
 			const char *type() const override { return "number"; }
+			_type _typeid() const override {
+				return NUMBER;
+			}
+
 			size_t hash() const override {
 				return std::hash<number>()(data);
 			}
 			bool equals(const object & b) const override {
-				return metatable() == b.metatable() && dynamic_cast<const numberobject &>(b).data == data;
+				return _typeid() == b._typeid() && dynamic_cast<const numberobject &>(b).data == data;
 			}
-			std::shared_ptr<object> metatable() const override {
-				return number_metatable;
+			objectcontainer metatable(softwarestate &state) const override {
+				return state.number_metatable;
 			}
 
 			string tostring(softwarestate &state) override {
@@ -145,27 +164,33 @@ namespace lorelai {
 			number data = 0;
 
 		private:
-			static std::shared_ptr<object> number_metatable;
+			static objectcontainer number_metatable;
 		};
 
 		class boolobject : public object {
 		public:
+			static objectcontainer create(softwarestate &state, bool b);
 			boolobject(bool b) : data(b) { }
+			boolobject() : data(false) { }
 
 		public:
 			const char *type() const override { return "boolean"; }
+			_type _typeid() const override {
+				return BOOL;
+			}
+
 			size_t hash() const override {
 				return std::hash<bool>()(data);
 			}
 
 			bool equals(const object & b) const override {
-				return metatable() == b.metatable() && dynamic_cast<const boolobject &>(b).data == data;
+				return _typeid() == b._typeid() && dynamic_cast<const boolobject &>(b).data == data;
 			}
 			bool tobool(softwarestate &state) override {
 				return data;
 			}
-			std::shared_ptr<object> metatable() const override {
-				return boolean_metatable;
+			objectcontainer metatable(softwarestate &state) const override {
+				return state.boolean_metatable;
 			}
 			string tostring(softwarestate &state) override {
 				return data ? "true" : "false";
@@ -175,20 +200,26 @@ namespace lorelai {
 			bool data;
 
 		private:
-			static std::shared_ptr<object> boolean_metatable;
+			static objectcontainer boolean_metatable;
 		};
 
 		class stringobject : public object {
 		public:
+			static objectcontainer create(softwarestate &state, string s);
 			stringobject(string str) : data(str) { }
+			stringobject() : data("") { }
 		public:
 			const char *type() const override { return "string"; }
-			bool equals(const object & b) const override {
-				return metatable() == b.metatable() && dynamic_cast<const stringobject &>(b).data == data;
+			_type _typeid() const override {
+				return STRING;
 			}
 
-			std::shared_ptr<object> metatable() const override {
-				return string_metatable;
+			bool equals(const object & b) const override {
+				return _typeid() == b._typeid() && dynamic_cast<const stringobject &>(b).data == data;
+			}
+
+			objectcontainer metatable(softwarestate &state) const override {
+				return state.string_metatable;
 			}
 
 			size_t hash() const override {
@@ -207,27 +238,34 @@ namespace lorelai {
 			string data = "";
 
 		private:
-			static std::shared_ptr<object> string_metatable;
+			static objectcontainer string_metatable;
 		};
 
-		extern std::shared_ptr<object> function_metatable;
+		extern objectcontainer function_metatable;
 		class functionobject : public object {
 		protected:
 			functionobject() { }
 		public:
 			const char *type() const override { return "function"; }
+
 			bool equals(const object & b) const override {
 				return &b == this;
 			}
 
-			std::shared_ptr<object> metatable() const override {
-				return function_metatable;
+			objectcontainer metatable(softwarestate &state) const override {
+				return state.function_metatable;
 			}
 		};
 
 		class luafunctionobject : public functionobject {
 		public:
+			_type _typeid() const override {
+				return LUAFUNCTION;
+			}
+			static objectcontainer create(softwarestate &state, std::shared_ptr<bytecode::prototype> proto);
+
 			luafunctionobject(std::shared_ptr<bytecode::prototype> proto) : data(proto) { }
+			luafunctionobject() { }
 			
 			state::_retdata call(softwarestate &state, int nrets, int nargs) override;
 		public:
@@ -236,9 +274,15 @@ namespace lorelai {
 
 		class cfunctionobject : public functionobject {
 		public:
+			static objectcontainer create(softwarestate &state, luafunction func);
 			cfunctionobject(luafunction func) : data(func) { }
+			cfunctionobject() { }
 		public:
-			const char *type() const override { return "function"; }
+			const char *type() const override { return "cfunction"; }
+			_type _typeid() const override {
+				return CFUNCTION;
+			}
+
 			bool equals(const object & b) const override {
 				return &b == this;
 			}
@@ -250,9 +294,15 @@ namespace lorelai {
 
 		class tableobject : public object {
 		public:
-			const char *type() const override { return "table"; }
+			tableobject() { }
+			static objectcontainer create(softwarestate &state);
 
-			std::shared_ptr<object> metatable() const override {
+			const char *type() const override { return "table"; }
+			_type _typeid() const override {
+				return TABLE;
+			}
+
+			objectcontainer metatable(softwarestate &state) const override {
 				return _metatable;
 			}
 			void rawset(softwarestate &state, objectcontainer lhs, objectcontainer rhs) override {
@@ -261,17 +311,17 @@ namespace lorelai {
 			bool rawget(softwarestate &state, objectcontainer &out, objectcontainer index) override {
 				auto found = data.find(index);
 				if (found == data.end()) {
-					out = std::make_shared<nilobject>();
+					out = nilobject::create(state);
 				}
 				else {
 					out = found->second;
 				}
 			}
 		public:
-			std::shared_ptr<object> _metatable = nullptr;
+			objectcontainer _metatable = nullptr;
 			std::unordered_map<objectcontainer, objectcontainer, std::hash<objectcontainer>, object::equals_to> data;
 		};
 	}
 }
 
-#endif // JIT_TYPES_HPP_
+#endif // OBJECT_HPP_

@@ -3,4 +3,6 @@
 using namespace lorelai;
 using namespace lorelai::vm;
 
-std::shared_ptr<object> numberobject::number_metatable = nullptr;
+objectcontainer numberobject::create(softwarestate &state, number num) {
+	return state.numberallocator.take(num);
+}
