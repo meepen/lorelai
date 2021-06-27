@@ -8,16 +8,19 @@ using namespace lorelai::vm;
 
 objectcontainer lorelai::vm::function_metatable = nullptr;
 
-struct _running {
-	softwarestate &state;
-	int nrets;
-	int nargs;
-	std::shared_ptr<bytecode::prototype> proto;
-	state::_retdata retdata {0, 0};
-	int multres = 0;
-	size_t nextinstruction = 0;
-};
-using func = state::_retdata *(*)(_running &run, const bytecode::instruction &instr);
+namespace lorelai {
+	namespace vm {
+		struct _running {
+			softwarestate &state;
+			int nrets;
+			int nargs;
+			std::shared_ptr<bytecode::prototype> proto;
+			state::_retdata retdata {0, 0};
+			int multres = 0;
+			size_t nextinstruction = 0;
+		};
+	}
+}
 
 #define OPCODE_FUNCTION(t) static state::_retdata *t(_running &run, const bytecode::instruction &instr)
 
@@ -29,7 +32,8 @@ using func = state::_retdata *(*)(_running &run, const bytecode::instruction &in
 	fn(MULTIPLY, multiply) \
 	fn(CONCAT, concat) \
 	fn(POWER, power)
-#define OPMAPFUNC(opcode, name, arg...) { bytecode::instruction_opcode_##opcode, op##name },
+
+#define OPMAPFUNC(opcode, name, arg...) vm::luaopcodes[bytecode::instruction_opcode_##opcode] = op##name;
 
 // A = B - C
 #define MATHFUNC(opcode, name) \
@@ -214,26 +218,37 @@ OPCODE_FUNCTION(opjmpiftrue) {
 	return nullptr;
 }
 
-static std::map<bytecode::instruction_opcode, func> opcode_map = {
-	{ bytecode::instruction_opcode_ENVIRONMENTGET, openvironmentget },
-	{ bytecode::instruction_opcode_NUMBER, opnumber },
-	{ bytecode::instruction_opcode_CALL, opcall },
-	{ bytecode::instruction_opcode_CALLM, opcallm },
-	{ bytecode::instruction_opcode_MOV, opmov },
-	{ bytecode::instruction_opcode_STRING, opstring },
-	{ bytecode::instruction_opcode_INDEX, opindex },
-	{ bytecode::instruction_opcode_GREATERTHANEQUAL, opgreaterthanequal },
-	{ bytecode::instruction_opcode_LESSTHANEQUAL, oplessthanequal },
-	{ bytecode::instruction_opcode_NOTEQUALS, opnotequals },
-	{ bytecode::instruction_opcode_NOT, opnot },
-	{ bytecode::instruction_opcode_MINUS, opminus },
-	{ bytecode::instruction_opcode_CONSTANT, opconstant },
-	{ bytecode::instruction_opcode_JMP, opjmp },
-	{ bytecode::instruction_opcode_JMPIFFALSE, opjmpiffalse },
-	{ bytecode::instruction_opcode_JMPIFTRUE, opjmpiftrue },
+vm::luaopcode vm::luaopcodes[bytecode::instruction_opcode_opcode_MAX] = { nullptr };
+
+static bool has_init = false;
+
+void luafunctionobject::init() {
+	if (has_init) {
+		return;
+	}
+	has_init = true;
+
+	memset(vm::luaopcodes, 0, sizeof(vm::luaopcodes));
+
+	vm::luaopcodes[bytecode::instruction_opcode_ENVIRONMENTGET] = openvironmentget;
+	vm::luaopcodes[bytecode::instruction_opcode_NUMBER] = opnumber;
+	vm::luaopcodes[bytecode::instruction_opcode_CALL] = opcall;
+	vm::luaopcodes[bytecode::instruction_opcode_CALLM] = opcallm;
+	vm::luaopcodes[bytecode::instruction_opcode_MOV] = opmov;
+	vm::luaopcodes[bytecode::instruction_opcode_STRING] = opstring;
+	vm::luaopcodes[bytecode::instruction_opcode_INDEX] = opindex;
+	vm::luaopcodes[bytecode::instruction_opcode_GREATERTHANEQUAL] = opgreaterthanequal;
+	vm::luaopcodes[bytecode::instruction_opcode_LESSTHANEQUAL] = oplessthanequal;
+	vm::luaopcodes[bytecode::instruction_opcode_NOTEQUALS] = opnotequals;
+	vm::luaopcodes[bytecode::instruction_opcode_NOT] = opnot;
+	vm::luaopcodes[bytecode::instruction_opcode_MINUS] = opminus;
+	vm::luaopcodes[bytecode::instruction_opcode_CONSTANT] = opconstant;
+	vm::luaopcodes[bytecode::instruction_opcode_JMP] = opjmp;
+	vm::luaopcodes[bytecode::instruction_opcode_JMPIFFALSE] = opjmpiffalse;
+	vm::luaopcodes[bytecode::instruction_opcode_JMPIFTRUE] = opjmpiftrue;
 	MATHOPS(OPMAPFUNC)
 	COMPAREOPS(OPMAPFUNC)
-};
+}
 
 class exception : public std::exception {
 public:
@@ -256,11 +271,11 @@ state::_retdata luafunctionobject::call(softwarestate &state, int nrets, int nar
 
 	while (run.nextinstruction < max) {
 		auto &instr = data->instructions(run.nextinstruction++);
-		auto found = opcode_map.find(instr.op());
-		if (found == opcode_map.end()) {
+		auto op = luaopcodes[instr.op()]; // TODO: verify in luafunctionobject::create
+		if (!op) { // TODO: verify in luafunctionobject::create
 			throw exception("Unknown opcode " + bytecode::instruction_opcode_Name(instr.op()));
 		}
-		if (found->second(run, instr)) {
+		if (op(run, instr)) {
 			break;
 		}
 	}

@@ -71,6 +71,7 @@ int softwarestate::_stack::poppointer(const stackpos old, const state::_retdata 
 }
 
 softwarestate::softwarestate() {
+	luafunctionobject::init();
 	initallocators();
 	registry = tableobject::create(*this);
 	initlibs();

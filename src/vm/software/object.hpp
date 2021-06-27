@@ -257,6 +257,9 @@ namespace lorelai {
 			}
 		};
 
+		using luaopcode = state::_retdata *(*)(struct _running &run, const bytecode::instruction &instr);
+		extern luaopcode luaopcodes[bytecode::instruction_opcode_opcode_MAX];
+
 		class luafunctionobject : public functionobject {
 		public:
 			_type _typeid() const override {
@@ -268,6 +271,9 @@ namespace lorelai {
 			luafunctionobject() { }
 			
 			state::_retdata call(softwarestate &state, int nrets, int nargs) override;
+
+			static void init();
+
 		public:
 			std::shared_ptr<bytecode::prototype> data;
 		};
