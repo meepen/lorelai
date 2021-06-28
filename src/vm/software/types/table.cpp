@@ -1,9 +1,12 @@
 #include "../object.hpp"
+#include "../software.hpp"
 
 using namespace lorelai;
 using namespace lorelai::vm;
 
 
-objectcontainer tableobject::create(softwarestate &state) {
-	return state.tableallocator.take();
+object tableobject::create(softwarestate &state) {
+	auto r = object(state.tableallocator.take(), true);
+	// TODO(possibly?) clear table
+	return r;
 }

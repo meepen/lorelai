@@ -4,12 +4,13 @@
 #include "state.hpp"
 #include "container.hpp"
 #include "types.hpp"
+#include "object.hpp"
 #include <vector>
 
 namespace lorelai {
 	namespace vm {
 		class object;
-		using objectcontainer = software::container<object>;
+		class referenceobject;
 		class boolobject;
 		class nilobject;
 		class numberobject;
@@ -31,7 +32,7 @@ namespace lorelai {
 				}
 				void initstack();
 
-				objectcontainer &operator[](const int index) {
+				object &operator[](const int index) {
 					if (index >= 0) {
 						return data[base + index];
 					}
@@ -52,7 +53,7 @@ namespace lorelai {
 			public:
 				softwarestate *st = nullptr;
 
-				std::vector<objectcontainer> data;
+				std::vector<object> data;
 				int base = 0;
 				int top = 0;
 			};
@@ -61,14 +62,13 @@ namespace lorelai {
 			virtual ~softwarestate() override { }
 
 			void initlibs();
-			void initallocators();
 
 			const char *backend() const override { return "software"; }
 			void loadfunction(std::shared_ptr<bytecode::prototype> code) override;
 			void loadnumber(number num) override;
 			_retdata call(int nargs, int nrets) override;
 
-			objectcontainer &operator[](int index) {
+			object &operator[](int index) {
 				return stack[index];
 			}
 			_stack *operator->() {
@@ -78,29 +78,20 @@ namespace lorelai {
 			static std::shared_ptr<state> create();
 
 		public:
-			objectcontainer registry;
+			object registry;
 
 		public:
-			objectcontainer boolean_metatable = nullptr;
-			objectcontainer nil_metatable = nullptr;
-			objectcontainer string_metatable = nullptr;
-			objectcontainer function_metatable = nullptr;
-			objectcontainer number_metatable = nullptr;
+			object boolean_metatable;
+			object nil_metatable;
+			object string_metatable;
+			object function_metatable;
+			object number_metatable;
 
 		public:
-			software::allocator<boolobject, 2> boolallocator;
-			software::allocator<nilobject, 1> nilallocator;
-			software::allocator<numberobject> numberallocator;
-			software::allocator<stringobject> stringallocator;
 			software::allocator<tableobject> tableallocator;
 			software::allocator<luafunctionobject> luafunctionallocator;
 			software::allocator<cfunctionobject> cfunctionallocator;
 
-		public:
-			objectcontainer nil;
-			objectcontainer trueobj;
-			objectcontainer falseobj;
-		
 		public:
 			_stack stack = _stack(this, 256);
 		};

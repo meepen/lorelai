@@ -14,6 +14,6 @@ state::_retdata cfunctionobject::call(softwarestate &state, int nrets, int nargs
 	};
 }
 
-objectcontainer cfunctionobject::create(softwarestate &state, luafunction func) {
-	return state.cfunctionallocator.take(func);
+object cfunctionobject::create(softwarestate &state, luafunction func) {
+	return object(state.cfunctionallocator.take(func), true);
 }

@@ -5,8 +5,28 @@
 #include <memory>
 #include "types.hpp"
 
+#define LORELAI_TYPES(fn) \
+	fn(NIL) \
+	fn(BOOL) \
+	fn(STRING) \
+	fn(NUMBER) \
+	fn(TABLE) \
+	fn(LUAFUNCTION) \
+	fn(CFUNCTION)
+
 namespace lorelai {
 	namespace vm {
+#define LORELAI_LITERAL(x) x,
+		enum _type {
+			LORELAI_TYPES(LORELAI_LITERAL)
+		};
+#undef LORELAI_LITERAL
+#define LORELAI_STRING(x) #x,
+		static const char *typenames[] = {
+			LORELAI_TYPES(LORELAI_STRING)
+		};
+#undef LORELAI_STRING
+
 		namespace bytecode {
 			class prototype;
 		}

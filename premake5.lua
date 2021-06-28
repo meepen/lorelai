@@ -145,8 +145,8 @@ workspace "lorelai"
 		linkoptions { "-fsanitize=address", "-static-libasan" }
 
 	filter {"configurations:release", "action:gmake" }
-		buildoptions { "-pg" }
-		linkoptions { "-pg" }
+		buildoptions { "-fno-omit-frame-pointer" }
+		linkoptions { "-fno-omit-frame-pointer" }
 
 	filter "configurations:release"
 		defines "NDEBUG"

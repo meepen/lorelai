@@ -3,3 +3,4 @@ bin
 *.pb.cc
 *.pb.h
 gmon.out
+*callgrind*

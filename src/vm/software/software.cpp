@@ -25,16 +25,16 @@ std::shared_ptr<state> state::createfastest() {
 
 void softwarestate::initlibs() {
 	for (size_t i = 0; i < sizeof(libraries) / sizeof(*libraries); i++) {
-		auto &namedlib = libraries[i];
+		const auto &namedlib = libraries[i];
 
 		auto libt = namedlib.name ? tableobject::create(*this) : registry;
 		if (namedlib.name) {
-			registry->rawset(*this, stringobject::create(*this, namedlib.name), libt);
+			registry.rawset(*this, object(namedlib.name), libt);
 		}
 
 		auto lib = namedlib.lib;
 		while (lib->name) {
-			libt->rawset(*this, stringobject::create(*this, lib->name), cfunctionobject::create(*this, lib->func));
+			libt.rawset(*this, object(lib->name), cfunctionobject::create(*this, lib->func));
 			lib++;
 		}
 	}
@@ -43,7 +43,7 @@ void softwarestate::initlibs() {
 state::_retdata softwarestate::call(int nargs, int nrets) {
 	auto old = stack.pushpointer(stack.base + stack.top - nargs - 1);
 	auto tocall = stack[0];
-	auto rets = stack.poppointer(old, tocall->call(*this, nrets, nargs), stack.base + stack.top - nargs - 1, nrets);
+	auto rets = stack.poppointer(old, tocall.call(*this, nargs, nrets), stack.base + stack.top - nargs - 1, nrets);
 
 	return {
 		stack.base + stack.top - nargs - 1 + nrets,
@@ -61,7 +61,7 @@ int softwarestate::_stack::poppointer(const stackpos old, const state::_retdata 
 	}
 
 	for (int i = std::min(amount, retdata.retsize) + 1; i <= amount; i++) {
-		data[to + i - 1] = nilobject::create(*st);
+		data[to + i - 1] = object();
 	}
 
 	top = old.top;
@@ -72,27 +72,19 @@ int softwarestate::_stack::poppointer(const stackpos old, const state::_retdata 
 
 softwarestate::softwarestate() {
 	luafunctionobject::init();
-	initallocators();
 	registry = tableobject::create(*this);
 	initlibs();
-}
-
-void softwarestate::initallocators() {
-	trueobj = boolallocator.take(true);
-	falseobj = boolallocator.take(false);
-
-	nil = nilallocator.take();
 }
 
 void softwarestate::loadfunction(std::shared_ptr<bytecode::prototype> code) {
 	stack[stack.top++] = luafunctionobject::create(*this, code);
 } 
 void softwarestate::loadnumber(number num) {
-	stack[stack.top++] = numberobject::create(*this, num);
+	stack[stack.top++] = object(num);
 }
 
 void softwarestate::_stack::initstack() {
 	for (auto &stackpos : data) {
-		stackpos = nilobject::create(*st);
+		stackpos = object();
 	}
 }

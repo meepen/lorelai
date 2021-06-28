@@ -19,8 +19,6 @@ struct luafunctionobject::instruction {
 	luafunctionobject::instruction *fastlookup[2] = { nullptr, nullptr };
 };
 
-objectcontainer lorelai::vm::function_metatable = nullptr;
-
 struct _running {
 	softwarestate &state;
 	luafunctionobject *obj;
@@ -46,7 +44,7 @@ struct _running {
 // A = B - C
 #define MATHFUNC(opcode, name) \
 OPCODE_FUNCTION(op##name) { \
-	run.state[instr.b] -> name (run.state, run.state[instr.a], run.state[instr.c]); \
+	run.state[instr.b] . name (run.state, run.state[instr.a], run.state[instr.c]); \
  \
 	return instr.fastlookup[0]; \
 }
@@ -60,43 +58,58 @@ MATHOPS(MATHFUNC)
 
 #define OPFUNC(opcode, name) \
 OPCODE_FUNCTION(op##name) { \
-	run.state[instr.a] = boolobject::create(run.state, run.state[instr.b] -> name (run.state, run.state[instr.c])); \
+	run.state[instr.a].set(run.state[instr.b] . name (run.state, run.state[instr.c])); \
  \
 	return instr.fastlookup[0]; \
 }
 
+OPCODE_FUNCTION(oplessthan) {
+	run.state[instr.a].set(run.state[instr.b].lessthan(run.state, run.state[instr.c]));
+
+	return instr.fastlookup[0];
+}
+
+OPCODE_FUNCTION(opgreaterthan) {
+	run.state[instr.a].set(run.state[instr.b].greaterthan(run.state, run.state[instr.c]));
+
+	return instr.fastlookup[0];
+}
+
+OPCODE_FUNCTION(opequals) {
+	run.state[instr.a].set(run.state[instr.b].equals(run.state, run.state[instr.c]));
+
+	return instr.fastlookup[0];
+}
 
 OPCODE_FUNCTION(opgreaterthanequal) {
-	run.state[instr.a] = boolobject::create(run.state, !run.state[instr.c]->greaterthan(run.state, run.state[instr.b]));
+	run.state[instr.a].set(!run.state[instr.c].greaterthan(run.state, run.state[instr.b]));
 
 	return instr.fastlookup[0];
 }
 
 OPCODE_FUNCTION(oplessthanequal) {
-	run.state[instr.a] = boolobject::create(run.state, !run.state[instr.c]->lessthan(run.state, run.state[instr.b]));
+	run.state[instr.a].set(!run.state[instr.c].lessthan(run.state, run.state[instr.b]));
 
 	return instr.fastlookup[0];
 }
 
 OPCODE_FUNCTION(opnotequals) {
-	run.state[instr.a] = boolobject::create(run.state, !run.state[instr.c]->equals(run.state, run.state[instr.b]));
+	run.state[instr.a].set(!run.state[instr.c].equals(run.state, run.state[instr.b]));
 
 	return instr.fastlookup[0];
 }
 
 OPCODE_FUNCTION(opnot) {
-	run.state[instr.a] = boolobject::create(run.state, !run.state[instr.b]->tobool(run.state));
+	run.state[instr.a].set(!run.state[instr.b].tobool(run.state));
 
 	return instr.fastlookup[0];
 }
 
 OPCODE_FUNCTION(opminus) {
-	run.state[instr.a] = numberobject::create(run.state, -run.state[instr.b]->tonumber(run.state));
+	run.state[instr.a].set(-run.state[instr.b].tonumber(run.state));
 
 	return instr.fastlookup[0];
 }
-
-COMPAREOPS(OPFUNC)
 
 #define LOGICOPS(fn) \
 	fn(and, AND, and, &&) \
@@ -106,15 +119,15 @@ OPCODE_FUNCTION(opindex) {
 	// A = B [ C ]
 
 	auto ref = run.state[instr.b];
-	ref->index(run.state, run.state[instr.a], run.state[instr.c]);
+	ref.index(run.state, run.state[instr.a], run.state[instr.c]);
 
 	return instr.fastlookup[0];
 }
 
 OPCODE_FUNCTION(openvironmentget) {
-	objectcontainer index = run.obj->strings[instr.b];
+	object &index = run.obj->strings[instr.b];
 
-	run.state.registry->index(run.state, run.state[instr.a], index);
+	run.state.registry.index(run.state, run.state[instr.a], index);
 
 	return instr.fastlookup[0];
 }
@@ -135,7 +148,7 @@ OPCODE_FUNCTION(opcall) {
 	// A .. A+C-2 = A(A+1 .. A + B)
 	auto old = run.state->pushpointer(run.state->base + instr.a);
 	auto data = run.state[0];
-	auto nret = data->call(run.state, instr.c - 1, instr.b);
+	auto nret = data.call(run.state, instr.b, instr.c - 1);
 	if (instr.c >= 1) {
 		run.state->poppointer(old, nret, old.base + instr.a, instr.c - 1);
 	}
@@ -157,7 +170,7 @@ OPCODE_FUNCTION(opcallm) {
 
 	auto old = run.state->pushpointer(run.state->base + run.state->top);
 	auto data = run.state[0];
-	auto nret = data->call(run.state, instr.c - 1, instr.b + run.multres);
+	auto nret = data.call(run.state, instr.b + run.multres, instr.c - 1);
 	if (instr.c >= 1) {
 		run.state->poppointer(old, nret, old.base + instr.a, instr.c - 1);
 	}
@@ -184,13 +197,13 @@ OPCODE_FUNCTION(opmov) {
 OPCODE_FUNCTION(opconstant) {
 	switch (instr.b) {
 	case 0:
-		run.state[instr.a] = boolobject::create(run.state, true);
+		run.state[instr.a].set(true);
 		break;
 	case 1:
-		run.state[instr.a] = boolobject::create(run.state, false);
+		run.state[instr.a].set(false);
 		break;
 	default:
-		run.state[instr.a] = nilobject::create(run.state);
+		run.state[instr.a].unset();
 		break;
 	}
 
@@ -210,7 +223,7 @@ OPCODE_FUNCTION(opjmp) {
 }
 
 OPCODE_FUNCTION(opjmpiffalse) {
-	if (!run.state[instr.a]->tobool(run.state)) {
+	if (!run.state[instr.a].tobool(run.state)) {
 		return instr.fastlookup[1];
 	}
 
@@ -218,7 +231,7 @@ OPCODE_FUNCTION(opjmpiffalse) {
 }
 
 OPCODE_FUNCTION(opjmpiftrue) {
-	if (run.state[instr.a]->tobool(run.state)) {
+	if (run.state[instr.a].tobool(run.state)) {
 		return instr.fastlookup[1];
 	}
 
@@ -269,8 +282,8 @@ state::_retdata luafunctionobject::call(softwarestate &state, int nrets, int nar
 	return run.retdata;
 }
 
-objectcontainer luafunctionobject::create(softwarestate &state, std::shared_ptr<bytecode::prototype> proto) {
-	return state.luafunctionallocator.take(state, proto);
+object luafunctionobject::create(softwarestate &state, std::shared_ptr<bytecode::prototype> proto) {
+	return object(state.luafunctionallocator.take(state, proto), true);
 }
 
 luafunctionobject::luafunctionobject(softwarestate &state, std::shared_ptr<bytecode::prototype> proto) {
@@ -330,11 +343,11 @@ luafunctionobject::luafunctionobject(softwarestate &state, std::shared_ptr<bytec
 	}
 
 	for (int i = 0; i < proto->strings_size(); i++) {
-		strings.push_back(stringobject::create(state, proto->strings(i)));
+		strings.push_back(object(proto->strings(i)));
 	}
 
 	for (int i = 0; i < proto->numbers_size(); i++) {
-		numbers.push_back(numberobject::create(state, proto->numbers(i)));
+		numbers.push_back(object(proto->numbers(i)));
 	}
 
 	stacksize = proto->stacksize();
@@ -342,3 +355,7 @@ luafunctionobject::luafunctionobject(softwarestate &state, std::shared_ptr<bytec
 
 luafunctionobject::luafunctionobject() { }
 luafunctionobject::~luafunctionobject() { }
+
+object functionobject::metatable(softwarestate &state) const {
+	return state.function_metatable;
+}
