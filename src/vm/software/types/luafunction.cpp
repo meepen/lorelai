@@ -205,7 +205,8 @@ OPCODE_FUNCTION(opconstant) {
 */
 
 OPCODE_FUNCTION(opjmp) {
-	return instr.fastlookup[0];
+	// this should never be called directly due to jmp patching
+	throw;
 }
 
 OPCODE_FUNCTION(opjmpiffalse) {
@@ -298,20 +299,33 @@ luafunctionobject::luafunctionobject(softwarestate &state, std::shared_ptr<bytec
 			throw exception("opcode not implemented: " + bytecode::instruction_opcode_Name(instr.op()));
 		}
 	}
+
+	// add fastlookup alternative jump to necessary ops
+
 	for (int i = 0; i < proto->instructions_size(); i++) {
 		auto &patchproto = proto->instructions(i);
 		auto &patchinstr = instructions[i];
 
 		switch (patchproto.op()) {
 		case bytecode::instruction_opcode_JMP:
-			patchinstr.fastlookup[0] = patchinstr.b >= oob ? nullptr : &instructions[patchinstr.b];
-			break;
 		case bytecode::instruction_opcode_JMPIFFALSE:
 		case bytecode::instruction_opcode_JMPIFNIL:
 		case bytecode::instruction_opcode_JMPIFTRUE:
 			patchinstr.fastlookup[1] = patchinstr.b >= oob ? nullptr : &instructions[patchinstr.b];
 		default:
 			break;
+		}
+	}
+
+	for (int i = 0; i < proto->instructions_size(); i++) {
+		auto &patchproto = proto->instructions(i);
+		auto &patchinstr = instructions[i];
+
+		for (int i = 0; i < sizeof(luafunctionobject::instruction::fastlookup) / sizeof(luafunctionobject::instruction::fastlookup[0]); i++) {
+			// fast patch jmp instructions
+			while (patchinstr.fastlookup[i] && patchinstr.fastlookup[i]->opcode == opjmp) {
+				patchinstr.fastlookup[i] = patchinstr.fastlookup[i]->fastlookup[1];
+			}
 		}
 	}
 
