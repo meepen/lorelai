@@ -2,27 +2,35 @@
 #include "../software.hpp"
 #include <exception>
 #include <string>
+#include <memory>
 
 using namespace lorelai;
 using namespace lorelai::vm;
 
+using luaopcode = luafunctionobject::instruction *const (*)(struct _running &run, const luafunctionobject::instruction &instr);
+luaopcode luaopcodes[bytecode::instruction_opcode_opcode_MAX] = { nullptr };
+
+struct luafunctionobject::instruction {
+	luaopcode opcode;
+	std::uint32_t a;
+	std::uint32_t b;
+	std::uint32_t c;
+
+	luafunctionobject::instruction *fastlookup[2] = { nullptr, nullptr };
+};
+
 objectcontainer lorelai::vm::function_metatable = nullptr;
 
-namespace lorelai {
-	namespace vm {
-		struct _running {
-			softwarestate &state;
-			int nrets;
-			int nargs;
-			std::shared_ptr<bytecode::prototype> proto;
-			state::_retdata retdata {0, 0};
-			int multres = 0;
-			size_t nextinstruction = 0;
-		};
-	}
-}
+struct _running {
+	softwarestate &state;
+	luafunctionobject *obj;
+	int nrets;
+	int nargs;
+	int multres = 0;
+	state::_retdata retdata {0, 0};
+};
 
-#define OPCODE_FUNCTION(t) static state::_retdata *t(_running &run, const bytecode::instruction &instr)
+#define OPCODE_FUNCTION(t) static luafunctionobject::instruction *const t(_running &run, const luafunctionobject::instruction &instr)
 
 #define MATHOPS(fn) \
 	fn(MODULO, modulo) \
@@ -33,14 +41,14 @@ namespace lorelai {
 	fn(CONCAT, concat) \
 	fn(POWER, power)
 
-#define OPMAPFUNC(opcode, name, arg...) vm::luaopcodes[bytecode::instruction_opcode_##opcode] = op##name;
+#define OPMAPFUNC(opcode, name, arg...) luaopcodes[bytecode::instruction_opcode_##opcode] = op##name;
 
 // A = B - C
 #define MATHFUNC(opcode, name) \
 OPCODE_FUNCTION(op##name) { \
-	run.state[instr.b()]-> name (run.state, run.state[instr.a()], run.state[instr.c()]); \
+	run.state[instr.b] -> name (run.state, run.state[instr.a], run.state[instr.c]); \
  \
-	return nullptr; \
+	return instr.fastlookup[0]; \
 }
 
 MATHOPS(MATHFUNC)
@@ -52,40 +60,40 @@ MATHOPS(MATHFUNC)
 
 #define OPFUNC(opcode, name) \
 OPCODE_FUNCTION(op##name) { \
-	run.state[instr.a()] = boolobject::create(run.state, run.state[instr.b()]-> name (run.state, run.state[instr.c()])); \
+	run.state[instr.a] = boolobject::create(run.state, run.state[instr.b] -> name (run.state, run.state[instr.c])); \
  \
-	return nullptr; \
+	return instr.fastlookup[0]; \
 }
 
 
 OPCODE_FUNCTION(opgreaterthanequal) {
-	run.state[instr.a()] = boolobject::create(run.state, !run.state[instr.c()]->greaterthan(run.state, run.state[instr.b()]));
+	run.state[instr.a] = boolobject::create(run.state, !run.state[instr.c]->greaterthan(run.state, run.state[instr.b]));
 
-	return nullptr;
+	return instr.fastlookup[0];
 }
 
 OPCODE_FUNCTION(oplessthanequal) {
-	run.state[instr.a()] = boolobject::create(run.state, !run.state[instr.c()]->lessthan(run.state, run.state[instr.b()]));
+	run.state[instr.a] = boolobject::create(run.state, !run.state[instr.c]->lessthan(run.state, run.state[instr.b]));
 
-	return nullptr;
+	return instr.fastlookup[0];
 }
 
 OPCODE_FUNCTION(opnotequals) {
-	run.state[instr.a()] = boolobject::create(run.state, !run.state[instr.c()]->equals(run.state, run.state[instr.b()]));
+	run.state[instr.a] = boolobject::create(run.state, !run.state[instr.c]->equals(run.state, run.state[instr.b]));
 
-	return nullptr;
+	return instr.fastlookup[0];
 }
 
 OPCODE_FUNCTION(opnot) {
-	run.state[instr.a()] = boolobject::create(run.state, !run.state[instr.b()]->tobool(run.state));
+	run.state[instr.a] = boolobject::create(run.state, !run.state[instr.b]->tobool(run.state));
 
-	return nullptr;
+	return instr.fastlookup[0];
 }
 
 OPCODE_FUNCTION(opminus) {
-	run.state[instr.a()] = numberobject::create(run.state, -run.state[instr.b()]->tonumber(run.state));
+	run.state[instr.a] = numberobject::create(run.state, -run.state[instr.b]->tonumber(run.state));
 
-	return nullptr;
+	return instr.fastlookup[0];
 }
 
 COMPAREOPS(OPFUNC)
@@ -97,96 +105,96 @@ COMPAREOPS(OPFUNC)
 OPCODE_FUNCTION(opindex) {
 	// A = B [ C ]
 
-	auto ref = run.state[instr.b()];
-	ref->index(run.state, run.state[instr.a()], run.state[instr.c()]);
+	auto ref = run.state[instr.b];
+	ref->index(run.state, run.state[instr.a], run.state[instr.c]);
 
-	return nullptr;
+	return instr.fastlookup[0];
 }
 
 OPCODE_FUNCTION(openvironmentget) {
-	objectcontainer index = stringobject::create(run.state, run.proto->strings(instr.b()));\
+	objectcontainer index = run.obj->strings[instr.b];
 
-	run.state.registry->index(run.state, run.state[instr.a()], index);\
+	run.state.registry->index(run.state, run.state[instr.a], index);
 
-	return nullptr;
+	return instr.fastlookup[0];
 }
 
 OPCODE_FUNCTION(opnumber) {
-	run.state[instr.a()] = numberobject::create(run.state, run.proto->numbers(instr.b()));
+	run.state[instr.a] = run.obj->numbers[instr.b];
 
-	return nullptr;
+	return instr.fastlookup[0];
 }
 
 OPCODE_FUNCTION(opstring) {
-	run.state[instr.a()] = stringobject::create(run.state, run.proto->strings(instr.b()));
+	run.state[instr.a] = run.obj->strings[instr.b];
 
-	return nullptr;
+	return instr.fastlookup[0];
 }
 
 OPCODE_FUNCTION(opcall) {
 	// A .. A+C-2 = A(A+1 .. A + B)
-	auto old = run.state->pushpointer(run.state->base + instr.a());
+	auto old = run.state->pushpointer(run.state->base + instr.a);
 	auto data = run.state[0];
-	auto nret = data->call(run.state, instr.c() - 1, instr.b());
-	if (instr.c() >= 1) {
-		run.state->poppointer(old, nret, old.base + instr.a(), instr.c() - 1);
+	auto nret = data->call(run.state, instr.c - 1, instr.b);
+	if (instr.c >= 1) {
+		run.state->poppointer(old, nret, old.base + instr.a, instr.c - 1);
 	}
 	else {
 		run.multres = run.state->poppointer(old, nret, old.base + old.top, -1);
 	}
 
-	return nullptr;
+	return instr.fastlookup[0];
 }
 
 OPCODE_FUNCTION(opcallm) {
 	// A .. A+C-2 = A(A+1 .. A + B, ...)
 	for (int i = run.multres - 1; i >= 0; i--) {
-		run.state[run.state->top + i + instr.b() + 1] = run.state[run.state->top + i];
+		run.state[run.state->top + i + instr.b + 1] = run.state[run.state->top + i];
 	}
-	for (int i = 0; i <= instr.b(); i++) {
-		run.state[run.state->top + i] = run.state[instr.a() + i];
+	for (int i = 0; i <= instr.b; i++) {
+		run.state[run.state->top + i] = run.state[instr.a + i];
 	}
 
 	auto old = run.state->pushpointer(run.state->base + run.state->top);
 	auto data = run.state[0];
-	auto nret = data->call(run.state, instr.c() - 1, instr.b() + run.multres);
-	if (instr.c() >= 1) {
-		run.state->poppointer(old, nret, old.base + instr.a(), instr.c() - 1);
+	auto nret = data->call(run.state, instr.c - 1, instr.b + run.multres);
+	if (instr.c >= 1) {
+		run.state->poppointer(old, nret, old.base + instr.a, instr.c - 1);
 	}
 	else {
 		run.multres = run.state->poppointer(old, nret, old.base + old.top, -1);
 	}
 
-	return nullptr;
+	return instr.fastlookup[0];
 }
 
 OPCODE_FUNCTION(opmov) {
 	// A .. A+C = B .. B+C
 
-	int a = instr.a(), b = instr.b(), c = instr.c();
+	auto a = instr.a, b = instr.b, c = instr.c;
 
 	while (c--) {
 		run.state[a++] = run.state[b++];
 	}
 	
-	return nullptr;
+	return instr.fastlookup[0];
 }
 
 // ({true, false, nil})[B]
 OPCODE_FUNCTION(opconstant) {
-	switch (instr.b()) {
+	switch (instr.b) {
 	case 0:
-		run.state[instr.a()] = boolobject::create(run.state, true);
+		run.state[instr.a] = boolobject::create(run.state, true);
 		break;
 	case 1:
-		run.state[instr.a()] = boolobject::create(run.state, false);
+		run.state[instr.a] = boolobject::create(run.state, false);
 		break;
 	default:
-		run.state[instr.a()] = nilobject::create(run.state);
+		run.state[instr.a] = nilobject::create(run.state);
 		break;
 	}
 
-	return nullptr;
+	return instr.fastlookup[0];
 }
 
 /*
@@ -197,28 +205,24 @@ OPCODE_FUNCTION(opconstant) {
 */
 
 OPCODE_FUNCTION(opjmp) {
-	run.nextinstruction = instr.b();
-
-	return nullptr;
+	return instr.fastlookup[0];
 }
 
 OPCODE_FUNCTION(opjmpiffalse) {
-	if (!run.state[instr.a()]->tobool(run.state)) {
-		run.nextinstruction = instr.b();
+	if (!run.state[instr.a]->tobool(run.state)) {
+		return instr.fastlookup[1];
 	}
 
-	return nullptr;
+	return instr.fastlookup[0];
 }
 
 OPCODE_FUNCTION(opjmpiftrue) {
-	if (run.state[instr.a()]->tobool(run.state)) {
-		run.nextinstruction = instr.b();
+	if (run.state[instr.a]->tobool(run.state)) {
+		return instr.fastlookup[1];
 	}
 
-	return nullptr;
+	return instr.fastlookup[0];
 }
-
-vm::luaopcode vm::luaopcodes[bytecode::instruction_opcode_opcode_MAX] = { nullptr };
 
 static bool has_init = false;
 
@@ -228,61 +232,99 @@ void luafunctionobject::init() {
 	}
 	has_init = true;
 
-	memset(vm::luaopcodes, 0, sizeof(vm::luaopcodes));
+	memset(luaopcodes, 0, sizeof(luaopcodes));
 
-	vm::luaopcodes[bytecode::instruction_opcode_ENVIRONMENTGET] = openvironmentget;
-	vm::luaopcodes[bytecode::instruction_opcode_NUMBER] = opnumber;
-	vm::luaopcodes[bytecode::instruction_opcode_CALL] = opcall;
-	vm::luaopcodes[bytecode::instruction_opcode_CALLM] = opcallm;
-	vm::luaopcodes[bytecode::instruction_opcode_MOV] = opmov;
-	vm::luaopcodes[bytecode::instruction_opcode_STRING] = opstring;
-	vm::luaopcodes[bytecode::instruction_opcode_INDEX] = opindex;
-	vm::luaopcodes[bytecode::instruction_opcode_GREATERTHANEQUAL] = opgreaterthanequal;
-	vm::luaopcodes[bytecode::instruction_opcode_LESSTHANEQUAL] = oplessthanequal;
-	vm::luaopcodes[bytecode::instruction_opcode_NOTEQUALS] = opnotequals;
-	vm::luaopcodes[bytecode::instruction_opcode_NOT] = opnot;
-	vm::luaopcodes[bytecode::instruction_opcode_MINUS] = opminus;
-	vm::luaopcodes[bytecode::instruction_opcode_CONSTANT] = opconstant;
-	vm::luaopcodes[bytecode::instruction_opcode_JMP] = opjmp;
-	vm::luaopcodes[bytecode::instruction_opcode_JMPIFFALSE] = opjmpiffalse;
-	vm::luaopcodes[bytecode::instruction_opcode_JMPIFTRUE] = opjmpiftrue;
+	luaopcodes[bytecode::instruction_opcode_ENVIRONMENTGET] = openvironmentget;
+	luaopcodes[bytecode::instruction_opcode_NUMBER] = opnumber;
+	luaopcodes[bytecode::instruction_opcode_CALL] = opcall;
+	luaopcodes[bytecode::instruction_opcode_CALLM] = opcallm;
+	luaopcodes[bytecode::instruction_opcode_MOV] = opmov;
+	luaopcodes[bytecode::instruction_opcode_STRING] = opstring;
+	luaopcodes[bytecode::instruction_opcode_INDEX] = opindex;
+	luaopcodes[bytecode::instruction_opcode_GREATERTHANEQUAL] = opgreaterthanequal;
+	luaopcodes[bytecode::instruction_opcode_LESSTHANEQUAL] = oplessthanequal;
+	luaopcodes[bytecode::instruction_opcode_NOTEQUALS] = opnotequals;
+	luaopcodes[bytecode::instruction_opcode_NOT] = opnot;
+	luaopcodes[bytecode::instruction_opcode_MINUS] = opminus;
+	luaopcodes[bytecode::instruction_opcode_CONSTANT] = opconstant;
+	luaopcodes[bytecode::instruction_opcode_JMP] = opjmp;
+	luaopcodes[bytecode::instruction_opcode_JMPIFFALSE] = opjmpiffalse;
+	luaopcodes[bytecode::instruction_opcode_JMPIFTRUE] = opjmpiftrue;
 	MATHOPS(OPMAPFUNC)
 	COMPAREOPS(OPMAPFUNC)
 }
 
-class exception : public std::exception {
-public:
-	exception(std::string str) : err(str) { }
-
-	const char *what() const noexcept {
-		return err.c_str();
-	}
-
-public:
-	std::string err;
-};
-
 state::_retdata luafunctionobject::call(softwarestate &state, int nrets, int nargs) {
-	_running run { state, nrets, nargs, data };
+	_running run { state, this, nrets, nargs };
 
-	state->top = state->base + data->stacksize();
+	state->top = state->base + stacksize;
 
-	auto max = data->instructions_size();
+	instruction *instruction = allocated.get();
 
-	while (run.nextinstruction < max) {
-		auto &instr = data->instructions(run.nextinstruction++);
-		auto op = luaopcodes[instr.op()]; // TODO: verify in luafunctionobject::create
-		if (!op) { // TODO: verify in luafunctionobject::create
-			throw exception("Unknown opcode " + bytecode::instruction_opcode_Name(instr.op()));
-		}
-		if (op(run, instr)) {
-			break;
-		}
+	while (instruction) {
+		instruction = instruction->opcode(run, *instruction);
 	}
 
 	return run.retdata;
 }
 
 objectcontainer luafunctionobject::create(softwarestate &state, std::shared_ptr<bytecode::prototype> proto) {
-	return state.luafunctionallocator.take(proto);
+	return state.luafunctionallocator.take(state, proto);
 }
+
+luafunctionobject::luafunctionobject(softwarestate &state, std::shared_ptr<bytecode::prototype> proto) {
+	auto oob = proto->instructions_size();
+	allocated = std::shared_ptr<instruction>(new instruction[oob], std::default_delete<instruction[]>());
+
+	auto instructions = allocated.get();
+
+
+	for (int i = 0; i < proto->instructions_size(); i++) {
+		auto &instr = proto->instructions(i);
+
+		if (instr.op() >= bytecode::instruction_opcode_opcode_MAX) {
+			throw exception("unknown opcode: " + instr.op());
+		}
+
+		instruction &generated = instructions[i];
+		generated.opcode = luaopcodes[instr.op()];
+		generated.a = instr.a();
+		generated.b = instr.b();
+		generated.c = instr.c();
+
+		generated.fastlookup[0] = i == oob - 1 ? nullptr : &instructions[i + 1];
+
+		if (!generated.opcode) {
+			throw exception("opcode not implemented: " + bytecode::instruction_opcode_Name(instr.op()));
+		}
+	}
+	for (int i = 0; i < proto->instructions_size(); i++) {
+		auto &patchproto = proto->instructions(i);
+		auto &patchinstr = instructions[i];
+
+		switch (patchproto.op()) {
+		case bytecode::instruction_opcode_JMP:
+			patchinstr.fastlookup[0] = patchinstr.b >= oob ? nullptr : &instructions[patchinstr.b];
+			break;
+		case bytecode::instruction_opcode_JMPIFFALSE:
+		case bytecode::instruction_opcode_JMPIFNIL:
+		case bytecode::instruction_opcode_JMPIFTRUE:
+			patchinstr.fastlookup[1] = patchinstr.b >= oob ? nullptr : &instructions[patchinstr.b];
+		default:
+			break;
+		}
+	}
+
+	for (int i = 0; i < proto->strings_size(); i++) {
+		strings.push_back(stringobject::create(state, proto->strings(i)));
+	}
+
+	for (int i = 0; i < proto->numbers_size(); i++) {
+		numbers.push_back(numberobject::create(state, proto->numbers(i)));
+	}
+
+	stacksize = proto->stacksize();
+}
+
+luafunctionobject::luafunctionobject() { }
+luafunctionobject::~luafunctionobject() { }

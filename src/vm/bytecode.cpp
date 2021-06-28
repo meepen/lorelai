@@ -616,15 +616,20 @@ public:
 
 		queue.startinstr = curfunc.proto->instructions_size();
 
+		// step > 0 and var <= limit
 		emit(bytecode::instruction_opcode_NUMBER, queue.stackreserved + 3, add(0.0));
-		emit(bytecode::instruction_opcode_GREATERTHAN, queue.stackreserved + 3, queue.stackreserved + 1, queue.stackreserved + 3);
+		emit(bytecode::instruction_opcode_GREATERTHAN, queue.stackreserved + 3, queue.stackreserved + 2, queue.stackreserved + 3);
 		auto patch = emit(bytecode::instruction_opcode_JMPIFFALSE, queue.stackreserved + 3);
 		emit(bytecode::instruction_opcode_LESSTHANEQUAL, queue.stackreserved + 3, queue.stackreserved, queue.stackreserved + 1);
 		queue.patches.push_back(emit(bytecode::instruction_opcode_JMPIFFALSE, queue.stackreserved + 3));
 		auto bodypatch = emit(bytecode::instruction_opcode_JMP, 0);
+
+		// step <= 0 and var >= limit
 		patch->set_b(curfunc.proto->instructions_size());
 		emit(bytecode::instruction_opcode_GREATERTHANEQUAL, queue.stackreserved + 3, queue.stackreserved, queue.stackreserved + 1);
 		queue.patches.push_back(emit(bytecode::instruction_opcode_JMPIFFALSE, queue.stackreserved + 3));
+
+
 		bodypatch->set_b(curfunc.proto->instructions_size());
 		curfunc.pushscope();
 
