@@ -49,109 +49,100 @@ bool object::equals(softwarestate &state, object &other) {
 
 void object::add(softwarestate &state, object &out, object &other) {
 	// if either can potentially have a custom metamethod be ran, pass through to the reference object to check
-	if (type >= TABLE) {
+	if (type == NUMBER && other.type == NUMBER) {
+		out.set(raw.num + other.raw.num);
+	}
+	else if (type >= TABLE) {
 		return raw.ref->add(state, out, other);
 	}
 	else if (other.type >= TABLE) {
 		return other.raw.ref->add(state, out, *this);
 	}
-
-	// otherwise, check types
-	// can only add number to number
-	if (type != other.type || type != NUMBER) {
-		throw exception(string("cannot add ") + gettypename() + " and " + other.gettypename());
+	else {
+		out.set(tonumber(state) + other.tonumber(state));
 	}
-	
-	out.set(raw.num + other.raw.num);
 }
 
 void object::subtract(softwarestate &state, object &out, object &other) {
 	// if either can potentially have a custom metamethod be ran, pass through to the reference object to check
-	if (type >= TABLE) {
-		return raw.ref->add(state, out, other);
+	if (type == NUMBER && other.type == NUMBER) {
+		out.set(raw.num - other.raw.num);
+	}
+	else if (type >= TABLE) {
+		return raw.ref->subtract(state, out, other);
 	}
 	else if (other.type >= TABLE) {
-		return other.raw.ref->add(state, out, *this);
+		return other.raw.ref->subtract(state, out, *this);
 	}
-
-	// otherwise, check types
-	// can only add number to number
-	if (type != other.type || type != NUMBER) {
-		throw exception(string("cannot subtract ") + gettypename() + " and " + other.gettypename());
+	else {
+		out.set(tonumber(state) - other.tonumber(state));
 	}
-	
-	out.set(raw.num - other.raw.num);
 }
+
 void object::divide(softwarestate &state, object &out, object &other) {
 	// if either can potentially have a custom metamethod be ran, pass through to the reference object to check
-	if (type >= TABLE) {
-		return raw.ref->add(state, out, other);
+	if (type == NUMBER && other.type == NUMBER) {
+		out.set(raw.num / other.raw.num);
+	}
+	else if (type >= TABLE) {
+		return raw.ref->divide(state, out, other);
 	}
 	else if (other.type >= TABLE) {
-		return other.raw.ref->add(state, out, *this);
+		return other.raw.ref->divide(state, out, *this);
 	}
-
-	// otherwise, check types
-	// can only add number to number
-	if (type != other.type || type != NUMBER) {
-		throw exception(string("cannot divide ") + gettypename() + " and " + other.gettypename());
+	else {
+		out.set(tonumber(state) / other.tonumber(state));
 	}
-	
-	out.set(raw.num / other.raw.num);
 }
 
 void object::multiply(softwarestate &state, object &out, object &other) {
 	// if either can potentially have a custom metamethod be ran, pass through to the reference object to check
-	if (type >= TABLE) {
-		return raw.ref->add(state, out, other);
+	if (type == NUMBER && other.type == NUMBER) {
+		out.set(raw.num * other.raw.num);
+	}
+	else if (type >= TABLE) {
+		return raw.ref->multiply(state, out, other);
 	}
 	else if (other.type >= TABLE) {
-		return other.raw.ref->add(state, out, *this);
+		return other.raw.ref->multiply(state, out, *this);
 	}
-
-	// otherwise, check types
-	// can only add number to number
-	if (type != other.type || type != NUMBER) {
-		throw exception(string("cannot multiply ") + gettypename() + " and " + other.gettypename());
+	else {
+		out.set(tonumber(state) * other.tonumber(state));
 	}
-	
-	out.set(raw.num * other.raw.num);
 }
 
 void object::power(softwarestate &state, object &out, object &other) {
 	// if either can potentially have a custom metamethod be ran, pass through to the reference object to check
-	if (type >= TABLE) {
-		return raw.ref->add(state, out, other);
+	if (type == NUMBER && other.type == NUMBER) {
+		out.set(std::pow(raw.num, other.raw.num));
+	}
+	else if (type >= TABLE) {
+		return raw.ref->power(state, out, other);
 	}
 	else if (other.type >= TABLE) {
-		return other.raw.ref->add(state, out, *this);
+		return other.raw.ref->power(state, out, *this);
 	}
-
-	// otherwise, check types
-	// can only add number to number
-	if (type != other.type || type != NUMBER) {
-		throw exception(string("cannot power ") + gettypename() + " and " + other.gettypename());
+	else {
+		out.set(std::pow(tonumber(state), other.tonumber(state)));
 	}
-	
-	out.set(std::pow(raw.num, other.raw.num));
 }
 
 void object::modulo(softwarestate &state, object &out, object &other) {
 	// if either can potentially have a custom metamethod be ran, pass through to the reference object to check
-	if (type >= TABLE) {
-		return raw.ref->add(state, out, other);
+	if (type == NUMBER && other.type == NUMBER) {
+		out.set(raw.num - other.raw.num * std::floor(raw.num / other.raw.num));
+	}
+	else if (type >= TABLE) {
+		return raw.ref->multiply(state, out, other);
 	}
 	else if (other.type >= TABLE) {
-		return other.raw.ref->add(state, out, *this);
+		return other.raw.ref->multiply(state, out, *this);
 	}
+	else {
+		auto a = tonumber(state), b = other.tonumber(state);
 
-	// otherwise, check types
-	// can only add number to number
-	if (type != other.type || type != NUMBER) {
-		throw exception(string("cannot subtract ") + gettypename() + " and " + other.gettypename());
+		out.set(a - b * std::floor(a / b));
 	}
-	
-	out.set(raw.num - other.raw.num * std::floor(raw.num / other.raw.num));
 }
 
 bool object::lessthan(softwarestate &state, object &other) {
