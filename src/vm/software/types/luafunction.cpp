@@ -187,7 +187,7 @@ OPCODE_FUNCTION(opmov) {
 	auto a = instr.a, b = instr.b, c = instr.c;
 
 	while (c--) {
-		run.state[a++] = run.state[b++];
+		run.state[a++].set(run.state[b++]);
 	}
 	
 	return instr.fastlookup[0];

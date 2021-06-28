@@ -92,22 +92,7 @@ namespace lorelai {
 
 			// copy constructor
 			object(const object& other) {
-				auto t = other.type;
-				if (t >= TABLE) {
-					set(other.raw.ref);
-				}
-				else if (t == STRING) {
-					set(other.raw.str);
-				}
-				else if (t == NUMBER) {
-					set(other.raw.num);
-				}
-				else if (t == BOOL) {
-					set(other.raw.b);
-				}
-				else {
-					unset();
-				}
+				set(other);
 			}
 
 			// copy assignment
@@ -118,36 +103,17 @@ namespace lorelai {
 
 			// move constructor
 			object(object&& other) noexcept {
-				clone(other);
+				set(other);
 				other.unset();
 			}
 
 			// move assignment
 			object& operator=(object&& other) noexcept 
 			{
-				clone(other);
+				set(other);
 				other.unset();
 
 				return *this;
-			}
-
-			void clone(const object &other) {
-				auto t = other.type;
-				if (t >= TABLE) {
-					set(other.raw.ref);
-				}
-				else if (t == STRING) {
-					set(other.raw.str);
-				}
-				else if (t == NUMBER) {
-					set(other.raw.num);
-				}
-				else if (t == BOOL) {
-					set(other.raw.b);
-				}
-				else {
-					unset();
-				}
 			}
 
 		public:
@@ -204,6 +170,25 @@ namespace lorelai {
 			void set(const number &num) {
 				settype(NUMBER);
 				raw.num = num;
+			}
+
+			void set(const object &other) {
+				auto t = other.type;
+				if (t >= TABLE) {
+					set(other.raw.ref);
+				}
+				else if (t == STRING) {
+					set(other.raw.str);
+				}
+				else if (t == NUMBER) {
+					set(other.raw.num);
+				}
+				else if (t == BOOL) {
+					set(other.raw.b);
+				}
+				else {
+					unset();
+				}
 			}
 
 			void set(const software::container<referenceobject> &data) {
