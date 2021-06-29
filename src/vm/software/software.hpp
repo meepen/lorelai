@@ -21,24 +21,21 @@ namespace lorelai {
 
 		class softwarestate : public state {
 		public:
+			template <int size>
 			class _stack {
 				struct stackpos {
 					int base;
 					int top;
 				};
 			public:
-				_stack(softwarestate *_st, int size) : st(_st), data(size) {
-					initstack();
+				_stack(softwarestate *_st) : st(_st), data(new object[size]) {
+					for (int i = 0; i < size; i++) {
+						data[i].unset();
+					}
 				}
-				void initstack();
 
 				object &operator[](const int index) {
-					if (index >= 0) {
-						return data[base + index];
-					}
-					else {
-						return data[base + top + index];
-					}
+					return data[base + index];
 				}
 
 				stackpos pushpointer(int _base) {
@@ -48,12 +45,29 @@ namespace lorelai {
 					return old;
 				}
 
-				int poppointer(const stackpos old, const state::_retdata retdata, int to = 0, int amount = 0);
+				int poppointer(const stackpos old, const state::_retdata retdata, int to = 0, int amount = 0) {
+					if (amount == -1) {
+						amount = retdata.retsize;
+					}
+
+					for (int i = 1; i <= std::min(amount, retdata.retsize); i++) {
+						data[to + i - 1] = data[retdata.retbase + i - 1];
+					}
+
+					for (int i = std::min(amount, retdata.retsize) + 1; i <= amount; i++) {
+						data[to + i - 1] = object();
+					}
+
+					top = old.top;
+					base = old.base;
+
+					return amount;
+				}
 
 			public:
 				softwarestate *st = nullptr;
 
-				std::vector<object> data;
+				object *data;
 				int base = 0;
 				int top = 0;
 			};
@@ -71,7 +85,7 @@ namespace lorelai {
 			object &operator[](int index) {
 				return stack[index];
 			}
-			_stack *operator->() {
+			_stack<256> *operator->() {
 				return &stack;
 			}
 
@@ -93,7 +107,7 @@ namespace lorelai {
 			software::allocator<cfunctionobject> cfunctionallocator;
 
 		public:
-			_stack stack = _stack(this, 256);
+			_stack<256> stack = _stack<256>(this);
 		};
 	}
 }

@@ -51,25 +51,6 @@ state::_retdata softwarestate::call(int nargs, int nrets) {
 	};
 }
 
-int softwarestate::_stack::poppointer(const stackpos old, const state::_retdata retdata, int to, int amount) {
-	if (amount == -1) {
-		amount = retdata.retsize;
-	}
-
-	for (int i = 1; i <= std::min(amount, retdata.retsize); i++) {
-		data[to + i - 1] = data[retdata.retbase + i - 1];
-	}
-
-	for (int i = std::min(amount, retdata.retsize) + 1; i <= amount; i++) {
-		data[to + i - 1] = object();
-	}
-
-	top = old.top;
-	base = old.base;
-
-	return amount;
-}
-
 softwarestate::softwarestate() {
 	luafunctionobject::init();
 	registry = tableobject::create(*this);
@@ -81,10 +62,4 @@ void softwarestate::loadfunction(std::shared_ptr<bytecode::prototype> code) {
 } 
 void softwarestate::loadnumber(number num) {
 	stack[stack.top++] = object(num);
-}
-
-void softwarestate::_stack::initstack() {
-	for (auto &stackpos : data) {
-		stackpos = object();
-	}
 }

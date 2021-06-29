@@ -151,6 +151,12 @@ workspace "lorelai"
 	filter "configurations:release"
 		defines "NDEBUG"
 		optimize "Full"
+		flags { "MultiProcessorCompile" }
+		floatingpoint "Fast"
+		intrinsics "On"
+		runtime "Release"
+		vectorextensions "SSE2"
+
 
 	filter "platforms:x86"
 		architecture "x86"
