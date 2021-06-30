@@ -27,6 +27,10 @@ namespace lorelai {
 					int base;
 					int top;
 				};
+
+			private:
+				_stack(const _stack &other) { }
+				_stack(_stack &&other) { }
 			public:
 				_stack(softwarestate *_st) : st(_st), data(new object[size]) {
 					for (int i = 0; i < size; i++) {

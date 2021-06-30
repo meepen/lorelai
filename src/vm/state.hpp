@@ -8,8 +8,8 @@
 #define LORELAI_TYPES(fn) \
 	fn(NIL) \
 	fn(BOOL) \
-	fn(STRING) \
 	fn(NUMBER) \
+	fn(STRING) \
 	fn(TABLE) \
 	fn(LUAFUNCTION) \
 	fn(CFUNCTION)

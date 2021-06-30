@@ -513,12 +513,10 @@ namespace lorelai {
 		class luafunctionobject : public functionobject {
 		public:
 			static object create(softwarestate &state, std::shared_ptr<bytecode::prototype> proto);
-			static void init();
 
 		public:
 			luafunctionobject(softwarestate &state, std::shared_ptr<bytecode::prototype> proto);
 			luafunctionobject();
-			~luafunctionobject();
 
 		public:
 			_type _typeid() const override {
@@ -530,6 +528,7 @@ namespace lorelai {
 		public:
 			struct instruction;
 			std::shared_ptr<instruction> allocated;
+			size_t size;
 			std::uint32_t stacksize;
 			std::vector<object> strings;
 			std::vector<object> numbers;

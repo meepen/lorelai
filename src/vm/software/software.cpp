@@ -52,7 +52,6 @@ state::_retdata softwarestate::call(int nargs, int nrets) {
 }
 
 softwarestate::softwarestate() {
-	luafunctionobject::init();
 	registry = tableobject::create(*this);
 	initlibs();
 }
