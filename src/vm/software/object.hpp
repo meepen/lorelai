@@ -323,15 +323,12 @@ namespace lorelai {
 				return raw.ref->call(state, nargs, nrets);
 			}
 
-			inline number tonumber    (softwarestate &state) {
-				if (type == NUMBER) {
-					return raw.num;
-				}
-				else if (type >= TABLE) {
-					return raw.ref->tonumber(state);
-				}
-				
-				throw exception(string("cannot convert ") + gettypename() + " to number");
+			constexpr number tonumber_lit() {
+				return type != NUMBER ? throw exception(string("cannot convert ") + gettypename() + " to number") : raw.num;
+			}
+
+			constexpr number tonumber    (softwarestate &state) {
+				return type >= TABLE ? raw.ref->tonumber(state) : tonumber_lit();
 			}
 
 			inline string tostring    (softwarestate &state) {

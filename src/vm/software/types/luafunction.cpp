@@ -16,17 +16,10 @@ struct luafunctionobject::instruction {
 	std::uint32_t c;
 };
 
-struct _running {
-	softwarestate &state;
-	luafunctionobject *obj;
-	int nrets;
-	int nargs;
-	int multres = 0;
-	state::_retdata retdata {0, 0};
-};
 
 state::_retdata luafunctionobject::call(softwarestate &state, int nrets, int nargs) {
-	_running run { state, this, nrets, nargs };
+	int multres = 0;
+	state::_retdata retdata {0, 0};
 
 	auto stackptr = &state[0];
 
@@ -40,16 +33,16 @@ state::_retdata luafunctionobject::call(softwarestate &state, int nrets, int nar
 		instruction *next = instr + 1;
 		switch (instr->opcode) {
 		vmcase(RETURN) {
-			return run.retdata;
+			return retdata;
 		}
 		vmcase (JMPIFTRUE) {
-			if (stackptr[instr->a].tobool(run.state)) {
+			if (stackptr[instr->a].tobool(state)) {
 				next = starts + instr->b;
 			}
 			break;
 		}
 		vmcase (JMPIFFALSE) {
-			if (!stackptr[instr->a].tobool(run.state)) {
+			if (!stackptr[instr->a].tobool(state)) {
 				next = starts + instr->b;
 			}
 			break;
@@ -73,7 +66,7 @@ state::_retdata luafunctionobject::call(softwarestate &state, int nrets, int nar
 			break;
 		}
 		vmcase (MINUS) {
-			stackptr[instr->a].set(-stackptr[instr->b].tonumber(run.state));
+			stackptr[instr->a].set(-stackptr[instr->b].tonumber(state));
 			break;
 		}
 		vmcase (MOV) {
@@ -86,40 +79,40 @@ state::_retdata luafunctionobject::call(softwarestate &state, int nrets, int nar
 		}
 		vmcase (CALLM) {
 			// A .. A+C-2 = A(A+1 .. A + B, ...)
-			for (int i = run.multres - 1; i >= 0; i--) {
-				stackptr[run.state->top + i + instr->b + 1].set(stackptr[run.state->top + i]);
+			for (int i = multres - 1; i >= 0; i--) {
+				stackptr[state->top + i + instr->b + 1].set(stackptr[state->top + i]);
 			}
 			for (int i = 0; i <= instr->b; i++) {
-				stackptr[run.state->top + i].set(stackptr[instr->a + i]);
+				stackptr[state->top + i].set(stackptr[instr->a + i]);
 			}
 
-			auto old = run.state->pushpointer(run.state->base + run.state->top);
+			auto old = state->pushpointer(state->base + state->top);
 			auto data = stackptr[0];
-			auto nret = data.call(run.state, instr->b + run.multres, instr->c - 1);
+			auto nret = data.call(state, instr->b + multres, instr->c - 1);
 			if (instr->c >= 1) {
-				run.state->poppointer(old, nret, old.base + instr->a, instr->c - 1);
+				state->poppointer(old, nret, old.base + instr->a, instr->c - 1);
 			}
 			else {
-				run.multres = run.state->poppointer(old, nret, old.base + old.top, -1);
+				multres = state->poppointer(old, nret, old.base + old.top, -1);
 			}
 			break;
 		}
 		vmcase (CALL) {
 			// A .. A+C-2 = A(A+1 .. A + B)
-			auto old = run.state->pushpointer(run.state->base + instr->a);
-			auto nret = run.state[0].call(run.state, instr->b, instr->c - 1);
+			auto old = state->pushpointer(state->base + instr->a);
+			auto nret = state[0].call(state, instr->b, instr->c - 1);
 			if (instr->c >= 1) {
-				run.state->poppointer(old, nret, old.base + instr->a, instr->c - 1);
+				state->poppointer(old, nret, old.base + instr->a, instr->c - 1);
 			}
 			else {
-				run.multres = run.state->poppointer(old, nret, old.base + old.top, -1);
+				multres = state->poppointer(old, nret, old.base + old.top, -1);
 			}
 			break;
 		}
 		vmcase (ENVIRONMENTGET) {
-			object &index = run.obj->strings[instr->b];
+			object &index = strings[instr->b];
 
-			run.state.registry.index(run.state, stackptr[instr->a], index);
+			state.registry.index(state, stackptr[instr->a], index);
 			break;
 		}
 		vmcase (STRING) {
@@ -127,64 +120,64 @@ state::_retdata luafunctionobject::call(softwarestate &state, int nrets, int nar
 			break;
 		}
 		vmcase (NUMBER) {
-			stackptr[instr->a].set(run.obj->numbers[instr->b]);
+			stackptr[instr->a].set(numbers[instr->b]);
 			break;
 		}
 		vmcase (INDEX) {
 			auto ref = stackptr[instr->b];
-			ref.index(run.state, stackptr[instr->a], stackptr[instr->c]);
+			ref.index(state, stackptr[instr->a], stackptr[instr->c]);
 			break;
 		}
 		vmcase (NOT) {
-			stackptr[instr->a].set(!stackptr[instr->b].tobool(run.state));
+			stackptr[instr->a].set(!stackptr[instr->b].tobool(state));
 			break;
 		}
 		vmcase (NOTEQUALS) {
-			stackptr[instr->a].set(!stackptr[instr->c].equals(run.state, stackptr[instr->b]));
+			stackptr[instr->a].set(!stackptr[instr->c].equals(state, stackptr[instr->b]));
 			break;
 		}
 		vmcase (LESSTHANEQUAL) {
-			stackptr[instr->a].set(!stackptr[instr->c].lessthan(run.state, stackptr[instr->b]));
+			stackptr[instr->a].set(!stackptr[instr->c].lessthan(state, stackptr[instr->b]));
 			break;
 		}
 		vmcase (LESSTHAN) {
-			stackptr[instr->a].set(stackptr[instr->b].lessthan(run.state, stackptr[instr->c]));
+			stackptr[instr->a].set(stackptr[instr->b].lessthan(state, stackptr[instr->c]));
 			break;
 		}
 		vmcase (EQUALS) {
-			stackptr[instr->a].set(stackptr[instr->b].equals(run.state, stackptr[instr->c]));
+			stackptr[instr->a].set(stackptr[instr->b].equals(state, stackptr[instr->c]));
 			break;
 		}
 		vmcase (GREATERTHANEQUAL) {
-			stackptr[instr->a].set(!stackptr[instr->c].greaterthan(run.state, stackptr[instr->b]));
+			stackptr[instr->a].set(!stackptr[instr->c].greaterthan(state, stackptr[instr->b]));
 			break;
 		}
 		vmcase (GREATERTHAN) {
-			stackptr[instr->a].set(stackptr[instr->b].greaterthan(run.state, stackptr[instr->c]));
+			stackptr[instr->a].set(stackptr[instr->b].greaterthan(state, stackptr[instr->c]));
 			break;
 		}
 		vmcase (ADD) {
-			stackptr[instr->b].add(run.state, stackptr[instr->a], stackptr[instr->c]);
+			stackptr[instr->b].add(state, stackptr[instr->a], stackptr[instr->c]);
 			break;
 		}
 		vmcase (SUBTRACT) {
-			stackptr[instr->b].subtract(run.state, stackptr[instr->a], stackptr[instr->c]);
+			stackptr[instr->b].subtract(state, stackptr[instr->a], stackptr[instr->c]);
 			break;
 		}
 		vmcase (MODULO) {
-			stackptr[instr->b].modulo(run.state, stackptr[instr->a], stackptr[instr->c]);
+			stackptr[instr->b].modulo(state, stackptr[instr->a], stackptr[instr->c]);
 			break;
 		}
 		vmcase (CONCAT) {
-			stackptr[instr->b].concat(run.state, stackptr[instr->a], stackptr[instr->c]);
+			stackptr[instr->b].concat(state, stackptr[instr->a], stackptr[instr->c]);
 			break;
 		}
 		vmcase (MULTIPLY) {
-			stackptr[instr->b].multiply(run.state, stackptr[instr->a], stackptr[instr->c]);
+			stackptr[instr->b].multiply(state, stackptr[instr->a], stackptr[instr->c]);
 			break;
 		}
 		vmcase (DIVIDE) {
-			stackptr[instr->b].divide(run.state, stackptr[instr->a], stackptr[instr->c]);
+			stackptr[instr->b].divide(state, stackptr[instr->a], stackptr[instr->c]);
 			break;
 		}
 		default:
@@ -194,7 +187,7 @@ state::_retdata luafunctionobject::call(softwarestate &state, int nrets, int nar
 		instr = next;
 	}
 
-	return run.retdata;
+	return retdata;
 }
 
 object luafunctionobject::create(softwarestate &state, std::shared_ptr<bytecode::prototype> proto) {
