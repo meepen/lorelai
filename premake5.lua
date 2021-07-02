@@ -133,7 +133,7 @@ workspace "lorelai"
 	characterset "MBCS"
 	warnings "Default"
 	symbols "On"
-	cppdialect "C++14"
+	cppdialect "C++17"
 	flags { "MultiProcessorCompile", "LinkTimeOptimization" }
 
 	filter "configurations:debug"

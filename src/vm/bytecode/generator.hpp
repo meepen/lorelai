@@ -5,6 +5,7 @@
 #include "statements.hpp"
 #include "expressions.hpp"
 #include "function.hpp"
+#include "bytecode.hpp"
 #ifdef __linux__
 #include <cxxabi.h>
 
@@ -26,7 +27,6 @@ static std::string gettypename(T &data) {
 namespace lorelai {
 	namespace bytecode {
 		class instruction;
-		enum instruction_opcode;
 
 		class bytecodegenerator : public parser::visitor {
 			struct _ifqueue {

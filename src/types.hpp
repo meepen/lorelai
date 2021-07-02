@@ -2,7 +2,7 @@
 #define TYPES_HPP_
 
 #include <string>
-#include <experimental/optional>
+#include <optional>
 #include <exception>
 
 #ifndef LORELAI_INLINE
@@ -12,7 +12,7 @@
 
 namespace lorelai {
 	template <class T>
-	using optional = std::experimental::optional<T>;
+	using optional = std::optional<T>;
 
 	using number = double;
 	using string = std::string;
