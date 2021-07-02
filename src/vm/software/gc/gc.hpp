@@ -44,7 +44,13 @@ namespace lorelai {
 
 		public:
 			manager() {
-				newheap(1024u * 1024u * 64);
+				newheap(1024u * 1024u * 64u);
+			}
+			~manager() {
+				for (std::size_t i = 0; i < heapcount; i++) {
+					free(heaps[i]);
+				}
+				free(heaps);
 			}
 
 			struct infoheader {
@@ -73,7 +79,7 @@ namespace lorelai {
 				auto info = allocate(sizeof(T));
 				info->type = type;
 
-				new (reinterpret_cast<T *>(info->data)) T(std::forward<_Args>(args)...);
+				new (info->get<T *>()) T(std::forward<_Args>(args)...);
 
 				return info;
 			}
@@ -127,10 +133,86 @@ namespace lorelai {
 				auto data = reinterpret_cast<byte *>(malloc(s + sizeof(heap)));
 				auto newheap = reinterpret_cast<heap *>(data);
 				newheap->size = s;
-				newheap->freeptr = data + sizeof(heap);
+				newheap->freeptr = newheap->data;
 				newheap->mode = true;
 				heaps[heapcount - 1] = newheap;
 			}
+
+		private:
+			struct Iterator 
+			{
+				using iterator_category = std::forward_iterator_tag;
+				using difference_type   = std::ptrdiff_t;
+				using value_type        = infoheader *;
+				using pointer           = value_type;
+				using reference         = value_type;
+
+    			Iterator(manager *__manager, bool end) : _manager(__manager) {
+					if (end) {
+						curheap = _manager->heapcount;
+						_info = nullptr;
+					}
+					else {
+						curheap = 0;
+						if (getheap()->mode) {
+							_info = reinterpret_cast<infoheader *>(getheap()->data);
+						}
+						else {
+							_info = reinterpret_cast<infoheader *>(getheap()->freeptr);
+						}
+						if (getheap()->mode ? reinterpret_cast<byte *>(_info) == getheap()->freeptr : reinterpret_cast<byte *>(_info) == getheap()->data + getheap()->size) {
+							curheap++;
+							_info = nullptr;
+						}
+					}
+				}
+
+				reference operator*() const { return _info; }
+				pointer operator->() { return _info; }
+
+				Iterator& operator++() {
+					auto _heap = getheap();
+					if (!_heap->mode && reinterpret_cast<byte *>(_info) == _heap->freeptr) {
+						curheap++;
+						if (_manager->heapcount == curheap) {
+							_info = nullptr;
+						}
+						else {
+							_info = reinterpret_cast<infoheader *>(getheap()->freeptr);
+						}
+						return *this;
+					}
+					_info = reinterpret_cast<infoheader *>(reinterpret_cast<byte *>(_info) + _info->size);
+					if (_heap->mode && reinterpret_cast<byte *>(_info) == _heap->freeptr) {
+						curheap++;
+						if (_manager->heapcount == curheap) {
+							_info = nullptr;
+						}
+						else {
+							_info = reinterpret_cast<infoheader *>(getheap()->data);
+						}
+					}
+					return *this;
+				}
+				Iterator operator++(int) { Iterator tmp = *this; ++(*this); return tmp; }
+
+				friend bool operator== (const Iterator& a, const Iterator& b) { return a._info == b._info; };
+				friend bool operator!= (const Iterator& a, const Iterator& b) { return a._info != b._info; };     
+
+			private:
+
+				heap *getheap() {
+					return _manager->heaps[curheap];
+				}
+
+				manager *_manager;
+				std::size_t curheap;
+				pointer _info;
+			};
+
+		public:
+			Iterator begin() { return Iterator(this, false); }
+			Iterator end() { return Iterator(this, true); }
 
 		private:
 			heap **heaps = nullptr;

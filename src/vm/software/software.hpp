@@ -40,6 +40,9 @@ namespace lorelai {
 						data[i].unset();
 					}
 				}
+				~_stack() {
+					delete[] data;
+				}
 
 				object &operator[](const int index) {
 					return data[base + index];
@@ -80,7 +83,7 @@ namespace lorelai {
 			};
 		public:
 			softwarestate();
-			virtual ~softwarestate() override { }
+			virtual ~softwarestate() override;
 
 			void initlibs();
 

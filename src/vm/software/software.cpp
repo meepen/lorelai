@@ -62,3 +62,24 @@ void softwarestate::loadfunction(std::shared_ptr<bytecode::prototype> code) {
 void softwarestate::loadnumber(number num) {
 	stack[stack.top++] = object(num);
 }
+
+softwarestate::~softwarestate() {
+	for (auto item : memory) {
+		switch (item->type) {
+		case STRING:
+			item->get<stringobject>()->~stringobject();
+			break;
+		case TABLE:
+			item->get<tableobject>()->~tableobject();
+			break;
+		case LUAFUNCTION:
+			item->get<luafunctionobject>()->~luafunctionobject();
+			break;
+		case CFUNCTION:
+			item->get<cfunctionobject>()->~cfunctionobject();
+			break;
+		default:
+			std::cerr << "unknown gc object type " << std::to_string(item->type) << " ptr: " << item << std::endl;
+		}
+	}
+}
