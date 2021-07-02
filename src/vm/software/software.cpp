@@ -29,12 +29,12 @@ void softwarestate::initlibs() {
 
 		auto libt = namedlib.name ? tableobject::create(*this) : registry;
 		if (namedlib.name) {
-			registry.rawset(*this, object(namedlib.name), libt);
+			registry.rawset(*this, stringobject::create(*this, namedlib.name), libt);
 		}
 
 		auto lib = namedlib.lib;
 		while (lib->name) {
-			libt.rawset(*this, object(lib->name), cfunctionobject::create(*this, lib->func));
+			libt.rawset(*this, stringobject::create(*this, lib->name), cfunctionobject::create(*this, lib->func));
 			lib++;
 		}
 	}

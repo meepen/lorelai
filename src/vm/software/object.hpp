@@ -39,6 +39,10 @@ namespace lorelai {
 				return typenames[_typeid()];
 			}
 
+			virtual number tonumber(softwarestate &state) {
+				throw exception(string("cannot convert ") + typenames[_typeid()] + " to number");
+			}
+
 			virtual bool            LORELAI_SOFTWARE_DEFAULT_FUNCTION(rawget,      softwarestate &state, object &out, const object &index)
 			virtual void            LORELAI_SOFTWARE_DEFAULT_FUNCTION(rawset,      softwarestate &state, const object &index, const object &data)
 			virtual state::_retdata LORELAI_SOFTWARE_DEFAULT_FUNCTION(call,        softwarestate &state, int nargs, int nrets)
@@ -71,96 +75,39 @@ namespace lorelai {
 		};
 
 		class object {
+		public:
 			union multidata {
-				multidata() { }
-				~multidata() { }
-
-				string str;
 				number num;
 				bool b;
-				software::container<referenceobject> ref;
+				referenceobject *ref;
 			};
 
 		public:
-			~object() {
-				if (type == STRING) {
-					raw.str.~string();
-				}
-				else if (type >= TABLE) {
-					raw.ref.~container();
-				}
+			object(const object &obj) {
+				type = obj.type;
+				memcpy(&raw, &obj.raw, sizeof(raw));
 			}
-
-			// copy constructor
-			object(const object& other) {
-				set(other);
-			}
-
-			// copy assignment
-			object& operator=(const object& other)
-			{
-				return *this = object(other);
-			}
-
-			// move constructor
-			object(object&& other) noexcept {
-				set(other);
-				other.unset();
-			}
-
-			// move assignment
-			object& operator=(object&& other) noexcept 
-			{
-				set(other);
-				other.unset();
-
-				return *this;
-			}
-
-		public:
-			object(const software::container<referenceobject> &ref, bool) {
+			object(referenceobject &ref) {
 				set(ref);
 			}
 			object(const number num) {
 				set(num);
 			}
-			object(const string s) {
-				set(s);
-			}
-			object(const char *s) {
-				set(string(s));
-			}
 			object(const bool b) {
 				set(b);
 			}
-			object() { }
-
-		public:
-			void settype(_type t) {
-				if (type == t) {
-					return;
-				}
-
-				if (type == STRING) {
-					raw.str.~string();
-				}
-				else if (type >= TABLE) {
-					raw.ref.~container();
-				}
-
-				type = t;
-
-				if (type == STRING) {
-					new (&raw.str) string();
-				}
-				else if (type >= TABLE) {
-					new (&raw.ref) software::container<referenceobject>();
-				}
+			object() {
+				set();
 			}
 
-			inline void set(const string &str) {
-				settype(STRING);
-				raw.str = str;
+		public:
+			inline void settype(_type t) {
+				type = t;
+			}
+
+			inline void set(referenceobject &ref) {
+				settype(ref._typeid());
+				raw.ref = &ref;
 			}
 
 			inline void set(const bool &b) {
@@ -171,44 +118,20 @@ namespace lorelai {
 			inline void set(const number &num) {
 				settype(NUMBER);
 				raw.num = num;
+				// hashed as needed
 			}
 
 			inline void set(const object &other) {
-				switch (other.type) {
-				case NUMBER:
-					set(other.raw.num);
-					break;
-				case STRING:
-					set(other.raw.str);
-					break;
-				case BOOL:
-					set(other.raw.b);
-					break;
-				case NIL:
-					unset();
-					break;
-				default:
-					set(other.raw.ref);
-					break;
-				}
-			}
-
-			inline void set(const software::container<referenceobject> &data) {
-				if (!data.get()) {
-					settype(NIL);
-					return;
-				}
-
-				settype(data->_typeid());
-				raw.ref = data;
+				type = other.type;
+				memcpy(&raw, &other.raw, sizeof(raw));
 			}
 
 			inline void set() {
-				unset();
+				settype(NIL);
 			}
 
 			inline void unset() {
-				settype(NIL);
+				set();
 			}
 
 			// this is used for c++ structures and cannot be modified
@@ -218,17 +141,19 @@ namespace lorelai {
 					return false;
 				}
 
+				if (type >= TABLE) {
+					return raw.ref == other.raw.ref;
+				}
+
 				switch (type) {
 				case NUMBER:
 					return raw.num == other.raw.num;
-				case STRING:
-					return raw.str == other.raw.str;
 				case BOOL:
 					return raw.b == other.raw.b;
 				case NIL:
 					return true;
 				default:
-					return raw.ref == other.raw.ref;
+					throw;
 				}
 			}
 
@@ -252,8 +177,6 @@ namespace lorelai {
 				switch (type) {
 				case NUMBER:
 					return raw.num == other.raw.num;
-				case STRING:
-					return raw.str == other.raw.str;
 				case BOOL:
 					return raw.b == other.raw.b;
 				case NIL:
@@ -270,9 +193,7 @@ namespace lorelai {
 				return tonumber(state) > other.tonumber(state);
 			}
 
-			inline void concat (softwarestate &state, object &out, object &other) {
-				out.set(tostring(state) + other.tostring(state));
-			}
+			void concat (softwarestate &state, object &out, object &other);
 
 			inline void add           (softwarestate &state, object &out, object &other) {
 				// if either can potentially have a custom metamethod be ran, pass through to the reference object to check
@@ -406,8 +327,8 @@ namespace lorelai {
 				if (type == NUMBER) {
 					return raw.num;
 				}
-				else if (type == STRING) {
-					return lorelai::tonumber(raw.str);
+				else if (type >= TABLE) {
+					return raw.ref->tonumber(state);
 				}
 				
 				throw exception(string("cannot convert ") + gettypename() + " to number");
@@ -426,11 +347,8 @@ namespace lorelai {
 						stream << raw.num;
 						return stream.str();
 					}
-				case STRING:
-					return raw.str;
-
 				default:
-					throw exception(string("cannot convert ") + gettypename() + " to string");
+					return raw.ref->tostring(state);
 				}
 			}
 
@@ -469,30 +387,18 @@ namespace std {
 	template<>
 	struct hash<lorelai::vm::object> {
 		size_t operator()(const lorelai::vm::object &obj) const {
-			size_t r;
-
-			if (obj.type >= lorelai::vm::TABLE) {
-				r = obj.raw.ref->hash();
-			}
-			else {
-				r = std::hash<int>()(obj.type);
-				switch (r) {
-
-				case lorelai::vm::NUMBER:
-					r ^= std::hash<lorelai::number>()(obj.raw.num);
-					break;
-
-				case lorelai::vm::STRING:
-					r ^= std::hash<lorelai::string>()(obj.raw.str);
-					break;
-
-				case lorelai::vm::BOOL:
-					r ^= std::hash<bool>()(obj.raw.b);
-
-				case lorelai::vm::NIL:
-				default:
-					break;
-				}
+			size_t r = std::hash<int>()(obj.type);
+			switch (r) {
+			case lorelai::vm::NUMBER:
+				r ^= std::hash<lorelai::number>()(obj.raw.num);
+				break;
+			case lorelai::vm::BOOL:
+				r ^= std::hash<bool>()(obj.raw.b);
+			case lorelai::vm::NIL:
+				break;
+			default:
+				r ^= obj.raw.ref->hash();
+				break;
 			}
 
 			return r;
@@ -502,6 +408,33 @@ namespace std {
 
 namespace lorelai {
 	namespace vm {
+		class stringobject : public referenceobject {
+		private:
+			stringobject() { }
+		public:
+			stringobject(string _str) : str(_str) { }
+
+			static object create(softwarestate &state, string str);
+
+
+			_type _typeid() const override {
+				return STRING;
+			}
+
+			number tonumber(softwarestate &state) override {
+				return lorelai::tonumber(str);
+			}
+
+			string tostring(softwarestate &state) override {
+				return str;
+			}
+
+			object metatable(softwarestate &state) const override;
+
+		public:
+			string str;
+		};
+
 		class functionobject : public referenceobject {
 		protected:
 			functionobject() { }
@@ -593,11 +526,11 @@ namespace lorelai {
 namespace lorelai {
 	namespace vm {
 		inline bool referenceobject::equals(softwarestate &state, object &other) {
-			return other.type == _typeid() && this == other.raw.ref.get();
+			return other.type == _typeid() && this == other.raw.ref;
 		}
 
 		inline void referenceobject::concat(softwarestate &state, object &out, object &other) {
-			out.set(tostring(state) + other.tostring(state));
+			out.set(stringobject::create(state, tostring(state) + other.tostring(state)));
 		}
 	}
 }

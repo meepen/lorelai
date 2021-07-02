@@ -1,6 +1,5 @@
 #include "../object.hpp"
 #include "../software.hpp"
-#include <exception>
 #include <string>
 
 using namespace lorelai;
@@ -15,5 +14,5 @@ state::_retdata cfunctionobject::call(softwarestate &state, int nrets, int nargs
 }
 
 object cfunctionobject::create(softwarestate &state, luafunction func) {
-	return object(state.cfunctionallocator.take(func), true);
+	return *state.memory.allocate<cfunctionobject>(CFUNCTION, func)->get<cfunctionobject>();
 }

@@ -9,8 +9,8 @@
 	fn(NIL) \
 	fn(BOOL) \
 	fn(NUMBER) \
-	fn(STRING) \
 	fn(TABLE) \
+	fn(STRING) \
 	fn(LUAFUNCTION) \
 	fn(CFUNCTION)
 

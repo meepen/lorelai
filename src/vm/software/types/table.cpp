@@ -4,9 +4,6 @@
 using namespace lorelai;
 using namespace lorelai::vm;
 
-
 object tableobject::create(softwarestate &state) {
-	auto r = object(state.tableallocator.take(), true);
-	// TODO(possibly?) clear table
-	return r;
+	return *state.memory.allocate<tableobject>(TABLE)->get<tableobject>();
 }

@@ -194,7 +194,7 @@ state::_retdata luafunctionobject::call(softwarestate &state, int nrets, int nar
 }
 
 object luafunctionobject::create(softwarestate &state, std::shared_ptr<bytecode::prototype> proto) {
-	return object(state.luafunctionallocator.take(state, proto), true);
+	return *state.memory.allocate<luafunctionobject>(LUAFUNCTION, state, proto)->get<luafunctionobject>();
 }
 
 luafunctionobject::luafunctionobject(softwarestate &state, std::shared_ptr<bytecode::prototype> proto) {
@@ -230,7 +230,7 @@ luafunctionobject::luafunctionobject(softwarestate &state, std::shared_ptr<bytec
 		case bytecode::instruction_opcode_JMPIFNIL:
 		case bytecode::instruction_opcode_JMPIFTRUE:
 			if (patchinstr.b >= oob) {
-				throw exception("invalid bytecode");
+				throw exception("invalid bytecode: JMP");
 			}
 		default:
 			break;
@@ -238,7 +238,7 @@ luafunctionobject::luafunctionobject(softwarestate &state, std::shared_ptr<bytec
 	}
 
 	for (int i = 0; i < proto->strings_size(); i++) {
-		strings.push_back(object(proto->strings(i)));
+		strings.push_back(stringobject::create(state, proto->strings(i)));
 	}
 
 	for (int i = 0; i < proto->numbers_size(); i++) {

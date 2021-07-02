@@ -5,7 +5,9 @@
 #include "container.hpp"
 #include "types.hpp"
 #include "object.hpp"
+#include "gc/gc.hpp"
 #include <vector>
+#include <unordered_map>
 
 namespace lorelai {
 	namespace vm {
@@ -106,9 +108,9 @@ namespace lorelai {
 			object number_metatable;
 
 		public:
-			software::allocator<tableobject> tableallocator;
-			software::allocator<luafunctionobject> luafunctionallocator;
-			software::allocator<cfunctionobject> cfunctionallocator;
+			gc::manager memory;
+
+			std::unordered_map<string, stringobject *> stringmap;
 
 		public:
 			_stack<256> stack = _stack<256>(this);
