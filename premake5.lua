@@ -148,6 +148,11 @@ workspace "lorelai"
 		buildoptions { "-fno-omit-frame-pointer" }
 		linkoptions { "-fno-omit-frame-pointer" }
 
+	filter "action:vs*"
+		defines { "LORELAI_INLINE=__forceinline" }
+	filter "action:gmake"
+		defines {"LORELAI_INLINE=inline __attribute__((always_inline))"}
+
 	filter "configurations:release"
 		defines "NDEBUG"
 		optimize "Speed"

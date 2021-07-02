@@ -5,6 +5,11 @@
 #include <experimental/optional>
 #include <exception>
 
+#ifndef LORELAI_INLINE
+#define LORELAI_INLINE
+#warning force inline disabled
+#endif
+
 namespace lorelai {
 	template <class T>
 	using optional = std::experimental::optional<T>;

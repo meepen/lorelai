@@ -101,36 +101,36 @@ namespace lorelai {
 			}
 
 		public:
-			inline void settype(_type t) {
+			constexpr void settype(_type t) {
 				type = t;
 			}
 
-			inline void set(referenceobject &ref) {
-				settype(ref._typeid());
+			constexpr void set(referenceobject &ref) {
+				settype(TABLE);
 				raw.ref = &ref;
 			}
 
-			inline void set(const bool &b) {
+			constexpr void set(const bool &b) {
 				settype(BOOL);
 				raw.b = b;
 			}
 
-			inline void set(const number &num) {
+			constexpr void set(const number &num) {
 				settype(NUMBER);
 				raw.num = num;
 				// hashed as needed
 			}
 
-			inline void set(const object &other) {
+			constexpr void set(const object &other) {
 				type = other.type;
 				memcpy(&raw, &other.raw, sizeof(raw));
 			}
 
-			inline void set() {
+			constexpr void set() {
 				settype(NIL);
 			}
 
-			inline void unset() {
+			constexpr void unset() {
 				set();
 			}
 
@@ -323,12 +323,18 @@ namespace lorelai {
 				return raw.ref->call(state, nargs, nrets);
 			}
 
-			constexpr number tonumber_lit() {
-				return type != NUMBER ? throw exception(string("cannot convert ") + gettypename() + " to number") : raw.num;
+			void convertexception(const char *what) throw() {
+				throw exception(string("cannot convert ") + gettypename() + " to " + what);
 			}
 
-			constexpr number tonumber    (softwarestate &state) {
-				return type >= TABLE ? raw.ref->tonumber(state) : tonumber_lit();
+			LORELAI_INLINE number tonumber    (softwarestate &state) {
+				if (type == NUMBER) {
+					return raw.num;
+				}
+				else if (type >= TABLE) {
+					return raw.ref->tonumber(state);
+				}
+				convertexception("number");
 			}
 
 			inline string tostring    (softwarestate &state) {
@@ -370,6 +376,9 @@ namespace lorelai {
 
 		public:
 			const char *gettypename() {
+				if (type >= TABLE) {
+					return typenames[raw.ref->_typeid()];
+				}
 				return typenames[type];
 			}
 
