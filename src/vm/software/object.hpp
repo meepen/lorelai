@@ -85,7 +85,7 @@ namespace lorelai {
 		public:
 			object(const object &obj) {
 				type = obj.type;
-				memcpy(&raw, &obj.raw, sizeof(raw));
+				raw = obj.raw;
 			}
 			object(referenceobject &ref) {
 				set(ref);
@@ -101,36 +101,32 @@ namespace lorelai {
 			}
 
 		public:
-			constexpr void settype(_type t) {
-				type = t;
-			}
 
-			constexpr void set(referenceobject &ref) {
-				settype(TABLE);
+			LORELAI_INLINE void set(referenceobject &ref) {
+				type = TABLE;
 				raw.ref = &ref;
 			}
 
-			constexpr void set(const bool &b) {
-				settype(BOOL);
+			LORELAI_INLINE void set(const bool &b) {
+				type = BOOL;
 				raw.b = b;
 			}
 
-			constexpr void set(const number &num) {
-				settype(NUMBER);
+			LORELAI_INLINE void set(const number &num) {
+				type = NUMBER;
 				raw.num = num;
-				// hashed as needed
 			}
 
-			constexpr void set(const object &other) {
+			LORELAI_INLINE void set(const object &other) {
 				type = other.type;
-				memcpy(&raw, &other.raw, sizeof(raw));
+				raw = other.raw;
 			}
 
-			constexpr void set() {
-				settype(NIL);
+			LORELAI_INLINE void set() {
+				type = NIL;
 			}
 
-			constexpr void unset() {
+			LORELAI_INLINE void unset() {
 				set();
 			}
 
