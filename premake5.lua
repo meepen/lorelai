@@ -134,10 +134,12 @@ workspace "lorelai"
 	warnings "Default"
 	symbols "On"
 	cppdialect "C++14"
+	flags { "MultiProcessorCompile", "LinkTimeOptimization" }
 
 	filter "configurations:debug"
 		defines "DEBUG"
-		optimize "Off"
+		optimize "Debug"
+		runtime "Debug"
 
 	filter {"configurations:debug", "action:gmake" }
 		buildoptions { "-fsanitize=address" }
@@ -155,7 +157,6 @@ workspace "lorelai"
 	filter "configurations:release"
 		defines "NDEBUG"
 		optimize "Speed"
-		flags { "MultiProcessorCompile", "LinkTimeOptimization" }
 		floatingpoint "Fast"
 		intrinsics "On"
 		runtime "Release"
