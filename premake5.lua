@@ -161,8 +161,8 @@ workspace "lorelai"
 		runtime "Debug"
 
 	filter {"configurations:debug", "action:gmake" }
-		buildoptions { "-fsanitize=address" }
-		linkoptions { "-fsanitize=address", "-static-libasan" }
+		buildoptions { "-g", "-fsanitize=address" }
+		linkoptions { "-g", "-fsanitize=address", "-static-libasan" }
 
 	filter {"configurations:release", "action:gmake" }
 		buildoptions { "-fno-omit-frame-pointer" }
