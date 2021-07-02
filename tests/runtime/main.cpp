@@ -38,7 +38,7 @@ static void print_branch(size_t idx, lorelai::parser::node &node) {
 		}
 	}
 	catch (std::exception &e) {
-		
+		(e);
 	}
 }
 

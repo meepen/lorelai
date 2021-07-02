@@ -512,9 +512,11 @@ namespace lorelai {
 				auto found = data.find(index);
 				if (found == data.end()) {
 					out.unset();
+					return false;
 				}
 				else {
-					out = found->second;
+					out.set(found->second);
+					return true;
 				}
 			}
 

@@ -252,7 +252,7 @@ static void generate_functioncallexpression(bytecodegenerator &gen, node &_expr,
 	auto &expr = *dynamic_cast<expressions::functioncallexpression *>(&_expr);
 	auto &arglist = *dynamic_cast<args *>(expr.arglist.get());
 
-	size_t stacksize = std::max(size, static_cast<std::uint32_t>(arglist.children.size() + 1 + (expr.methodname ? 1 : 0)));
+	std::uint32_t stacksize = std::max(size, static_cast<std::uint32_t>(arglist.children.size() + 1 + (expr.methodname ? 1 : 0)));
 
 	bool using_temp = stacksize > size || target == -1;
 	auto functionindex = target;

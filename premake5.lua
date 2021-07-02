@@ -3,6 +3,10 @@ newoption {
 	description = "Enables JIT state runtime (if available)"
 }
 
+local protobuf_include = os.findheader "google/protobuf/port_def.inc"
+
+os.execute "protoc --proto_path=src/vm/proto/src --cpp_out=src/vm/proto src/vm/proto/src/bytecode.proto"
+
 local libs = {
 	lexer = {
 		includes = {
@@ -48,7 +52,8 @@ local libs = {
 		includes = {
 			dirs = {
 				"src",
-				"src/vm"
+				"src/vm",
+				protobuf_include
 			},
 			files = {
 				"src/vm/**.hpp"
@@ -57,8 +62,13 @@ local libs = {
 		links = {
 			"asmjit",
 			"parser",
-			"protobuf",
-			"pthread",
+			["system:not windows"] = {
+				"protobuf",
+				"pthread",
+			},
+			["system:windows"] = { -- huge sigh
+				"libprotobuf",
+			}
 		},
 	}
 }
@@ -135,6 +145,15 @@ workspace "lorelai"
 	symbols "On"
 	cppdialect "C++17"
 	flags { "MultiProcessorCompile", "LinkTimeOptimization" }
+	defines {
+		"ASMJIT_STATIC"
+	}
+
+	if (os.findheader "lib/libprotobuf.lib") then
+		libdirs {
+			os.findheader "lib/libprotobuf.lib" .. "/lib"
+		}
+	end
 
 	filter "configurations:debug"
 		defines "DEBUG"
@@ -184,10 +203,6 @@ workspace "lorelai"
 		kind "StaticLib"
 		addincludes "asmjit"
 
-		defines {
-			"ASMJIT_STATIC",
-			"ASMJIT_TARGET_TYPE=\"STATIC\""
-		}
 		filter "platforms:x86 or x86-64"
 			files {
 				"asmjit/src/asmjit/x86/**.cpp",
@@ -198,18 +213,11 @@ workspace "lorelai"
 		kind "StaticLib"
 		targetprefix "" -- remove lib from name (linux)
 		addincludes "liblorelai"
-		prebuildcommands {
-			"protoc --proto_path=../src/vm/proto/src --cpp_out=../src/vm/proto ../src/vm/proto/src/bytecode.proto"
-		}
 
 		includedirs { "src/vm" }
 
 		pchheader "stdafx.h"
 		pchsource "src/vm/stdafx.cpp"
-
-		links {
-			"protobuf",
-		}
 
 		addlinks {
 			"parser",

@@ -136,6 +136,8 @@ namespace lorelai {
 				newheap->freeptr = newheap->data;
 				newheap->mode = true;
 				heaps[heapcount - 1] = newheap;
+
+				return newheap;
 			}
 
 		private:
