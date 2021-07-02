@@ -51,7 +51,7 @@ state::_retdata softwarestate::call(int nargs, int nrets) {
 	};
 }
 
-softwarestate::softwarestate() {
+softwarestate::softwarestate() : stack(this) {
 	registry = tableobject::create(*this);
 	initlibs();
 }

@@ -135,6 +135,7 @@ workspace "lorelai"
 	characterset "MBCS"
 	warnings "Default"
 	symbols "On"
+	flags "C++14"
 
 	filter "configurations:debug"
 		defines "DEBUG"

@@ -33,6 +33,7 @@ namespace lorelai {
 			private:
 				_stack(const _stack &other) { }
 				_stack(_stack &&other) { }
+
 			public:
 				_stack(softwarestate *_st) : st(_st), data(new object[size]) {
 					for (int i = 0; i < size; i++) {
@@ -113,7 +114,7 @@ namespace lorelai {
 			std::unordered_map<string, stringobject *> stringmap;
 
 		public:
-			_stack<256> stack = _stack<256>(this);
+			_stack<256> stack;
 		};
 	}
 }
