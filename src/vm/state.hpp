@@ -15,6 +15,10 @@
 	fn(CFUNCTION)
 
 namespace lorelai {
+	namespace bytecode {
+		class prototype;
+	}
+
 	namespace vm {
 #define LORELAI_LITERAL(x) x,
 		enum _type {
@@ -26,10 +30,6 @@ namespace lorelai {
 			LORELAI_TYPES(LORELAI_STRING)
 		};
 #undef LORELAI_STRING
-
-		namespace bytecode {
-			class prototype;
-		}
 
 		class state {
 		public:

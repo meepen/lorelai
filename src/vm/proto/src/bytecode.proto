@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package lorelai.vm.bytecode;
+package lorelai.bytecode;
 
 message debugdata {
 	uint32 linenumber = 1;

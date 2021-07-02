@@ -72,7 +72,7 @@ static std::string getcode(ValueArg<std::string> &filename, ValueArg<std::string
 	}
 }
 
-static void printproto(lorelai::vm::bytecode::prototype &bytecode) {
+static void printproto(lorelai::bytecode::prototype &bytecode) {
 	std::cout << "Bytecode evaluated: " << std::endl;
 	std::cout << "    Instructions: " << bytecode.instructions_size() << std::endl;
 	std::cout << "    Prototypes:   " << bytecode.protos_size() << std::endl;
@@ -86,7 +86,7 @@ static void printproto(lorelai::vm::bytecode::prototype &bytecode) {
 	}
 
 	size_t longest = 0;
-	auto descriptor = lorelai::vm::bytecode::instruction_opcode_descriptor();
+	auto descriptor = lorelai::bytecode::instruction_opcode_descriptor();
 	for (int i = 0; i < descriptor->value_count(); i++) {
 		longest = std::max(descriptor->value(i)->name().length() + 1, longest);
 	}
@@ -95,7 +95,7 @@ static void printproto(lorelai::vm::bytecode::prototype &bytecode) {
 
 	for (int i = 0; i < bytecode.instructions_size(); i++) {	
 		auto &instruct = bytecode.instructions(i);
-		auto instrname = lorelai::vm::bytecode::instruction_opcode_Name(instruct.op());
+		auto instrname = lorelai::bytecode::instruction_opcode_Name(instruct.op());
 
 		std::string index = std::to_string(i);
 
@@ -141,7 +141,7 @@ int main(int argc, char *argv[]) {
 			return 0;
 		}
 
-		auto bytecode = lorelai::vm::parse(mainchunk);
+		auto bytecode = lorelai::bytecode::create(mainchunk);
 
 		if (bytecodeonly.getValue()) {
 			if (raw.getValue()) {

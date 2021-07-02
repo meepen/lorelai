@@ -12,10 +12,8 @@
 #include <iostream>
 
 using namespace lorelai;
-using namespace lorelai::vm;
-
+using namespace lorelai::bytecode;
 using namespace lorelai::parser;
-
 
 #ifdef __linux__
 #include <cxxabi.h>
@@ -1054,7 +1052,7 @@ std::unordered_map<std::type_index, expressiongenerator> expressionmap = {
 #undef ADD
 
 
-std::shared_ptr<bytecode::prototype> lorelai::vm::parse(chunk &data) {
+std::shared_ptr<bytecode::prototype> lorelai::bytecode::create(chunk &data) {
 	bytecodegenerator generator;
 	auto r = generator.curfunc.proto;
 	std::shared_ptr<node> container = std::make_shared<chunk>(data);
