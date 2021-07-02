@@ -123,11 +123,11 @@ state::_retdata luafunctionobject::call(softwarestate &state, int nrets, int nar
 			break;
 		}
 		vmcase (STRING) {
-			stackptr[instr->a] = run.obj->strings[instr->b];
+			stackptr[instr->a].set(strings[instr->b]);
 			break;
 		}
 		vmcase (NUMBER) {
-			stackptr[instr->a] = run.obj->numbers[instr->b];
+			stackptr[instr->a].set(run.obj->numbers[instr->b]);
 			break;
 		}
 		vmcase (INDEX) {
