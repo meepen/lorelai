@@ -150,7 +150,7 @@ workspace "lorelai"
 
 	filter "configurations:release"
 		defines "NDEBUG"
-		optimize "Full"
+		optimize "Speed"
 		flags { "MultiProcessorCompile" }
 		floatingpoint "Fast"
 		intrinsics "On"
