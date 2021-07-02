@@ -32,15 +32,15 @@ namespace lorelai {
 			struct _ifqueue {
 				bytecode::instruction *patch = nullptr;
 				std::vector<bytecode::instruction *> jmpends;
-				size_t target;
+				std::uint32_t target;
 			};
 
 			std::vector<_ifqueue> ifqueue;
 
 			struct _loopqueue {
 				int startinstr;
-				size_t stackreserved;
-				size_t extrastack;
+				std::uint32_t stackreserved;
+				std::uint32_t extrastack;
 				std::vector<bytecode::instruction *> patches;
 			};
 
@@ -96,10 +96,10 @@ namespace lorelai {
 			LORELAI_VISIT_FUNCTION(statements::returnstatement);
 
 		private:
-			void pushornil(std::vector<std::shared_ptr<lorelai::parser::node>> &v, int index, size_t target);
+			void pushornil(std::vector<std::shared_ptr<lorelai::parser::node>> &v, int index, std::uint32_t target);
 
 		public:
-			void runexpressionhandler(lorelai::parser::node &_expr, size_t target, size_t size) {
+			void runexpressionhandler(lorelai::parser::node &_expr, std::uint32_t target, std::uint32_t size) {
 				auto found = expressionmap.find(typeid(_expr));
 
 				if (found == expressionmap.end()) {
@@ -109,7 +109,7 @@ namespace lorelai {
 				return found->second(*this, _expr, target, size);
 			}
 
-			void runexpressionhandler(std::shared_ptr<lorelai::parser::node> _expr, size_t target, size_t size) {
+			void runexpressionhandler(std::shared_ptr<lorelai::parser::node> _expr, std::uint32_t target, std::uint32_t size) {
 				return runexpressionhandler(*_expr.get(), target, size);
 			}
 

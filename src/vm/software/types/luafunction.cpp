@@ -84,7 +84,7 @@ state::_retdata luafunctionobject::call(softwarestate &state, int nrets, int nar
 			for (int i = multres - 1; i >= 0; i--) {
 				stackptr[state->top + i + instr->b + 1].set(stackptr[state->top + i]);
 			}
-			for (int i = 0; i <= instr->b; i++) {
+			for (unsigned i = 0; i <= instr->b; i++) {
 				stackptr[state->top + i].set(stackptr[instr->a + i]);
 			}
 

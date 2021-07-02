@@ -23,12 +23,12 @@ namespace lorelai {
 				return nullptr;
 			}
 
-			size_t addvariable(string name, size_t stackpos) {
+			std::uint32_t addvariable(string name, std::uint32_t stackpos) {
 				variables[name] = stackpos;
 				return stackpos;
 			}
 
-			size_t getvariableindex(string name) {
+			std::uint32_t getvariableindex(string name) {
 				auto var = variables.find(name);
 				if (var != variables.end()) {
 					return var->second;
@@ -37,12 +37,12 @@ namespace lorelai {
 				return -1;
 			}
 
-			size_t hasvariable(string name) {
+			std::uint32_t hasvariable(string name) {
 				return variables.find(name) != variables.end();
 			}
 
 		public:
-			std::unordered_map<string, size_t> variables;
+			std::unordered_map<string, std::uint32_t> variables;
 			std::shared_ptr<scope> parent;
 		};
 	}

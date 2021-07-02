@@ -75,7 +75,7 @@ namespace lorelai {
 			}
 
 			template <typename T, typename... _Args>
-			infoheader *allocate(std::size_t type, _Args &&...args) {
+			infoheader *allocate(std::uint8_t type, _Args &&...args) {
 				auto info = allocate(sizeof(T));
 				info->type = type;
 

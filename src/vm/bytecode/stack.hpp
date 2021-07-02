@@ -8,11 +8,11 @@ namespace lorelai {
 	namespace bytecode {
 		class stack {
 		public:
-			size_t getslots(size_t amount) {
+			std::uint32_t getslots(std::uint32_t amount) {
 				bool found = false;
-				for (size_t index = 0; index <= maxsize; index++) {
+				for (std::uint32_t index = 0; index <= maxsize; index++) {
 					found = true;
-					for (size_t i = 0; i < amount; i++) {
+					for (std::uint32_t i = 0; i < amount; i++) {
 						if (isslotfree(index + i)) {
 							found = false;
 							break;
@@ -21,7 +21,7 @@ namespace lorelai {
 
 					if (found) {
 						// obtain and return
-						for (size_t i = 0; i < amount; i++) {
+						for (std::uint32_t i = 0; i < amount; i++) {
 							if (index + i < maxsize) {
 								unusedslots.remove(index + i);
 							}
@@ -38,15 +38,15 @@ namespace lorelai {
 				throw;
 			}
 
-			void freeslots(size_t slot, size_t amount) {
-				for (size_t i = 0; i < amount; i++) {
+			void freeslots(std::uint32_t slot, std::uint32_t amount) {
+				for (std::uint32_t i = 0; i < amount; i++) {
 					unusedslots.insert(std::lower_bound(unusedslots.begin(), unusedslots.end(), slot + i), slot + i);
 				}
 			}
 
 			// note: untested
-			size_t highestfree() {
-				size_t ret = maxsize - 1;
+			std::uint32_t highestfree() {
+				auto ret = maxsize - 1;
 				if (!isslotfree(ret)) {
 					return maxsize;
 				}
@@ -56,7 +56,7 @@ namespace lorelai {
 				return ret + 1;
 			}
 
-			bool isslotfree(size_t slot) {
+			bool isslotfree(std::uint32_t slot) {
 				if (slot >= maxsize) {
 					return false;
 				}
@@ -67,8 +67,8 @@ namespace lorelai {
 			}
 
 		public:
-			size_t maxsize = 0;
-			std::list<size_t> unusedslots;
+			std::uint32_t maxsize = 0;
+			std::list<std::uint32_t> unusedslots;
 		};
 	}
 }

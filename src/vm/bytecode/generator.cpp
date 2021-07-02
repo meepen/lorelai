@@ -8,7 +8,7 @@ using namespace lorelai::bytecode;
 
 
 LORELAI_VISIT_DEFINE(bytecodegenerator, statements::localassignmentstatement) { // TODO: VARARG
-	std::deque<size_t> indexes;
+	std::deque<std::uint32_t> indexes;
 	for (auto &_name : obj.left) {
 		auto name = dynamic_cast<expressions::nameexpression *>(_name.get());
 		if (!name) {
@@ -36,7 +36,7 @@ LORELAI_VISIT_DEFINE(bytecodegenerator, statements::localassignmentstatement) { 
 	}
 
 	// fill the rest with nil
-	for (int i = obj.right.size(); i < obj.left.size(); i++) {
+	for (auto i = obj.right.size(); i < obj.left.size(); i++) {
 		auto index = indexes[0];
 		indexes.pop_front();
 
@@ -55,11 +55,11 @@ LORELAI_VISIT_DEFINE(bytecodegenerator, statements::assignmentstatement) { // TO
 			if (auto name = dynamic_cast<expressions::nameexpression *>(lhs.get())) {
 				auto scope = curfunc.curscope->findvariablescope(name->name);
 				if (scope) {
-					size_t target = scope->getvariableindex(name->name);
+					auto target = scope->getvariableindex(name->name);
 					pushornil(obj.right, i, target);
 				} // TODO: upvalues
 				else {
-					size_t target = curfunc.gettemp(2);
+					auto target = curfunc.gettemp(2);
 
 					pushornil(obj.right, i, target + 1);
 					emit(instruction_opcode_ENVIRONMENTSET, target, add(name->name), target + 1);
@@ -68,7 +68,7 @@ LORELAI_VISIT_DEFINE(bytecodegenerator, statements::assignmentstatement) { // TO
 				}
 			}
 			else if (auto index = dynamic_cast<expressions::dotexpression *>(lhs.get())) {
-				size_t target = curfunc.gettemp(3);
+				auto target = curfunc.gettemp(3);
 				
 				runexpressionhandler(index->prefix, target, 1);
 				expressions::stringexpression string(index->index->tostring());
@@ -80,7 +80,7 @@ LORELAI_VISIT_DEFINE(bytecodegenerator, statements::assignmentstatement) { // TO
 				curfunc.freetemp(target, 3);
 			}
 			else if (auto index = dynamic_cast<expressions::indexexpression *>(lhs.get())) {
-				size_t target = curfunc.gettemp(3);
+				auto target = curfunc.gettemp(3);
 				
 				runexpressionhandler(index->prefix, target, 1);
 				runexpressionhandler(index->index, target + 1, 1);
@@ -222,9 +222,9 @@ LORELAI_VISIT_DEFINE(bytecodegenerator, statements::forinstatement) {
 	}
 
 	// loop prep: local f, s, v = inexprs
-	for (int i = 0; i < obj.inexprs.size(); i++) {
+	for (size_t i = 0; i < obj.inexprs.size(); i++) {
 		auto &inexpr = obj.inexprs[i];
-		size_t amount;
+		std::uint32_t amount;
 		if (i == obj.inexprs.size() - 1 && i < 3) {
 			amount = 3 - i;
 		}
@@ -323,7 +323,7 @@ LORELAI_VISIT_DEFINE(bytecodegenerator, statements::returnstatement) {
 	auto realrets = obj.children.size();
 	auto rets = realrets;
 	auto target = curfunc.gettemp(realrets);
-	size_t varargtype = 0;
+	std::uint32_t varargtype = 0;
 	for (int i = 0; i < obj.children.size(); i++) {
 		auto &child = obj.children[i];
 
@@ -347,7 +347,7 @@ LORELAI_VISIT_DEFINE(bytecodegenerator, statements::returnstatement) {
 	return false;
 }
 
-void bytecodegenerator::pushornil(std::vector<std::shared_ptr<lorelai::parser::node>> &v, int index, size_t target) {
+void bytecodegenerator::pushornil(std::vector<std::shared_ptr<lorelai::parser::node>> &v, int index, std::uint32_t target) {
 	if (index < v.size()) {
 		runexpressionhandler(v[index], target, 1);
 	}

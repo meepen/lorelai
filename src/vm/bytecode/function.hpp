@@ -44,7 +44,7 @@ namespace lorelai {
 			}
 
 			// finds a local variable and returns a stack position
-			size_t findlocal(string name) {
+			std::uint32_t findlocal(string name) {
 				auto found = curscope->findvariablescope(name, firstscope);
 				if (!found) {
 					// not in current scope, what do?
@@ -55,7 +55,7 @@ namespace lorelai {
 				return found->getvariableindex(name);
 			}
 
-			size_t createlocal(string name) {
+			std::uint32_t createlocal(string name) {
 				// since it already exists and won't be used passed this point, reuse slot
 				// this might have to change if used as an upvalue?
 				if (curscope->hasvariable(name)) {
@@ -66,7 +66,7 @@ namespace lorelai {
 				return scopeindex;
 			}
 
-			size_t createlocals(std::vector<string> names) {
+			std::uint32_t createlocals(std::vector<string> names) {
 				if (names.size() == 0) {
 					return 0;
 				}
@@ -85,11 +85,11 @@ namespace lorelai {
 				return target;
 			}
 
-			size_t gettemp(size_t amount = 1) {
+			std::uint32_t gettemp(size_t amount = 1) {
 				return funcstack.getslots(amount);
 			}
 
-			void freetemp(size_t slot, size_t amount = 1) {
+			void freetemp(std::uint32_t slot, std::uint32_t amount = 1) {
 				funcstack.freeslots(slot, amount);
 			}
 

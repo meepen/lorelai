@@ -14,7 +14,7 @@
 #include <memory>
 #include <unordered_map>
 
-#define LORELAI_SOFTWARE_DEFAULT_FUNCTION(name, args...) name (args) { except(#name); }
+#define LORELAI_SOFTWARE_DEFAULT_FUNCTION(name, ...) name (__VA_ARGS__) { except(#name); }
 
 
 namespace lorelai {
@@ -319,7 +319,7 @@ namespace lorelai {
 				return raw.ref->call(state, nargs, nrets);
 			}
 
-			void convertexception(const char *what) throw() {
+			void convertexception(const char *what) {
 				throw exception(string("cannot convert ") + gettypename() + " to " + what);
 			}
 

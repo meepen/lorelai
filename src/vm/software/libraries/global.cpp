@@ -8,7 +8,7 @@ using namespace lorelai;
 using namespace lorelai::vm;
 
 static int print(softwarestate &state, int nargs, int nrets) {
-	for (size_t i = 1; i <= nargs; i++) {
+	for (int i = 1; i <= nargs; i++) {
 		if (i > 1) {
 			std::cout << "    ";
 		}

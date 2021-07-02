@@ -7,21 +7,21 @@ using namespace lorelai::parser;
 using namespace lorelai::parser;
 using namespace lorelai::bytecode;
 
-static void generate_numberexpression(bytecodegenerator &gen, node &expr, size_t target, size_t size) {
+static void generate_numberexpression(bytecodegenerator &gen, node &expr, std::uint32_t target, std::uint32_t size) {
 	if (size == 0) {
 		return;
 	}
 	gen.emit(bytecode::instruction_opcode_NUMBER, target, gen.add(dynamic_cast<expressions::numberexpression *>(&expr)->data));
 }
 
-static void generate_stringexpression(bytecodegenerator &gen, node &expr, size_t target, size_t size) {
+static void generate_stringexpression(bytecodegenerator &gen, node &expr, std::uint32_t target, std::uint32_t size) {
 	if (size == 0) {
 		return;
 	}
 	gen.emit(bytecode::instruction_opcode_STRING, target, gen.add(dynamic_cast<expressions::stringexpression *>(&expr)->data));
 }
 
-static void generate_enclosedexpression(bytecodegenerator &gen, node &expr, size_t target, size_t size) {
+static void generate_enclosedexpression(bytecodegenerator &gen, node &expr, std::uint32_t target, std::uint32_t size) {
 	auto &child = *dynamic_cast<expressions::enclosedexpression *>(&expr)->children[0].get();
 	gen.runexpressionhandler(child, target, size > 0 ? 1 : 0);
 }
@@ -75,7 +75,7 @@ currently:
 
 class binopsimplifier {
 public:
-	binopsimplifier(bytecodegenerator &_gen, expressions::binopexpression &expr, size_t target, size_t size) : gen(_gen) {
+	binopsimplifier(bytecodegenerator &_gen, expressions::binopexpression &expr, std::uint32_t target, std::uint32_t size) : gen(_gen) {
 		if (size == 0) {
 			auto find = binoplookup.find(expr.op);
 			if (find == binoplookup.end()) {
@@ -98,7 +98,7 @@ public:
 			}
 		}
 		else {
-			size_t rhs_stack;
+			std::uint32_t rhs_stack;
 			bool free_right = false;
 			gen.runexpressionhandler(expr.lhs, target, 1);
 
@@ -115,7 +115,7 @@ public:
 		}
 	}
 
-	bool get(std::shared_ptr<node> &expr, size_t *stackposout, bool leftside) {
+	bool get(std::shared_ptr<node> &expr, std::uint32_t *stackposout, bool leftside) {
 		if (auto name = dynamic_cast<expressions::nameexpression *>(expr.get())) {
 			if (auto scope = gen.curfunc.curscope->findvariablescope(name->name)) {
 				*stackposout = scope->getvariableindex(name->name);
@@ -130,7 +130,7 @@ public:
 	bytecodegenerator &gen;
 };
 
-static void generate_binopexpression(bytecodegenerator &gen, node &_expr, size_t target, size_t size) {
+static void generate_binopexpression(bytecodegenerator &gen, node &_expr, std::uint32_t target, std::uint32_t size) {
 	auto &expr = *dynamic_cast<expressions::binopexpression *>(&_expr);
 	binopsimplifier simplify(gen, expr, target, size);
 }
@@ -142,7 +142,7 @@ std::unordered_map<string, bytecode::instruction_opcode> unoplookup = {
 	{ "-", bytecode::instruction_opcode_MINUS },
 };
 
-static void generate_unopexpression(bytecodegenerator &gen, node &_expr, size_t target, size_t size) {
+static void generate_unopexpression(bytecodegenerator &gen, node &_expr, std::uint32_t target, std::uint32_t size) {
 	auto &expr = *dynamic_cast<expressions::unopexpression *>(&_expr);
 
 	if (size > 0) {
@@ -162,7 +162,7 @@ static void generate_unopexpression(bytecodegenerator &gen, node &_expr, size_t 
 	}
 }
 
-static void generate_nilexpression(bytecodegenerator &gen, node &expr, size_t target, size_t size) {
+static void generate_nilexpression(bytecodegenerator &gen, node &expr, std::uint32_t target, std::uint32_t size) {
 	if (size == 0) {
 		return;
 	}
@@ -170,7 +170,7 @@ static void generate_nilexpression(bytecodegenerator &gen, node &expr, size_t ta
 	gen.emit(bytecode::instruction_opcode_CONSTANT, target, 2);
 }
 
-static void generate_falseexpression(bytecodegenerator &gen, node &expr, size_t target, size_t size) {
+static void generate_falseexpression(bytecodegenerator &gen, node &expr, std::uint32_t target, std::uint32_t size) {
 	if (size == 0) {
 		return;
 	}
@@ -178,7 +178,7 @@ static void generate_falseexpression(bytecodegenerator &gen, node &expr, size_t 
 	gen.emit(bytecode::instruction_opcode_CONSTANT, target, 1);
 }
 
-static void generate_trueexpression(bytecodegenerator &gen, node &expr, size_t target, size_t size) {
+static void generate_trueexpression(bytecodegenerator &gen, node &expr, std::uint32_t target, std::uint32_t size) {
 	if (size == 0) {
 		return;
 	}
@@ -186,7 +186,7 @@ static void generate_trueexpression(bytecodegenerator &gen, node &expr, size_t t
 	gen.emit(bytecode::instruction_opcode_CONSTANT, target, 0);
 }
 
-static void generate_indexexpression(bytecodegenerator &gen, node &_expr, size_t target, size_t size) {
+static void generate_indexexpression(bytecodegenerator &gen, node &_expr, std::uint32_t target, std::uint32_t size) {
 	auto &expr = *dynamic_cast<expressions::indexexpression *>(&_expr);
 
 	bool is_temp = size == 0;
@@ -207,7 +207,7 @@ static void generate_indexexpression(bytecodegenerator &gen, node &_expr, size_t
 	}
 }
 
-static void generate_dotexpression(bytecodegenerator &gen, node &_expr, size_t target, size_t size) {
+static void generate_dotexpression(bytecodegenerator &gen, node &_expr, std::uint32_t target, std::uint32_t size) {
 	auto &expr = *dynamic_cast<expressions::dotexpression *>(&_expr);
 	bool is_temp = size == 0;
 
@@ -228,7 +228,7 @@ static void generate_dotexpression(bytecodegenerator &gen, node &_expr, size_t t
 	}
 }
 
-static void generate_nameexpression(bytecodegenerator &gen, node &_expr, size_t target, size_t size) {
+static void generate_nameexpression(bytecodegenerator &gen, node &_expr, std::uint32_t target, std::uint32_t size) {
 	if (size == 0) {
 		return;
 	}
@@ -248,11 +248,11 @@ static void generate_nameexpression(bytecodegenerator &gen, node &_expr, size_t 
 	}
 }
 
-static void generate_functioncallexpression(bytecodegenerator &gen, node &_expr, size_t target, size_t size) {
+static void generate_functioncallexpression(bytecodegenerator &gen, node &_expr, std::uint32_t target, std::uint32_t size) {
 	auto &expr = *dynamic_cast<expressions::functioncallexpression *>(&_expr);
 	auto &arglist = *dynamic_cast<args *>(expr.arglist.get());
 
-	size_t stacksize = std::max(size, arglist.children.size() + 1 + (expr.methodname ? 1 : 0));
+	size_t stacksize = std::max(size, static_cast<std::uint32_t>(arglist.children.size() + 1 + (expr.methodname ? 1 : 0)));
 
 	bool using_temp = stacksize > size || target == -1;
 	auto functionindex = target;

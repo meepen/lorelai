@@ -39,7 +39,7 @@ local libs = {
 			}
 		},
 		links = {
-			["not windows"] = {
+			["system:not windows"] = {
 				"rt"
 			}
 		}
@@ -202,8 +202,10 @@ workspace "lorelai"
 			"protoc --proto_path=../src/vm/proto/src --cpp_out=../src/vm/proto ../src/vm/proto/src/bytecode.proto"
 		}
 
-		pchheader "../src/vm/stdafx.h"
-		pchsource "../src/vm/stdafx.cpp"
+		includedirs { "src/vm" }
+
+		pchheader "stdafx.h"
+		pchsource "src/vm/stdafx.cpp"
 
 		links {
 			"protobuf",
@@ -221,6 +223,9 @@ workspace "lorelai"
 			"src/vm/software/*.cpp",
 			"src/vm/bytecode/*.cpp"
 		}
+
+		filter { "action:vs*" }
+			buildoptions { "/FI stdafx.h" }
 
 		filter { "platforms:x86 or x86-64" }
 			configuration "with-jit"

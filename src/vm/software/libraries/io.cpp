@@ -8,7 +8,7 @@ using namespace lorelai;
 using namespace lorelai::vm;
 
 static int io_write(softwarestate &state, int nargs, int nrets) {
-	for (size_t i = 1; i <= nargs; i++) {
+	for (int i = 1; i <= nargs; i++) {
 		std::cout << state[i].tostring(state);
 	}
 
