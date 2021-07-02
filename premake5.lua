@@ -156,7 +156,7 @@ workspace "lorelai"
 	filter "configurations:release"
 		defines "NDEBUG"
 		optimize "Speed"
-		flags { "MultiProcessorCompile" }
+		flags { "MultiProcessorCompile", "LinkTimeOptimization" }
 		floatingpoint "Fast"
 		intrinsics "On"
 		runtime "Release"
@@ -218,7 +218,8 @@ workspace "lorelai"
 			"src/vm/**.cc",
 			"src/vm/*.cpp",
 			"src/vm/software/**.cpp",
-			"src/vm/software/*.cpp"
+			"src/vm/software/*.cpp",
+			"src/vm/bytecode/*.cpp"
 		}
 
 		filter { "platforms:x86 or x86-64" }

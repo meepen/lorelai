@@ -9,12 +9,16 @@
 #include "parser/funcbody.hpp"
 #include "parser/args.hpp"
 
-#define LORELAI_VISIT_FUNCTION(name) virtual bool visit(name &obj, std::shared_ptr<node> &container) override
-#define LORELAI_POSTVISIT_FUNCTION(name) virtual bool postvisit(name &obj, std::shared_ptr<node> &container) override
-#define LORELAI_VISIT_MACRO(name) virtual bool visit(name &_node, std::shared_ptr<node> &container) { return false; }
-#define LORELAI_POSTVISIT_MACRO(name) virtual bool postvisit(name &_node, std::shared_ptr<node> &container) { return false; }
+
+
+#define LORELAI_VISIT_FUNCTION(name) bool visit(lorelai::parser:: name &obj, std::shared_ptr<lorelai::parser::node> &container) override
+#define LORELAI_VISIT_DEFINE(clasname, type) bool clasname::visit(lorelai::parser:: type &obj, std::shared_ptr<lorelai::parser::node> &container)
+#define LORELAI_POSTVISIT_FUNCTION(name) bool postvisit(lorelai::parser:: name &obj, std::shared_ptr<lorelai::parser::node> &container) override
+#define LORELAI_POSTVISIT_DEFINE(clasname, type) bool clasname::postvisit(lorelai::parser:: type &obj, std::shared_ptr<lorelai::parser::node> &container)
+#define LORELAI_VISIT_MACRO(name) virtual bool visit(name &_node, std::shared_ptr<lorelai::parser::node> &container) { return false; }
+#define LORELAI_POSTVISIT_MACRO(name) virtual bool postvisit(name &_node, std::shared_ptr<lorelai::parser::node> &container) { return false; }
 #define LORELAI_VISIT_BRANCH_DEFINE(name) \
-	bool name::accept(visitor &visit, std::shared_ptr<node> &container) { \
+	bool name::accept(visitor &visit, std::shared_ptr<lorelai::parser::node> &container) { \
 		bool r; \
 		if (!(r = visit.visit(*this, container))) { \
 			visitchildren(visit); \
@@ -26,7 +30,7 @@
 	}
 
 #define LORELAI_VISIT_NODE_DEFINE(name) \
-	bool name::accept(visitor &visit, std::shared_ptr<node> &container) { \
+	bool name::accept(visitor &visit, std::shared_ptr<lorelai::parser::node> &container) { \
 		bool r = visit.visit(*this, container); \
 		bool r2 = visit.postvisit(*this, container); \
 		return r || r2; \
