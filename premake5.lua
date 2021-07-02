@@ -128,8 +128,6 @@ workspace "lorelai"
 	configurations { "debug", "release" }
 	platforms { "x86", "x86-64" }
 
-	cppdialect "C++17"
-
 	targetdir "bin/%{cfg.buildcfg}/%{cfg.platform}"
 	location "proj"
 	characterset "MBCS"
