@@ -34,25 +34,29 @@ state::_retdata luafunctionobject::call(softwarestate &state, int nrets, int nar
 	instructionstart:
 	instr = next++;
 	switch (instr->opcode) {
-		vmcase(RETURN) {
+		vmcase(RETURN)
 			return retdata;
-		}
-		vmcase (JMPIFTRUE) {
+		vmcase (JMPIFTRUE)
 			if (stackptr[instr->a].tobool(state)) {
 				next = starts + instr->b;
 			}
 			vmbreak;
-		}
-		vmcase (JMPIFFALSE) {
+		vmcase (JMPIFFALSE)
 			if (!stackptr[instr->a].tobool(state)) {
 				next = starts + instr->b;
 			}
 			vmbreak;
-		}
-		vmcase (JMP) {
-			next = starts + instr->b;
+		vmcase (FORCHECK) {
+			auto a = instr->a;
+			if (!(stackptr[a + 2].tonumber(state) > 0 ? stackptr[a].tonumber(state) <= stackptr[a + 1].tonumber(state)
+				: stackptr[a + 2].tonumber(state) <= 0 && stackptr[a].tonumber(state) >= stackptr[a + 1].tonumber(state))) {
+				next = starts + instr->b;
+			}
 			vmbreak;
 		}
+		vmcase (JMP)
+			next = starts + instr->b;
+			vmbreak;
 		vmcase (CONSTANT) {
 			switch (instr->b) {
 			case 0:
@@ -162,7 +166,7 @@ state::_retdata luafunctionobject::call(softwarestate &state, int nrets, int nar
 			stackptr[instr->b].divide(state, stackptr[instr->a], stackptr[instr->c]);
 			vmbreak;
 		default:
-			throw exception("opcode not implemented: " + bytecode::instruction_opcode_Name(instr->opcode));
+			throw exception(string("opcode not implemented: ") + bytecode::instruction_opcode_Name(instr->opcode));
 	}
 }
 
@@ -180,8 +184,8 @@ luafunctionobject::luafunctionobject(softwarestate &state, std::shared_ptr<bytec
 	for (int i = 0; i < proto->instructions_size(); i++) {
 		auto &instr = proto->instructions(i);
 
-		if (instr.op() >= bytecode::instruction_opcode_opcode_MAX) {
-			throw exception("unknown opcode: " + instr.op());
+		if (instr.op() > bytecode::instruction_opcode_opcode_MAX) {
+			throw exception(string("unknown opcode: ") + bytecode::instruction_opcode_Name(instr.op()));
 		}
 
 		instruction &generated = instructions[i];
@@ -202,6 +206,7 @@ luafunctionobject::luafunctionobject(softwarestate &state, std::shared_ptr<bytec
 		case bytecode::instruction_opcode_JMPIFFALSE:
 		case bytecode::instruction_opcode_JMPIFNIL:
 		case bytecode::instruction_opcode_JMPIFTRUE:
+		case bytecode::instruction_opcode_FORCHECK:
 			if (patchinstr.b >= oob) {
 				throw exception("invalid bytecode: JMP");
 			}

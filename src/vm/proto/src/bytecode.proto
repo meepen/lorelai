@@ -65,6 +65,8 @@ message instruction {
 
 		CALLM    = 38; // A .. A+C-2 = A(A+1 .. A + B, returns...)
 		VARARG   = 39; // A .. A+C = ...
+
+		FORCHECK = 40; // if (!((A + 2) > 0 ? (A) <= (A + 1) : (A + 2) <= 0 && (A) >= (A + 1)) { JMP(instruction(B)) }
 	}
 
 	opcode op = 1;

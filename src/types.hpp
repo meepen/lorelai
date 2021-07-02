@@ -26,7 +26,7 @@ namespace lorelai {
 		}
 
 	public:
-		std::string data;
+		string data;
 	};
 
 	static number tonumber(string str, optional<int> base = {}) {
