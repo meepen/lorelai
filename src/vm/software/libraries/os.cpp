@@ -11,7 +11,18 @@ static int os_clock(softwarestate &state, int nrets, int nargs) {
 	return 1;
 }
 
+static int os_exit(softwarestate &state, int nrets, int nargs) {
+	int code = 0;
+	if (nargs >= 1) {
+		code = state[1].tonumber(state);
+	}
+
+	exit(code);
+	return 0;
+}
+
 library vm::os[] = {
 	{ "clock", os_clock },
+	{ "exit", os_exit },
 	{ nullptr, nullptr }
 };

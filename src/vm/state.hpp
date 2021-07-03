@@ -49,6 +49,7 @@ namespace lorelai {
 			virtual const char *backend() const = 0;
 			virtual void loadfunction(std::shared_ptr<bytecode::prototype> code) = 0;
 			virtual void loadnumber(number num) = 0;
+			virtual void loadstring(string str) = 0;
 
 			void loadfunction(const std::string &code);
 

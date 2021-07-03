@@ -57,10 +57,13 @@ softwarestate::softwarestate() : stack(this) {
 }
 
 void softwarestate::loadfunction(std::shared_ptr<bytecode::prototype> code) {
-	stack[stack.top++] = luafunctionobject::create(*this, code);
+	stack[stack.top++].set(luafunctionobject::create(*this, code));
 } 
 void softwarestate::loadnumber(number num) {
-	stack[stack.top++] = object(num);
+	stack[stack.top++].set(num);
+}
+void softwarestate::loadstring(string str) {
+	stack[stack.top++].set(stringobject::create(*this, str));
 }
 
 softwarestate::~softwarestate() {

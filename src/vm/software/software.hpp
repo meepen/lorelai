@@ -2,7 +2,6 @@
 #define SOFTWARE_HPP_
 
 #include "state.hpp"
-#include "container.hpp"
 #include "types.hpp"
 #include "object.hpp"
 #include "gc/gc.hpp"
@@ -90,6 +89,7 @@ namespace lorelai {
 			const char *backend() const override { return "software"; }
 			void loadfunction(std::shared_ptr<bytecode::prototype> code) override;
 			void loadnumber(number num) override;
+			void loadstring(string num) override;
 			_retdata call(int nargs, int nrets) override;
 
 			object &operator[](int index) {
