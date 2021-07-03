@@ -27,8 +27,7 @@ dotexpression::dotexpression(std::shared_ptr<node> _prefix, lexer &lex) {
 	children.push_back(prefix);
 	lex.expect(".", "dot expression");
 
-	index = std::make_shared<nameexpression>(lex);
-	children.push_back(index);
+	index = nameexpression(lex).name;
 }
 
 LORELAI_VISIT_BRANCH_DEFINE(indexexpression)
@@ -36,7 +35,7 @@ LORELAI_VISIT_BRANCH_DEFINE(dotexpression)
 
 string dotexpression::tostring() {
 	std::stringstream stream;
-	stream << prefix->tostring() << "." << index->tostring();
+	stream << prefix->tostring() << "." << index;
 
 	return stream.str();
 }

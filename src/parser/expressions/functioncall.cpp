@@ -25,8 +25,7 @@ functioncallexpression::functioncallexpression(std::shared_ptr<node> prefixexp, 
 	children.push_back(funcexpr);
 
 	if (lex.read(":")) {
-		methodname = std::make_shared<nameexpression>(lex);
-		children.push_back(methodname);
+		methodname = nameexpression(lex).name;
 	}
 
 	arglist = std::make_shared<args>(lex);
@@ -40,7 +39,7 @@ string functioncallexpression::tostring() {
 
 	stream << funcexpr->tostring();
 	if (methodname) {
-		stream << ":" << methodname->tostring();
+		stream << ":" << *methodname;
 	}
 
 	stream << "(" << arglist->tostring() << ")";

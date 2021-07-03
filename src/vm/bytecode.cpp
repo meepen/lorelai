@@ -20,7 +20,7 @@ std::shared_ptr<prototype> lorelai::bytecode::create(chunk &data) {
 
 	data.accept(generator, container);
 
-	r->set_stacksize(generator.curfunc.funcstack.maxsize);
+	r->set_stacksize(generator.curfunc.maxsize);
 
 	return r;
 }

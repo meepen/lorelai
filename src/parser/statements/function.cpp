@@ -10,19 +10,18 @@ using namespace lorelai::parser::statements;
 using namespace lorelai::parser::expressions;
 
 functionstatement::functionstatement(lexer &lex) {
-	lex.expect("function", "local function");
+	lex.expect("function", "function");
 
 	name = std::make_shared<nameexpression>(lex);
 	while (lex.read(".")) {
-		std::shared_ptr<node> index = std::make_shared<nameexpression>(lex);
+		auto index = nameexpression(lex).name;
 		name = std::make_shared<dotexpression>(name, index);
 	}
 
 	children.push_back(name);
 
 	if (lex.read(":")) {
-		method = std::make_shared<nameexpression>(lex);
-		children.push_back(method);
+		method = nameexpression(lex).name;
 	}
 
 	body = std::make_shared<funcbody>(lex);
@@ -32,7 +31,7 @@ string functionstatement::tostring() {
 	std::stringstream stream;
 	stream << "function " << name->tostring();
 	if (method) {
-		stream << ":" << method->tostring();
+		stream << ":" << *method;
 	}
 
 	return stream.str();

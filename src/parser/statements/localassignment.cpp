@@ -11,9 +11,7 @@ using namespace lorelai::parser::expressions;
 
 localassignmentstatement::localassignmentstatement(lexer &lex) {
 	do {
-		auto name = std::make_shared<nameexpression>(lex);
-		left.push_back(name);
-		children.push_back(name);
+		left.push_back(nameexpression(lex).name);
 	}
 	while (lex.read(","));
 
@@ -43,7 +41,7 @@ string localassignmentstatement::tostring() {
 			stream << ", ";
 		}
 		first = false;
-		stream << child->tostring();
+		stream << child;
 	}
 	
 	if (right.size() > 0) {

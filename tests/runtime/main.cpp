@@ -4,6 +4,7 @@
 #include <fstream>
 #include "tclap/CmdLine.h"
 #include "tclap/ValueArg.h"
+#include "bytecode/scope.hpp"
 
 using namespace TCLAP;
 
@@ -25,9 +26,7 @@ std::string gettypename(T &data) {
 #endif
 
 static void print_branch(size_t idx, lorelai::parser::node &node) {
-	for (size_t i = 0; i < idx; i++) {
-		std::cout << "  ";
-	}
+	std::cout << std::string(idx * 2, ' ');
 
 	std::cout << gettypename(node) << std::endl;
 
@@ -39,6 +38,26 @@ static void print_branch(size_t idx, lorelai::parser::node &node) {
 	}
 	catch (std::exception &e) {
 		(e);
+	}
+}
+
+static void print_scopes(std::vector<std::shared_ptr<lorelai::bytecode::scope>> &list, std::shared_ptr<lorelai::bytecode::scope> with_parent = nullptr, size_t idx = 0) {
+	auto tab = std::string(idx * 4, ' ');
+	std::vector<std::shared_ptr<lorelai::bytecode::scope>> found;
+
+	for (auto &child : list) {
+		if (child->parent == with_parent) {
+			found.push_back(child);
+		}
+	}
+
+	for (auto &child : found) {
+		std::cout << tab << "scope #" << child->id << " (" << child->variables.size() << ")" << std::endl;
+
+		for (auto &var : child->variables) {
+			std::cout << tab << var->name << " accesses:" << var->accesses << " writes:" << var->writes << std::endl;
+		}
+		print_scopes(list, child, idx + 1);
 	}
 }
 
@@ -125,12 +144,15 @@ int main(int argc, char *argv[]) {
 		ValueArg<std::string> code("l", "lua", "Lua code to load", false, "", "string");
 		cmd.add(code);
 
-		SwitchArg bytecodeonly("b", "bytecode", "Print bytecode", false);
+		SwitchArg bytecodeonly("b", "print-bytecode", "Print bytecode", false);
 		cmd.add(bytecodeonly);
 		SwitchArg raw("r", "raw", "Raw output", false);
 		cmd.add(raw);
-		SwitchArg astonly("a", "ast", "Print ast structure", false);
+		SwitchArg astonly("a", "print-ast", "Print ast structure", false);
 		cmd.add(astonly);
+
+		SwitchArg scopesonly("s", "print-scopes", "Print scope structure for variables", false);
+		cmd.add(scopesonly);
 
 		cmd.parse(argc, argv);
 
@@ -138,6 +160,15 @@ int main(int argc, char *argv[]) {
 		lorelai::parser::chunk mainchunk(luacode);
 		if (astonly.getValue()) {
 			print_branch(0, mainchunk);
+			return 0;
+		}
+
+		if (scopesonly.getValue()) {
+			auto container = std::shared_ptr<lorelai::parser::node>(new lorelai::parser::chunk(mainchunk));
+			auto map = lorelai::bytecode::generatescopemap(container);
+
+			print_scopes(map.scopes);
+
 			return 0;
 		}
 

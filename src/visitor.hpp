@@ -13,36 +13,37 @@
 
 #define LORELAI_VISIT_FUNCTION(name) bool visit(lorelai::parser:: name &obj, std::shared_ptr<lorelai::parser::node> &container) override
 #define LORELAI_VISIT_DEFINE(clasname, type) bool clasname::visit(lorelai::parser:: type &obj, std::shared_ptr<lorelai::parser::node> &container)
-#define LORELAI_POSTVISIT_FUNCTION(name) bool postvisit(lorelai::parser:: name &obj, std::shared_ptr<lorelai::parser::node> &container) override
-#define LORELAI_POSTVISIT_DEFINE(clasname, type) bool clasname::postvisit(lorelai::parser:: type &obj, std::shared_ptr<lorelai::parser::node> &container)
-#define LORELAI_VISIT_MACRO(name) virtual bool visit(name &_node, std::shared_ptr<lorelai::parser::node> &container) { return false; }
-#define LORELAI_POSTVISIT_MACRO(name) virtual bool postvisit(name &_node, std::shared_ptr<lorelai::parser::node> &container) { return false; }
+#define LORELAI_POSTVISIT_FUNCTION(name) void postvisit(lorelai::parser:: name &obj, std::shared_ptr<lorelai::parser::node> &container) override
+#define LORELAI_POSTVISIT_DEFINE(clasname, type) void clasname::postvisit(lorelai::parser:: type &obj, std::shared_ptr<lorelai::parser::node> &container)
+#define LORELAI_VISIT_MACRO(name) virtual bool visit(lorelai::parser:: name &obj, std::shared_ptr<lorelai::parser::node> &container) { return false; }
+#define LORELAI_POSTVISIT_MACRO(name) virtual void postvisit(lorelai::parser:: name &obj, std::shared_ptr<lorelai::parser::node> &container) { }
 #define LORELAI_VISIT_BRANCH_DEFINE(name) \
 	bool name::accept(visitor &visit, std::shared_ptr<lorelai::parser::node> &container) { \
-		bool r; \
-		if (!(r = visit.visit(*this, container))) { \
+		if (!visit.visit(*this, container)) { \
 			visitchildren(visit); \
+			visit.postvisit(*this, container); \
+			return false; \
 		} \
  \
-		bool r2 = visit.postvisit(*this, container); \
- \
-		return r || r2; \
+		return true; \
 	}
 
 #define LORELAI_VISIT_NODE_DEFINE(name) \
 	bool name::accept(visitor &visit, std::shared_ptr<lorelai::parser::node> &container) { \
-		bool r = visit.visit(*this, container); \
-		bool r2 = visit.postvisit(*this, container); \
-		return r || r2; \
+		if (!visit.visit(*this, container)) { \
+			visit.postvisit(*this, container); \
+			return false; \
+		} \
+		return true; \
 	}
 
 
 #define LORELAI_VISIT_NAME_MACRO(fn) \
 	LORELAI_EXPRESSION_CLASS_MACRO(fn) \
 	LORELAI_STATEMENT_CLASS_MACRO(fn) \
-	fn(lorelai::parser::chunk) \
-	fn(lorelai::parser::funcbody) \
-	fn(lorelai::parser::args)
+	fn(chunk) \
+	fn(funcbody) \
+	fn(args)
 
 namespace lorelai {
 	namespace parser {

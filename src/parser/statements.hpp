@@ -2,24 +2,24 @@
 #define STATEMENTS_HPP_
 
 #define LORELAI_STATEMENT_BRANCH_CLASS_MACRO(fn) \
-	fn(lorelai::parser::statements::returnstatement) \
-	fn(lorelai::parser::statements::dostatement) \
-	fn(lorelai::parser::statements::whilestatement) \
-	fn(lorelai::parser::statements::repeatstatement) \
-	fn(lorelai::parser::statements::localassignmentstatement) \
-	fn(lorelai::parser::statements::localfunctionstatement) \
-	fn(lorelai::parser::statements::fornumstatement) \
-	fn(lorelai::parser::statements::forinstatement) \
-	fn(lorelai::parser::statements::ifstatement) \
-	fn(lorelai::parser::statements::elseifstatement) \
-	fn(lorelai::parser::statements::elsestatement) \
-	fn(lorelai::parser::statements::functionstatement) \
-	fn(lorelai::parser::statements::functioncallstatement) \
-	fn(lorelai::parser::statements::assignmentstatement)
+	fn(statements::returnstatement) \
+	fn(statements::dostatement) \
+	fn(statements::whilestatement) \
+	fn(statements::repeatstatement) \
+	fn(statements::localassignmentstatement) \
+	fn(statements::localfunctionstatement) \
+	fn(statements::fornumstatement) \
+	fn(statements::forinstatement) \
+	fn(statements::ifstatement) \
+	fn(statements::elseifstatement) \
+	fn(statements::elsestatement) \
+	fn(statements::functionstatement) \
+	fn(statements::functioncallstatement) \
+	fn(statements::assignmentstatement)
 
 #define LORELAI_STATEMENT_CLASS_MACRO(fn) \
 	LORELAI_STATEMENT_BRANCH_CLASS_MACRO(fn) \
-	fn(lorelai::parser::statements::breakstatement)
+	fn(statements::breakstatement)
 
 #include <vector>
 #include <memory>
@@ -93,7 +93,7 @@ namespace lorelai {
 				string tostring() override;
 
 			public:
-				std::vector<std::shared_ptr<node>> left;
+				std::vector<string> left;
 				std::vector<std::shared_ptr<node>> right;
 			};
 
@@ -111,25 +111,25 @@ namespace lorelai {
 
 			class fornumstatement : public loopstatement {
 			public:
-				fornumstatement(std::shared_ptr<node> name, lexer &lex);
+				fornumstatement(string name, lexer &lex);
 
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
 				string tostring() override;
 
 			public:
-				std::shared_ptr<node> itername;
+				string itername;
 				std::shared_ptr<node> startexpr, endexpr, stepexpr;
 			};
 
 			class forinstatement : public loopstatement {
 			public:
-				forinstatement(std::shared_ptr<node> name, lexer &lex);
+				forinstatement(string name, lexer &lex);
 
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
 				string tostring() override;
 
 			public:
-				std::vector<std::shared_ptr<node>> iternames;
+				std::vector<string> iternames;
 				std::vector<std::shared_ptr<node>> inexprs;
 			};
 
@@ -189,7 +189,7 @@ namespace lorelai {
 
 			public:
 				std::shared_ptr<node> name;
-				std::shared_ptr<node> method;
+				optional<string> method;
 				std::shared_ptr<node> body;
 			};
 

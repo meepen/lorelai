@@ -23,10 +23,9 @@ using namespace lorelai::parser;
 		std::cout << "visited: " << #classname << std::endl; \
 		return false; \
 	} \
-	bool postvisit(classname &_node, std::shared_ptr<node> &container) override { \
+	void postvisit(classname &_node, std::shared_ptr<node> &container) override { \
 		postvisited++; \
 		std::cout << "post visit: " << #classname << std::endl; \
-		return false; \
 	}
 
 class visitor_printer : public visitor {

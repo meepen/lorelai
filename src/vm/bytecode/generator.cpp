@@ -8,79 +8,83 @@ using namespace lorelai::bytecode;
 
 
 LORELAI_VISIT_DEFINE(bytecodegenerator, statements::localassignmentstatement) { // TODO: VARARG
-	std::deque<std::uint32_t> indexes;
-	for (auto &_name : obj.left) {
-		auto name = dynamic_cast<expressions::nameexpression *>(_name.get());
-		if (!name) {
-			throw;
-		}
+	variablevisitor::visit(obj, container);
 
-		indexes.push_back(curfunc.createlocal(name->name));
-	}
+	auto size = std::min(obj.right.size(), obj.left.size());
+	_assignmentqueue queue { curfunc.getslots(size), size };
+
+	std::uint32_t target = queue.index;
 
 	for (auto &_expr : obj.right) {
-		size_t target = 0;
 		size_t size = 0;
-		if (indexes.size() > 0) {
+		if (obj.left.size() > 0) {
 			// we still have a local variable to assign to
-			target = indexes[0];
-			indexes.pop_front();
 			size = 1; // TODO: vararg stuff
 		}
 		else {
 			size = 0;
 		}
 
-		// bug: local a; a = b-a
 		runexpressionhandler(_expr, target, size);
+		target++;
 	}
 
-	// fill the rest with nil
-	for (auto i = obj.right.size(); i < obj.left.size(); i++) {
-		auto index = indexes[0];
-		indexes.pop_front();
-
-		emit(instruction_opcode_CONSTANT, index, 2);
-	}
+	assignmentqueue.push_back(queue);
 
 	return false;
 }
 
 
+
+LORELAI_POSTVISIT_DEFINE(bytecodegenerator, statements::localassignmentstatement) {
+	variablevisitor::postvisit(obj, container);
+	auto queue = assignmentqueue.back();
+	assignmentqueue.pop_back();
+	// fill the rest with nil
+	auto minsize = std::min((size_t)queue.size, obj.left.size());
+	for (std::uint32_t i = 0; i < minsize; i++) {
+		emit(instruction_opcode_MOV, curfunc.varlookup[obj.left[i]], queue.index + i, 1);
+	}
+	for (auto i = minsize + 1; i < obj.left.size(); i++) {
+		emit(instruction_opcode_CONSTANT, curfunc.varlookup[obj.left[i]], 2);
+	}
+}
+
+
 LORELAI_VISIT_DEFINE(bytecodegenerator, statements::assignmentstatement) { // TODO: VARARG
+	variablevisitor::visit(obj, container);
+
 	for (int i = 0; i < std::max(obj.left.size(), obj.right.size()); i++) {
 		if (i < obj.left.size()) {
 			auto &lhs = obj.left[i];
 
 			if (auto name = dynamic_cast<expressions::nameexpression *>(lhs.get())) {
-				auto scope = curfunc.curscope->findvariablescope(name->name);
-				if (scope) {
-					auto target = scope->getvariableindex(name->name);
-					pushornil(obj.right, i, target);
+				if (curfunc.hasvariable(name->name)) {
+					pushornil(obj.right, i, curfunc.varlookup[name->name]);
 				} // TODO: upvalues
 				else {
-					auto target = curfunc.gettemp(2);
+					auto target = curfunc.getslots(2);
 
 					pushornil(obj.right, i, target + 1);
 					emit(instruction_opcode_ENVIRONMENTSET, target, add(name->name), target + 1);
 
-					curfunc.freetemp(target, 2);
+					curfunc.freeslots(target, 2);
 				}
 			}
 			else if (auto index = dynamic_cast<expressions::dotexpression *>(lhs.get())) {
-				auto target = curfunc.gettemp(3);
+				auto target = curfunc.getslots(3);
 				
 				runexpressionhandler(index->prefix, target, 1);
-				expressions::stringexpression string(index->index->tostring());
+				expressions::stringexpression string(index->index);
 				runexpressionhandler(string, target + 1, 1);
 				pushornil(obj.right, i, target + 2);
 
 				emit(instruction_opcode_SETINDEX, target, target + 1, target + 2);
 
-				curfunc.freetemp(target, 3);
+				curfunc.freeslots(target, 3);
 			}
 			else if (auto index = dynamic_cast<expressions::indexexpression *>(lhs.get())) {
-				auto target = curfunc.gettemp(3);
+				auto target = curfunc.getslots(3);
 				
 				runexpressionhandler(index->prefix, target, 1);
 				runexpressionhandler(index->index, target + 1, 1);
@@ -88,7 +92,7 @@ LORELAI_VISIT_DEFINE(bytecodegenerator, statements::assignmentstatement) { // TO
 
 				emit(instruction_opcode_SETINDEX, target, target + 1, target + 2);
 
-				curfunc.freetemp(target, 3);
+				curfunc.freeslots(target, 3);
 			}
 			else {
 				throw;
@@ -103,73 +107,74 @@ LORELAI_VISIT_DEFINE(bytecodegenerator, statements::assignmentstatement) { // TO
 }
 
 LORELAI_VISIT_DEFINE(bytecodegenerator, statements::ifstatement) {
+	variablevisitor::visit(obj, container);
+
 	_ifqueue queue;
-	queue.target = curfunc.gettemp(1);
+	queue.target = curfunc.getslots(1);
 	runexpressionhandler(obj.conditional, queue.target, 1);
 	queue.patch = emit(instruction_opcode_JMPIFFALSE, queue.target);
 	ifqueue.push_back(queue);
 
-	curfunc.pushscope();
 	return false;
 }
 
 LORELAI_VISIT_DEFINE(bytecodegenerator, statements::elseifstatement) {
+	variablevisitor::visit(obj, container);
+	
 	auto &queue = ifqueue.back();
 	queue.jmpends.push_back(emit(instruction_opcode_JMP, 0));
-
-	curfunc.popscope();
 
 	queue.patch->set_b(curfunc.proto->instructions_size());
 
 	runexpressionhandler(obj.conditional, queue.target, 1);
 	queue.patch = emit(instruction_opcode_JMPIFFALSE, queue.target);
-	curfunc.pushscope();
 	return false;
 }
 
 LORELAI_VISIT_DEFINE(bytecodegenerator, statements::elsestatement) {
+	variablevisitor::visit(obj, container);
+
 	auto &queue = ifqueue.back();
 	queue.jmpends.push_back(emit(instruction_opcode_JMP, 0));
 
-	curfunc.popscope();
-
 	queue.patch->set_b(curfunc.proto->instructions_size());
 	queue.patch = nullptr;
-
-	curfunc.pushscope();
 	return false;
 }
 
 LORELAI_POSTVISIT_DEFINE(bytecodegenerator, statements::ifstatement) {
-	curfunc.popscope();
+	variablevisitor::visit(obj, container);
+
 	auto &queue = ifqueue.back();
 	if (queue.patch) {
 		queue.patch->set_b(curfunc.proto->instructions_size());
 	}
-	curfunc.freetemp(queue.target, 1);
+	curfunc.freeslots(queue.target, 1);
 
 	for (auto &jmpend : queue.jmpends) {
 		jmpend->set_b(curfunc.proto->instructions_size());
 	}
 
 	ifqueue.pop_back();
-	return false;
 }
 
 LORELAI_VISIT_DEFINE(bytecodegenerator, statements::whilestatement) {
+	variablevisitor::visit(obj, container);
+
 	_loopqueue data;
 	data.startinstr = curfunc.proto->instructions_size();
-	data.stackreserved = curfunc.gettemp(1);
+	data.stackreserved = curfunc.getslots(1);
 
 	runexpressionhandler(obj.conditional, data.stackreserved, 1);
 	data.patches.push_back(emit(instruction_opcode_JMPIFFALSE, data.stackreserved));
 
 	loopqueue.push_back(data);
-	curfunc.pushscope();
 	return false;
 }
 
 LORELAI_POSTVISIT_DEFINE(bytecodegenerator, statements::whilestatement) {
+	variablevisitor::postvisit(obj, container);
+
 	auto data = loopqueue.back();
 
 	emit(instruction_opcode_JMP, 0, data.startinstr);
@@ -178,16 +183,16 @@ LORELAI_POSTVISIT_DEFINE(bytecodegenerator, statements::whilestatement) {
 		patch->set_b(curfunc.proto->instructions_size());
 	}
 
-	curfunc.freetemp(data.stackreserved, 1);
-	curfunc.popscope();
+	curfunc.freeslots(data.stackreserved, 1);
 	loopqueue.pop_back();
-	return false;
 }
 
 LORELAI_POSTVISIT_DEFINE(bytecodegenerator, statements::repeatstatement) {
+	variablevisitor::postvisit(obj, container);
+
 	auto data = loopqueue.back();
 
-	auto target = curfunc.gettemp(1);
+	auto target = curfunc.getslots(1);
 
 	runexpressionhandler(obj.conditional, target, 1);
 	emit(instruction_opcode_JMPIFFALSE, target, data.startinstr);
@@ -196,10 +201,9 @@ LORELAI_POSTVISIT_DEFINE(bytecodegenerator, statements::repeatstatement) {
 		patch->set_b(curfunc.proto->instructions_size());
 	}
 
-	curfunc.freetemp(target, 1);
+	curfunc.freeslots(target, 1);
 
 	loopqueue.pop_back();
-	return false;
 }
 
 LORELAI_VISIT_DEFINE(bytecodegenerator, statements::breakstatement) {
@@ -212,28 +216,14 @@ LORELAI_VISIT_DEFINE(bytecodegenerator, statements::breakstatement) {
 }
 
 LORELAI_VISIT_DEFINE(bytecodegenerator, statements::forinstatement) {
+	/* TODO: ALL OF THIS IS WRONG SINCE UPDATE */
+	throw exception("for in is not implemented");
+	variablevisitor::visit(obj, container);
+
 	_loopqueue queue;
 
-	curfunc.pushscope();
-	queue.stackreserved = curfunc.gettemp(3);
-	queue.extrastack = curfunc.gettemp(std::max((size_t)3, obj.iternames.size()));
-	for (int i = 0; i < obj.iternames.size(); i++) {
-		curfunc.curscope->addvariable(obj.iternames[i]->tostring(), queue.extrastack + i);
-	}
+	queue.stackreserved = curfunc.getslots(3);
 
-	// loop prep: local f, s, v = inexprs
-	for (size_t i = 0; i < obj.inexprs.size(); i++) {
-		auto &inexpr = obj.inexprs[i];
-		std::uint32_t amount;
-		if (i == obj.inexprs.size() - 1 && i < 3) {
-			amount = 3 - i;
-		}
-		else {
-			amount = i >= 3 ? 0 : 1;
-		}
-
-		runexpressionhandler(inexpr, queue.extrastack + 3 - amount, amount);
-	}
 
 	// begin loop
 	queue.startinstr = curfunc.proto->instructions_size();
@@ -247,36 +237,26 @@ LORELAI_VISIT_DEFINE(bytecodegenerator, statements::forinstatement) {
 }
 
 LORELAI_POSTVISIT_DEFINE(bytecodegenerator, statements::forinstatement) {
+	variablevisitor::postvisit(obj, container);
+
 	auto &queue = loopqueue.back();
 
-	curfunc.freetemp(queue.stackreserved, 3);
-	curfunc.freetemp(queue.extrastack, std::max((size_t)3, obj.iternames.size()));
+	curfunc.freeslots(queue.stackreserved, 3);
+	curfunc.freeslots(queue.extrastack, std::max((size_t)3, obj.iternames.size()));
 
 	emit(bytecode::instruction_opcode_JMP, 0, queue.startinstr);
 
 	for (auto &patch : queue.patches) {
 		patch->set_b(curfunc.proto->instructions_size());
 	}
-
-	// before popping we must delete references to extrastack in the variable list to prevent double free
-	auto start = queue.extrastack;
-	auto ends = start + std::max((size_t)3, obj.iternames.size());
-	for (int i = 0; i < obj.iternames.size(); i++) {
-		auto name = obj.iternames[i]->tostring();
-		auto index = curfunc.curscope->getvariableindex(name);
-		if (index >= start && index < ends) {
-			curfunc.curscope->variables.erase(name);
-		}
-	}
-
 	loopqueue.pop_back();
-	curfunc.popscope();
-	return false;
 }
 
 LORELAI_VISIT_DEFINE(bytecodegenerator, statements::fornumstatement) {
+	variablevisitor::visit(obj, container);
+
 	_loopqueue queue;
-	queue.stackreserved = curfunc.gettemp(3); // var, limit, step
+	queue.stackreserved = curfunc.getslots(3); // var, limit, step
 	runexpressionhandler(obj.startexpr, queue.stackreserved, 1);
 	runexpressionhandler(obj.endexpr, queue.stackreserved + 1, 1);
 	if (obj.stepexpr) {
@@ -292,17 +272,17 @@ LORELAI_VISIT_DEFINE(bytecodegenerator, statements::fornumstatement) {
 	queue.startinstr = curfunc.proto->instructions_size();
 
 	queue.patches.push_back(emit(bytecode::instruction_opcode_FORCHECK, queue.stackreserved));
-	curfunc.pushscope();
 
-	emit(bytecode::instruction_opcode_MOV, curfunc.createlocal(obj.itername->tostring()), queue.stackreserved, 1);
+	emit(bytecode::instruction_opcode_MOV, curfunc.varlookup[obj.itername], queue.stackreserved, 1);
 
 	// start body
-
 	loopqueue.push_back(queue);
 	return false;
 }
 
 LORELAI_POSTVISIT_DEFINE(bytecodegenerator, statements::fornumstatement) {
+	variablevisitor::postvisit(obj, container);
+
 	auto &queue = loopqueue.back();
 
 	emit(bytecode::instruction_opcode_ADD, queue.stackreserved, queue.stackreserved, queue.stackreserved + 2);
@@ -312,17 +292,15 @@ LORELAI_POSTVISIT_DEFINE(bytecodegenerator, statements::fornumstatement) {
 		patch->set_b(curfunc.proto->instructions_size());
 	}
 
-	curfunc.freetemp(queue.stackreserved, 3);
-	curfunc.popscope();
+	curfunc.freeslots(queue.stackreserved, 3);
 	loopqueue.pop_back();
-	return false;
 }
 
 
 LORELAI_VISIT_DEFINE(bytecodegenerator, statements::returnstatement) {
 	auto realrets = obj.children.size();
 	auto rets = realrets;
-	auto target = curfunc.gettemp(realrets);
+	auto target = curfunc.getslots(realrets);
 	std::uint32_t varargtype = 0;
 	for (int i = 0; i < obj.children.size(); i++) {
 		auto &child = obj.children[i];
@@ -343,7 +321,7 @@ LORELAI_VISIT_DEFINE(bytecodegenerator, statements::returnstatement) {
 
 	emit(bytecode::instruction_opcode_RETURN, target, rets, varargtype);
 	
-	curfunc.freetemp(target, rets);
+	curfunc.freeslots(target, rets);
 	return false;
 }
 

@@ -10,17 +10,14 @@ using namespace lorelai::parser;
 using namespace lorelai::parser::statements;
 using namespace lorelai::parser::expressions;
 
-forinstatement::forinstatement(std::shared_ptr<node> _itername, lexer &lex) {
+forinstatement::forinstatement(string _itername, lexer &lex) {
 	// for is consumed in for for deducer
 	// lex.expect("for", "for .. = .., .., [..] do .. end");
 
-	children.push_back(_itername);
 	iternames.push_back(_itername);
 
 	while (lex.read(",")) {
-		auto name = std::make_shared<nameexpression>(lex);
-		children.push_back(name);
-		iternames.push_back(name);
+		iternames.push_back(nameexpression(lex).name);
 	}
 
 	lex.expect("in", "for ..{, ..} in .. do .. end");
@@ -55,7 +52,7 @@ string forinstatement::tostring() {
 			stream << ", ";
 		}
 		first = false;
-		stream << iter->tostring();
+		stream << iter;
 	}
 	stream << " in ";
 

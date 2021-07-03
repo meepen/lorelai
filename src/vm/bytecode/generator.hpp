@@ -1,7 +1,7 @@
 #ifndef BYTECODE_GENERATOR_HPP_
 #define BYTECODE_GENERATOR_HPP_
 
-#include "visitor.hpp"
+#include "scope.hpp"
 #include "statements.hpp"
 #include "expressions.hpp"
 #include "function.hpp"
@@ -28,7 +28,7 @@ namespace lorelai {
 	namespace bytecode {
 		class instruction;
 
-		class bytecodegenerator : public parser::visitor {
+		class bytecodegenerator : public variablevisitor {
 			struct _ifqueue {
 				bytecode::instruction *patch = nullptr;
 				std::vector<bytecode::instruction *> jmpends;
@@ -36,6 +36,13 @@ namespace lorelai {
 			};
 
 			std::vector<_ifqueue> ifqueue;
+
+			struct _assignmentqueue {
+				std::uint32_t index;
+				std::uint32_t size;
+			};
+
+			std::vector<_assignmentqueue> assignmentqueue;
 
 			struct _loopqueue {
 				int startinstr;
@@ -47,10 +54,13 @@ namespace lorelai {
 			std::vector<_loopqueue> loopqueue;
 
 		public:
-			using visitor::visit;
-			using visitor::postvisit;
+			bytecodegenerator() { }
+
+			using variablevisitor::visit;
+			using variablevisitor::postvisit;
 
 			LORELAI_VISIT_FUNCTION(statements::localassignmentstatement);
+			LORELAI_POSTVISIT_FUNCTION(statements::localassignmentstatement);
 			LORELAI_VISIT_FUNCTION(statements::assignmentstatement);
 
 			LORELAI_VISIT_FUNCTION(statements::functioncallstatement) {
@@ -62,15 +72,6 @@ namespace lorelai {
 			LORELAI_VISIT_FUNCTION(statements::elseifstatement);
 			LORELAI_VISIT_FUNCTION(statements::elsestatement);
 			LORELAI_POSTVISIT_FUNCTION(statements::ifstatement);
-
-			LORELAI_VISIT_FUNCTION(statements::dostatement) {
-				curfunc.pushscope();
-				return false;
-			}
-			LORELAI_POSTVISIT_FUNCTION(statements::dostatement) {
-				curfunc.popscope();
-				return false;
-			}
 
 			LORELAI_VISIT_FUNCTION(statements::whilestatement);
 			LORELAI_POSTVISIT_FUNCTION(statements::whilestatement);
@@ -94,6 +95,13 @@ namespace lorelai {
 			LORELAI_POSTVISIT_FUNCTION(statements::fornumstatement);
 
 			LORELAI_VISIT_FUNCTION(statements::returnstatement);
+
+			void onnewvariable(scope::variablecontainer var) override {
+				curfunc.newstackvariable(var->name);
+			}
+			void onfreevariable(scope::variablecontainer var) override {
+				curfunc.freestackvariable(var->name);
+			}
 
 		private:
 			void pushornil(std::vector<std::shared_ptr<lorelai::parser::node>> &v, int index, std::uint32_t target);

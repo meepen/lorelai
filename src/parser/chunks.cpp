@@ -47,9 +47,9 @@ bool chunk::accept(visitor &visit, std::shared_ptr<node> &container) {
 		for (auto &del : deleted) {
 			children.erase(std::find(children.cbegin(), children.cend(), del));
 		}
+
+		visit.postvisit(*this, container);
 	}
 
-	bool r2 = visit.postvisit(*this, container);
-
-	return r || r2;
+	return r;
 }

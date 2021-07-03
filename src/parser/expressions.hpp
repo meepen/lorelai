@@ -12,21 +12,21 @@
 	fn(lorelai::parser::expressions::nameexpression)
 
 #define LORELAI_EXPRESSION_CLASS_MACRO(fn) \
-	fn(lorelai::parser::expressions::nilexpression) \
-	fn(lorelai::parser::expressions::falseexpression) \
-	fn(lorelai::parser::expressions::trueexpression) \
-	fn(lorelai::parser::expressions::numberexpression) \
-	fn(lorelai::parser::expressions::stringexpression) \
-	fn(lorelai::parser::expressions::varargexpression) \
-	fn(lorelai::parser::expressions::nameexpression) \
-	fn(lorelai::parser::expressions::tableexpression) \
-	fn(lorelai::parser::expressions::enclosedexpression) \
-	fn(lorelai::parser::expressions::binopexpression) \
-	fn(lorelai::parser::expressions::unopexpression) \
-	fn(lorelai::parser::expressions::indexexpression) \
-	fn(lorelai::parser::expressions::dotexpression) \
-	fn(lorelai::parser::expressions::functioncallexpression) \
-	fn(lorelai::parser::expressions::functionexpression)
+	fn(expressions::nilexpression) \
+	fn(expressions::falseexpression) \
+	fn(expressions::trueexpression) \
+	fn(expressions::numberexpression) \
+	fn(expressions::stringexpression) \
+	fn(expressions::varargexpression) \
+	fn(expressions::nameexpression) \
+	fn(expressions::tableexpression) \
+	fn(expressions::enclosedexpression) \
+	fn(expressions::binopexpression) \
+	fn(expressions::unopexpression) \
+	fn(expressions::indexexpression) \
+	fn(expressions::dotexpression) \
+	fn(expressions::functioncallexpression) \
+	fn(expressions::functionexpression)
 
 #include "types.hpp"
 #include "node.hpp"
@@ -210,7 +210,7 @@ namespace lorelai {
 
 			public:
 				std::shared_ptr<node> funcexpr;
-				std::shared_ptr<node> methodname;
+				optional<string> methodname { };
 				std::shared_ptr<node> arglist;
 			};
 
@@ -231,12 +231,13 @@ namespace lorelai {
 			public:
 				dotexpression(std::shared_ptr<node> prefixexp, lexer &lex);
 				dotexpression(lexer &lex) : dotexpression(prefixexpression::read(lex), lex) { }
-				dotexpression(std::shared_ptr<node> &_prefix, std::shared_ptr<node> &_index) : prefix(_prefix), index(_index) { }
+				dotexpression(std::shared_ptr<node> &_prefix, string &_index) : prefix(_prefix), index(_index) { }
 
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
 				string tostring() override;
 			public:
-				std::shared_ptr<node> prefix, index;
+				std::shared_ptr<node> prefix;
+				string index;
 			};
 
 			class functionexpression : public branch, public expression {

@@ -65,7 +65,9 @@
 			"typeindex": "cpp",
 			"list": "cpp",
 			"strstream": "cpp",
-			"iomanip": "cpp"
+			"iomanip": "cpp",
+			"codecvt": "cpp",
+			"filesystem": "cpp"
 		}
 	}
 }

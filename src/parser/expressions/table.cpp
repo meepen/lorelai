@@ -58,7 +58,7 @@ tableexpression::tableexpression(lexer &lex) {
 
 				word = lex.lookahead().value_or("");
 				
-				if (word == "=" && dynamic_cast<nameexpression *>(value.get())) {
+				if (word == "=" && dynamic_cast<nameexpression *>(value.get())) { // TODO: remove nameexpression
 					// consume `=`
 					lex.read();
  
@@ -121,11 +121,11 @@ bool tableexpression::accept(visitor &visit, std::shared_ptr<node> &container) {
 		for (auto &del : deleted) {
 			children.erase(std::remove(children.begin(), children.end(), del), children.end());
 		}
+
+		visit.postvisit(*this, container);
 	}
 
-	auto r2 = visit.postvisit(*this, container);
-
-	return r || r2;
+	return r;
 }
 
 string tableexpression::tostring() {

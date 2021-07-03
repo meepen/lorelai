@@ -84,17 +84,17 @@ public:
 			auto opcode = find->second;
 			if (opcode == bytecode::instruction_opcode_AND || opcode == bytecode::instruction_opcode_OR) {
 				// these do not have overloads, can ignore binop part
-				auto temp = gen.curfunc.gettemp();
+				auto temp = gen.curfunc.getslots(1);
 				gen.runexpressionhandler(expr.lhs, temp, 1);
 				gen.runexpressionhandler(expr.rhs, temp, 1);
-				gen.curfunc.freetemp(temp);
+				gen.curfunc.freeslots(temp, 1);
 			}
 			else {
-				auto temp = gen.curfunc.gettemp(2);
+				auto temp = gen.curfunc.getslots(2);
 				gen.runexpressionhandler(expr.lhs, temp, 1);
 				gen.runexpressionhandler(expr.rhs, temp + 1, 1);
 				gen.emit(opcode, temp, temp, temp + 1);
-				gen.curfunc.freetemp(temp, 2);
+				gen.curfunc.freeslots(temp, 2);
 			}
 		}
 		else {
@@ -103,22 +103,22 @@ public:
 			gen.runexpressionhandler(expr.lhs, target, 1);
 
 			if (free_right = !get(expr.rhs, &rhs_stack, false)) {
-				rhs_stack = gen.curfunc.gettemp();
+				rhs_stack = gen.curfunc.getslots(1);
 				gen.runexpressionhandler(expr.rhs, rhs_stack, 1);
 			}
 
 			gen.emit(binoplookup[expr.op], target, target, rhs_stack);
 
 			if (free_right) {
-				gen.curfunc.freetemp(rhs_stack);
+				gen.curfunc.freeslots(rhs_stack, 1);
 			}
 		}
 	}
 
 	bool get(std::shared_ptr<node> &expr, std::uint32_t *stackposout, bool leftside) {
 		if (auto name = dynamic_cast<expressions::nameexpression *>(expr.get())) {
-			if (auto scope = gen.curfunc.curscope->findvariablescope(name->name)) {
-				*stackposout = scope->getvariableindex(name->name);
+			if (gen.curfunc.hasvariable(name->name)) {
+				*stackposout = gen.curfunc.varlookup[name->name];
 				return true;
 			}
 		}
@@ -150,12 +150,12 @@ static void generate_unopexpression(bytecodegenerator &gen, node &_expr, std::ui
 		gen.emit(unoplookup[expr.op], target, target);
 	}
 	else if (unoplookup[expr.op] != bytecode::instruction_opcode_NOT) {
-		auto temp = gen.curfunc.gettemp();
+		auto temp = gen.curfunc.getslots(1);
 
 		gen.runexpressionhandler(expr.expr, temp, 1);
 		gen.emit(unoplookup[expr.op], temp, temp);
 
-		gen.curfunc.freetemp(temp);
+		gen.curfunc.freeslots(temp, 1);
 	}
 	else {
 		gen.runexpressionhandler(expr.expr, target, 0);
@@ -193,17 +193,17 @@ static void generate_indexexpression(bytecodegenerator &gen, node &_expr, std::u
 
 	if (is_temp) {
 		size = 1;
-		target = gen.curfunc.gettemp(size);
+		target = gen.curfunc.getslots(size);
 	}
 	gen.runexpressionhandler(expr.prefix, target, 1);
 
-	auto temp = gen.curfunc.gettemp();
+	auto temp = gen.curfunc.getslots(1);
 	gen.runexpressionhandler(expr.index, temp, 1);
 	gen.emit(bytecode::instruction_opcode_INDEX, target, target, temp);
-	gen.curfunc.freetemp(temp);
+	gen.curfunc.freeslots(temp, 1);
 
 	if (is_temp) {
-		gen.curfunc.freetemp(target, size);
+		gen.curfunc.freeslots(target, size);
 	}
 }
 
@@ -213,18 +213,18 @@ static void generate_dotexpression(bytecodegenerator &gen, node &_expr, std::uin
 
 	if (is_temp) {
 		size = 1;
-		target = gen.curfunc.gettemp(size);
+		target = gen.curfunc.getslots(size);
 	}
 	gen.runexpressionhandler(expr.prefix, target, 1);
 
-	auto temp = gen.curfunc.gettemp();
-	expressions::stringexpression name(expr.index->tostring());
+	auto temp = gen.curfunc.getslots(1);
+	expressions::stringexpression name(expr.index);
 	gen.runexpressionhandler(name, temp, 1);
 	gen.emit(bytecode::instruction_opcode_INDEX, target, target, temp);
-	gen.curfunc.freetemp(temp);
+	gen.curfunc.freeslots(temp, 1);
 
 	if (is_temp) {
-		gen.curfunc.freetemp(target, size);
+		gen.curfunc.freeslots(target, size);
 	}
 }
 
@@ -234,12 +234,13 @@ static void generate_nameexpression(bytecodegenerator &gen, node &_expr, std::ui
 	}
 
 	auto &expr = *dynamic_cast<expressions::nameexpression *>(&_expr);
-	if (auto scope = gen.curfunc.curscope->findvariablescope(expr.name)) {
-		gen.emit(bytecode::instruction_opcode_MOV, target, scope->getvariableindex(expr.name), 1);
+	if (gen.curfunc.hasvariable(expr.name)) {
+		gen.emit(bytecode::instruction_opcode_MOV, target, gen.curfunc.varlookup[expr.name], 1);
 	}
+	/*
 	else if(gen.curfunc.hasupvalue(expr.name)) {
 		// TODO
-	}
+	} */
 	else if (expr.name == "_ENV" || expr.name == "_G") {
 		gen.emit(bytecode::instruction_opcode_ENVIRONMENT, target);
 	}
@@ -257,13 +258,13 @@ static void generate_functioncallexpression(bytecodegenerator &gen, node &_expr,
 	bool using_temp = stacksize > size || target == -1;
 	auto functionindex = target;
 	if (using_temp) {
-		functionindex = gen.curfunc.gettemp(stacksize);
+		functionindex = gen.curfunc.getslots(stacksize);
 	}
 	auto argsindex = functionindex + 1;
 
 	if (expr.methodname) {
 		gen.runexpressionhandler(expr.funcexpr, argsindex, 1);
-		expressions::stringexpression name(expr.methodname->tostring());
+		expressions::stringexpression name(*expr.methodname);
 		gen.runexpressionhandler(name, functionindex, 1);
 		gen.emit(bytecode::instruction_opcode_INDEX, functionindex, argsindex, functionindex);
 
@@ -299,7 +300,7 @@ static void generate_functioncallexpression(bytecodegenerator &gen, node &_expr,
 		if (target != -1 && size != 0) {
 			gen.emit(bytecode::instruction_opcode_MOV, target, functionindex, size);
 		}
-		gen.curfunc.freetemp(functionindex, stacksize);
+		gen.curfunc.freeslots(functionindex, stacksize);
 	}
 }
 

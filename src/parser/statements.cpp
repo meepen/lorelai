@@ -32,7 +32,7 @@ const static std::unordered_map<string, std::shared_ptr<node>(*)(lexer &lex)> lo
 	{ "for", [](lexer &lex) -> std::shared_ptr<node> {
 		lex.expect("for", "for deducer");
 
-		auto name = std::make_shared<expressions::nameexpression>(lex);
+		auto name = expressions::nameexpression(lex).name;
 		if (!lex.lookahead()) {
 			lex.wasexpected("<token>", "for deducer");
 		}
