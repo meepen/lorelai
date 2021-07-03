@@ -39,6 +39,13 @@ namespace lorelai {
 				varlookup[name] = getslots(1);
 			}
 
+			void newstackvariables(const std::vector<string> &list) {
+				auto index = getslots(list.size());
+				for (auto &name : list) {
+					varlookup[name] = index++;
+				}
+			}
+
 			void freestackvariable(const string &name) {
 				freeslots(varlookup[name], 1);
 				varlookup.erase(name);

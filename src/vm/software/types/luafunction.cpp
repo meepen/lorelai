@@ -71,7 +71,7 @@ state::_retdata luafunctionobject::call(softwarestate &state, int nrets, int nar
 			vmbreak;
 		}
 		vmcase (MOV) {
-			auto a = instr->a, b = instr->b, c = instr->c;
+			auto a = instr->a, b = instr->b, c = instr->c + 1;
 
 			while (c--) {
 				stackptr[a++].set(stackptr[b++]);

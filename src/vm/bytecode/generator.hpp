@@ -99,6 +99,13 @@ namespace lorelai {
 			void onnewvariable(scope::variablecontainer var) override {
 				curfunc.newstackvariable(var->name);
 			}
+			void onnewvariables(const std::vector<scope::variablecontainer> &list) override {
+				std::vector<string> names;
+				for (auto &child : list) {
+					names.push_back(child->name);
+				}
+				curfunc.newstackvariables(names);
+			}
 			void onfreevariable(scope::variablecontainer var) override {
 				curfunc.freestackvariable(var->name);
 			}
@@ -126,6 +133,18 @@ namespace lorelai {
 			instruction *emit(instruction_opcode opcode, std::uint32_t a);
 			instruction *emit(instruction_opcode opcode, std::uint32_t a, std::uint32_t b);
 			instruction *emit(instruction_opcode opcode, std::uint32_t a, std::uint32_t b, std::uint32_t c);
+
+			void mov(std::uint32_t to, std::uint32_t from, std::uint32_t size = 1) {
+				if (curfunc.proto->instructions_size() > 0) {
+					auto &last = *curfunc.proto->mutable_instructions(curfunc.proto->instructions_size() - 1);
+					if (last.op() == instruction_opcode_MOV && to == last.a() + last.c() + 1 && from == last.b() + last.c() + 1) {
+						last.set_c(last.c() + size);
+						return;
+					}
+				}
+
+				emit(instruction_opcode_MOV, to, from, size - 1);
+			}
 
 		public:
 			int add(string str) {

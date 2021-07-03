@@ -270,9 +270,7 @@ namespace lorelai {
 
 			// postvisit since left side variables don't exist to right side expressions yet
 			LORELAI_POSTVISIT_FUNCTION(statements::localassignmentstatement) {
-				for (auto &child : obj.left) {
-					createvariable(child);
-				}
+				createvariable(obj.left);
 			}
 
 			LORELAI_VISIT_FUNCTION(statements::assignmentstatement) {
@@ -324,6 +322,7 @@ namespace lorelai {
 
 		public:
 			virtual void onnewvariable(scope::variablecontainer) { }
+			virtual void onnewvariables(const std::vector<scope::variablecontainer> &) { }
 			virtual void onfreevariable(scope::variablecontainer) { }
 
 			void onfreescope() override {
@@ -333,6 +332,24 @@ namespace lorelai {
 			}
 
 		private:
+			void createvariable(const std::vector<string> &names) {
+				std::vector<scope::variablecontainer> newvars;
+				for (auto &name : names) {
+					auto v = curscope->newvariable(name);
+					newvars.push_back(v);
+
+					if (v->version > 1) { // variable is now shadowed
+						for (auto child : curscope->variables) {
+							if (child->version == v->version - 1) {
+								onfreevariable(child);
+								break;
+							}
+						}
+					}
+				}
+
+				onnewvariables(newvars);
+			}
 			void createvariable(string name) {
 				auto v = curscope->newvariable(name);
 

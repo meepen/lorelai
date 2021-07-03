@@ -43,7 +43,7 @@ LORELAI_POSTVISIT_DEFINE(bytecodegenerator, statements::localassignmentstatement
 	// fill the rest with nil
 	auto minsize = std::min((size_t)queue.size, obj.left.size());
 	for (std::uint32_t i = 0; i < minsize; i++) {
-		emit(instruction_opcode_MOV, curfunc.varlookup[obj.left[i]], queue.index + i, 1);
+		mov(curfunc.varlookup[obj.left[i]], queue.index + i, 1);
 	}
 	for (auto i = minsize + 1; i < obj.left.size(); i++) {
 		emit(instruction_opcode_CONSTANT, curfunc.varlookup[obj.left[i]], 2);
@@ -228,7 +228,7 @@ LORELAI_VISIT_DEFINE(bytecodegenerator, statements::forinstatement) {
 	// begin loop
 	queue.startinstr = curfunc.proto->instructions_size();
 
-	emit(bytecode::instruction_opcode_MOV, queue.extrastack, queue.stackreserved, 3);
+	mov(queue.extrastack, queue.stackreserved, 3);
 	emit(bytecode::instruction_opcode_CALL, queue.extrastack, 3, obj.iternames.size() + 1);
 	queue.patches.push_back(emit(bytecode::instruction_opcode_JMPIFNIL, queue.extrastack));
 
@@ -273,7 +273,7 @@ LORELAI_VISIT_DEFINE(bytecodegenerator, statements::fornumstatement) {
 
 	queue.patches.push_back(emit(bytecode::instruction_opcode_FORCHECK, queue.stackreserved));
 
-	emit(bytecode::instruction_opcode_MOV, curfunc.varlookup[obj.itername], queue.stackreserved, 1);
+	mov(curfunc.varlookup[obj.itername], queue.stackreserved, 1);
 
 	// start body
 	loopqueue.push_back(queue);

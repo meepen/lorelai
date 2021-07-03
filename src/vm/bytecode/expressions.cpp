@@ -235,7 +235,7 @@ static void generate_nameexpression(bytecodegenerator &gen, node &_expr, std::ui
 
 	auto &expr = *dynamic_cast<expressions::nameexpression *>(&_expr);
 	if (gen.curfunc.hasvariable(expr.name)) {
-		gen.emit(bytecode::instruction_opcode_MOV, target, gen.curfunc.varlookup[expr.name], 1);
+		gen.mov(target, gen.curfunc.varlookup[expr.name], 1);
 	}
 	/*
 	else if(gen.curfunc.hasupvalue(expr.name)) {
@@ -298,7 +298,7 @@ static void generate_functioncallexpression(bytecodegenerator &gen, node &_expr,
 
 	if (using_temp) {
 		if (target != -1 && size != 0) {
-			gen.emit(bytecode::instruction_opcode_MOV, target, functionindex, size);
+			gen.mov(target, functionindex, size);
 		}
 		gen.curfunc.freeslots(functionindex, stacksize);
 	}

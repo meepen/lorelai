@@ -164,6 +164,10 @@ workspace "lorelai"
 		buildoptions { "-g", "-fsanitize=address" }
 		linkoptions { "-g", "-fsanitize=address", "-static-libasan" }
 
+	filter {"configurations:release", "action:gmake" }
+		buildoptions { "-fno-omit-frame-pointer" }
+		linkoptions { "-fno-omit-frame-pointer" }
+
 	filter "action:vs*"
 		defines { "LORELAI_INLINE=__forceinline" }
 	filter "action:gmake"
