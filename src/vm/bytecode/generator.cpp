@@ -11,7 +11,7 @@ LORELAI_VISIT_DEFINE(bytecodegenerator, statements::localassignmentstatement) { 
 	variablevisitor::visit(obj, container);
 
 	auto size = std::min(obj.right.size(), obj.left.size());
-	_assignmentqueue queue { curfunc.getslots(size), size };
+	_assignmentqueue queue { curfunc.getslots(size), static_cast<std::uint32_t>(size) };
 
 	std::uint32_t target = queue.index;
 

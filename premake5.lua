@@ -145,6 +145,12 @@ workspace "lorelai"
 	symbols "On"
 	cppdialect "C++17"
 	flags { "MultiProcessorCompile", "LinkTimeOptimization" }
+	if (os.execute "clang -v" and os.execute "llvm-ar -version") then
+		print "clang found, enabling"
+		toolset "clang"
+		makesettings { "AR=llvm-ar" }
+	end
+
 	defines {
 		"ASMJIT_STATIC"
 	}
@@ -160,13 +166,8 @@ workspace "lorelai"
 		optimize "Debug"
 		runtime "Debug"
 
-	filter {"configurations:debug", "action:gmake" }
-		buildoptions { "-g", "-fsanitize=address" }
-		linkoptions { "-g", "-fsanitize=address", "-static-libasan" }
-
-	filter {"configurations:release", "action:gmake" }
-		buildoptions { "-fno-omit-frame-pointer" }
-		linkoptions { "-fno-omit-frame-pointer" }
+	filter { "toolset:clang" }
+		disablewarnings  { "logical-op-parentheses" }
 
 	filter "action:vs*"
 		defines { "LORELAI_INLINE=__forceinline" }
@@ -174,8 +175,8 @@ workspace "lorelai"
 		defines {"LORELAI_INLINE=inline __attribute__((always_inline))"}
 
 	filter "configurations:release"
-		defines "NDEBUG"
 		optimize "Speed"
+		defines "NDEBUG"
 		floatingpoint "Fast"
 		intrinsics "On"
 		runtime "Release"

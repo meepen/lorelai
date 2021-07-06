@@ -17,12 +17,12 @@ static string unicodecodepointtoutf8(lexer &lex, long codepoint) {
 	std::vector<unsigned char> utf8;
 	unsigned char stoppoint = 0b01000000;
 	while (codepoint > stoppoint && stoppoint != 0) {
-		utf8.push_back(0b10000000 | (codepoint & 0b00111111) & 0xff);
+		utf8.push_back(0b10000000 | ((codepoint & 0b00111111) & 0xff));
 		stoppoint >>= 1;
 		codepoint >>= 6;
 	}
 
-	utf8.push_back(~stoppoint & 0xff & ~(stoppoint - 1) | codepoint);
+	utf8.push_back((~stoppoint & 0xff) & ~(stoppoint - 1) | codepoint);
 	std::reverse(utf8.begin(), utf8.end());
 
 	return string(utf8.begin(), utf8.end());
@@ -84,6 +84,7 @@ static string escape(lexer &lex, string::value_type escape_char) {
 	}
 
 	lex.wasexpected("<escape character>", "string");
+	throw;
 }
 
 stringexpression::stringexpression(lexer &lex) {
