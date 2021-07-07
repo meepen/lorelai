@@ -175,8 +175,14 @@ object luafunctionobject::create(softwarestate &state, std::shared_ptr<bytecode:
 
 luafunctionobject::luafunctionobject(softwarestate &state, std::shared_ptr<bytecode::prototype> proto) {
 	auto oob = proto->instructions_size();
-	size = oob;
+	size = oob + 1;
 	allocated = std::shared_ptr<instruction>(new instruction[oob], std::default_delete<instruction[]>());
+	allocated.get()[oob] = {
+		bytecode::instruction_opcode_RETURN,
+		0,
+		0,
+		0
+	};
 
 	auto instructions = allocated.get();
 
