@@ -3,6 +3,11 @@ newoption {
 	description = "Enables JIT state runtime (if available)"
 }
 
+newoption {
+	trigger     = "clang",
+	description = "Use clang compiler",
+ }
+
 local protobuf_include = os.findheader "google/protobuf/port_def.inc"
 
 os.execute "protoc --proto_path=src/vm/proto/src --cpp_out=src/vm/proto src/vm/proto/src/bytecode.proto"
@@ -145,11 +150,12 @@ workspace "lorelai"
 	symbols "On"
 	cppdialect "C++17"
 	flags { "MultiProcessorCompile", "LinkTimeOptimization" }
-	if (os.execute "clang -v" and os.execute "llvm-ar -version") then
-		print "clang found, enabling"
+	
+	filter { "options:clang" }
 		toolset "clang"
+	filter { "action:gmake", "options:clang" }
 		makesettings { "AR=llvm-ar" }
-	end
+	filter {}
 
 	defines {
 		"ASMJIT_STATIC"
