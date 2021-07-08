@@ -154,7 +154,8 @@ namespace lorelai {
 				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
 				string tostring() override;
 			public:
-				std::vector<std::pair<std::shared_ptr<node>, std::shared_ptr<node>>> tabledata;
+				std::vector<std::shared_ptr<node>> arraypart;
+				std::vector<std::pair<std::shared_ptr<node>, std::shared_ptr<node>>> hashpart;
 			};
 
 

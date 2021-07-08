@@ -2,13 +2,6 @@ syntax = "proto3";
 
 package lorelai.bytecode;
 
-message debugdata {
-	uint32 linenumber = 1;
-	uint32 linecolumn = 2;
-	optional string filename = 3;
-	optional string note = 4;
-}
-
 message instruction {
 	enum opcode {
 
@@ -73,13 +66,11 @@ message instruction {
 	optional uint32 a = 2;
 	optional uint32 b = 3;
 	optional uint32 c = 4;
-
-	optional debugdata debug = 5;
 }
 
 message tablevalue {
 	enum valuetype {
-		NIL = 0;
+		CONSTANT = 0;
 		NUMBER = 1;
 		STRING = 2;
 		TABLE = 3;
@@ -89,14 +80,14 @@ message tablevalue {
 	optional uint32 index = 2;
 }
 
-message tablekeyvalue {
+message hashpartvalue {
 	tablevalue key = 1;
 	tablevalue value = 2;
 }
 
 message table {
 	repeated tablevalue arraypart = 1;
-	repeated tablevalue keyvaluepart = 2;
+	repeated hashpartvalue hashpart = 2;
 }
 
 message upvaluereference {

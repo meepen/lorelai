@@ -27,7 +27,7 @@ tableexpression::tableexpression(lexer &lex) {
 		do {
 			word = lex.lookahead().value_or("");
 
-			if (word == "[") {
+			if (word == "[") { // TODO: maybe make this a sub-expression?
 				// `[` exp `]` `=` exp
 				// consume `[`
 				lex.read();
@@ -44,7 +44,7 @@ tableexpression::tableexpression(lexer &lex) {
 					lex.wasexpected("<expression>", "table constructor");
 				}
 
-				tabledata.push_back(std::make_pair(key, value));
+				hashpart.push_back(std::make_pair(key, value));
 				children.push_back(key);
 				children.push_back(value);
 			}
@@ -72,7 +72,7 @@ tableexpression::tableexpression(lexer &lex) {
 				}
 				
 				children.push_back(value);
-				tabledata.push_back(std::make_pair(key, value));
+				arraypart.push_back(value);
 			}
 		}
 		while (lex.read(",") || lex.read(";"));
@@ -98,7 +98,7 @@ bool tableexpression::accept(visitor &visit, std::shared_ptr<node> &container) {
 			}
 		}
 
-		for (auto &pair : tabledata) {
+		for (auto &pair : hashpart) {
 			auto firstdeleted = std::find(deleted.begin(), deleted.end(), pair.first);
 			auto seconddeleted = std::find(deleted.begin(), deleted.end(), pair.second);
 
@@ -115,10 +115,11 @@ bool tableexpression::accept(visitor &visit, std::shared_ptr<node> &container) {
 		}
 
 		for (auto &key : keys) {
-			tabledata.erase(std::remove(tabledata.begin(), tabledata.end(), key), tabledata.end());
+			hashpart.erase(std::remove(hashpart.begin(), hashpart.end(), key), hashpart.end());
 		}
 
 		for (auto &del : deleted) {
+			arraypart.erase(std::remove(arraypart.begin(), arraypart.end(), del));
 			children.erase(std::remove(children.begin(), children.end(), del), children.end());
 		}
 

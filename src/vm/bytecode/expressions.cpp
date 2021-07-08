@@ -316,6 +316,7 @@ std::unordered_map<std::type_index, expressiongenerator> bytecode::expressionmap
 	ADD(binopexpression),
 	ADD(unopexpression),
 	// ADD(functioncallexpression),
+	ADD(tableexpression),
 	ADD(indexexpression),
 	ADD(dotexpression),
 	ADD(nameexpression),
