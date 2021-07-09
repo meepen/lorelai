@@ -120,17 +120,7 @@ static void printproto(lorelai::bytecode::prototype &bytecode) {
 
 		std::cout << "#" << index << std::string(max_index.size() - index.size() + 1, ' ') << "| " <<  instrname << std::string(longest - instrname.size(), ' ') << "| ";
 
-		if (instruct.has_a()) {
-			std::cout << instruct.a();
-			if (instruct.has_b()) {
-				std::cout << ", " << instruct.b();
-				if (instruct.has_c()) {
-					std::cout << ", " << instruct.c();
-				}
-			}
-		}
-
-		std::cout << std::endl;
+		std::cout << instruct.a() << ", " << instruct.b() << ", " << instruct.c() << std::endl;
 	}
 }
 

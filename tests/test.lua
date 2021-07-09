@@ -1,4 +1,5 @@
-local t = {}
-t.a = 1
+local t = {1, [false] = true, [true] = false}
 
-print(t.a)
+t.a = "lmao"
+
+print(t[1], t[true], t[false], t.a)

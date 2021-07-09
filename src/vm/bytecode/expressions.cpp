@@ -279,7 +279,7 @@ static void generate_functioncallexpression(bytecodegenerator &gen, node &_expr,
 	auto argsize = arglist.children.size();
 
 	for (int i = 0; i < arglist.children.size(); i++) {
-		auto &arg = arglist.children[i];
+		auto &arg = arglist.children[i];	
 		if (dynamic_cast<expressions::varargexpression *>(arg.get()) && i == arglist.children.size() - 1) {
 			opcode = bytecode::instruction_opcode_CALLV;
 			argsize--;
@@ -301,6 +301,66 @@ static void generate_functioncallexpression(bytecodegenerator &gen, node &_expr,
 			gen.mov(target, functionindex, size);
 		}
 		gen.curfunc.freeslots(functionindex, stacksize);
+	}
+}
+
+static void populate_tablevalue(bytecode::tablevalue *val, bytecodegenerator &gen, node &_expr) {
+	if (auto numvalue = dynamic_cast<expressions::numberexpression *>(&_expr)) {
+		val->set_type(bytecode::tablevalue_valuetype_NUMBER);
+		val->set_index(gen.add(numvalue->data));
+	}
+	else if (auto strvalue = dynamic_cast<expressions::stringexpression *>(&_expr)) {
+		val->set_type(bytecode::tablevalue_valuetype_STRING);
+		val->set_index(gen.add(strvalue->data));
+	}
+	else if (auto strvalue = dynamic_cast<expressions::trueexpression *>(&_expr)) {
+		val->set_type(bytecode::tablevalue_valuetype_CONSTANT);
+		val->set_index(0);
+	}
+	else if (auto strvalue = dynamic_cast<expressions::falseexpression *>(&_expr)) {
+		val->set_type(bytecode::tablevalue_valuetype_CONSTANT);
+		val->set_index(1);
+	}
+	else if (auto strvalue = dynamic_cast<expressions::nilexpression *>(&_expr)) {
+		val->set_type(bytecode::tablevalue_valuetype_CONSTANT);
+		val->set_index(2);
+	}
+	else {
+		throw exception(string("cannot create tablevalue for ") + _expr.tostring());
+	}
+}
+
+static void generate_tableexpression(bytecodegenerator &gen, node &_expr, std::uint32_t target, std::uint32_t size) {
+	auto obj = *dynamic_cast<expressions::tableexpression *>(&_expr);
+	auto bcid = gen.curfunc.proto->tables_size();
+	gen.emit(bytecode::instruction_opcode_TABLE, target, bcid);
+	auto bcobj = gen.curfunc.proto->add_tables();
+	for (auto &hashpart : obj.hashpart) {
+		auto bckv = bcobj->add_hashpart();
+		auto key = new bytecode::tablevalue;
+		try {
+			populate_tablevalue(key, gen, *hashpart.first.get());
+		}
+		catch (std::exception &e) {
+			delete key;
+			throw;
+		}
+
+		bckv->set_allocated_key(key);
+		auto value = new bytecode::tablevalue;
+		try {
+			populate_tablevalue(value, gen, *hashpart.second.get());
+		}
+		catch (std::exception &e) {
+			delete value;
+			throw;
+		}
+		bckv->set_allocated_value(value);
+	}
+
+	for (auto &arraypart : obj.arraypart) {
+		auto bcarraypart = bcobj->add_arraypart();
+		populate_tablevalue(bcarraypart, gen, *arraypart.get());
 	}
 }
 

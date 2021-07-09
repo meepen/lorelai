@@ -3,6 +3,7 @@
 #include <exception>
 #include <string>
 #include <memory>
+#include <iostream>
 
 using namespace lorelai;
 using namespace lorelai::vm;
@@ -15,6 +16,35 @@ struct luafunctionobject::instruction {
 	std::uint32_t b;
 	std::uint32_t c;
 };
+
+void luafunctionobject::fromtablevalue(object &out, const bytecode::tablevalue &data) {
+	switch (data.type()) {
+	case bytecode::tablevalue_valuetype_CONSTANT:
+		switch (data.index()) {
+		case 0:
+			out.set(true);
+			break;
+		case 1:
+			out.set(false);
+			break;
+		default:
+			out.set();
+			break;
+		}
+		break;
+
+	case bytecode::tablevalue_valuetype_NUMBER:
+		out.set(numbers[data.index()]);
+		break;
+
+	case bytecode::tablevalue_valuetype_STRING:
+		out.set(strings[data.index()]);
+		break;
+
+	default:
+		throw exception("unsupported type in table");
+	}
+}
 
 
 state::_retdata luafunctionobject::call(softwarestate &state, int nrets, int nargs) {
@@ -125,6 +155,9 @@ state::_retdata luafunctionobject::call(softwarestate &state, int nrets, int nar
 		vmcase (INDEX)
 			stackptr[instr->b].index(state, stackptr[instr->a], stackptr[instr->c]);
 			vmbreak;
+		vmcase (SETINDEX)
+			stackptr[instr->a].setindex(state, stackptr[instr->b], stackptr[instr->c]);
+			vmbreak;
 		vmcase (NOT)
 			stackptr[instr->a].set(!stackptr[instr->b].tobool(state));
 			vmbreak;
@@ -164,8 +197,27 @@ state::_retdata luafunctionobject::call(softwarestate &state, int nrets, int nar
 		vmcase (DIVIDE)
 			stackptr[instr->b].divide(state, stackptr[instr->a], stackptr[instr->c]);
 			vmbreak;
+		vmcase (TABLE) {
+			auto tbl = tableobject::create(state);
+			auto &tmplate = tables[instr->b];
+			for (auto &kv : tmplate.hashpart) {
+				object key;
+				object value;
+				fromtablevalue(key, kv.first);
+				fromtablevalue(value, kv.second);
+				tbl.rawset(state, key, value);
+			}
+			int i = 0;
+			for (auto &arr : tmplate.arraypart) {
+				object val;
+				fromtablevalue(val, arr);
+				tbl.rawset(state, static_cast<double>(++i), val);
+			}
+			stackptr[instr->a].set(tbl);
+			vmbreak;
+		}
 		default:
-			throw exception(string("opcode not implemented: ") + bytecode::instruction_opcode_Name(instr->opcode));
+			throw exception(string("opcode not implemented: ") + bytecode::instruction_opcode_Name(static_cast<bytecode::instruction_opcode>(instr->opcode)));
 	}
 }
 
@@ -176,7 +228,7 @@ object luafunctionobject::create(softwarestate &state, std::shared_ptr<bytecode:
 luafunctionobject::luafunctionobject(softwarestate &state, std::shared_ptr<bytecode::prototype> proto) {
 	auto oob = proto->instructions_size();
 	size = oob + 1;
-	allocated = std::shared_ptr<instruction>(new instruction[oob], std::default_delete<instruction[]>());
+	allocated = std::shared_ptr<instruction>(new instruction[size], std::default_delete<instruction[]>());
 	allocated.get()[oob] = {
 		bytecode::instruction_opcode_RETURN,
 		0,
@@ -226,6 +278,19 @@ luafunctionobject::luafunctionobject(softwarestate &state, std::shared_ptr<bytec
 
 	for (int i = 0; i < proto->numbers_size(); i++) {
 		numbers.push_back(object(proto->numbers(i)));
+	}
+
+	for (int i = 0; i < proto->tables_size(); i++) {
+		auto &tbl = proto->tables(i);
+		tabledata data;
+		for (int j = 0; j < tbl.hashpart_size(); j++) {
+			auto &hashpart = tbl.hashpart(j);
+			data.hashpart.push_back(std::make_pair(hashpart.key(), hashpart.value()));
+		}
+		for (int j = 0; j < tbl.arraypart_size(); j++) {
+			data.arraypart.push_back(tbl.arraypart(j));
+		}
+		tables.push_back(data);
 	}
 
 	stacksize = proto->stacksize();

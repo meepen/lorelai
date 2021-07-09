@@ -34,7 +34,7 @@ namespace lorelai {
 				return std::hash<uintptr_t>()(reinterpret_cast<uintptr_t>(this));
 			}
 
-			virtual string tostring(softwarestate &state) {
+			virtual string tostring(softwarestate &state) const {
 				return typenames[_typeid()];
 			}
 
@@ -45,6 +45,7 @@ namespace lorelai {
 			virtual bool            LORELAI_SOFTWARE_DEFAULT_FUNCTION(rawget,      softwarestate &state, object &out, const object &index)
 			virtual void            LORELAI_SOFTWARE_DEFAULT_FUNCTION(rawset,      softwarestate &state, const object &index, const object &data)
 			virtual state::_retdata LORELAI_SOFTWARE_DEFAULT_FUNCTION(call,        softwarestate &state, int nargs, int nrets)
+			virtual void            LORELAI_SOFTWARE_DEFAULT_FUNCTION(setindex,    softwarestate &state, object &key, object &value)
 
 			void LORELAI_SOFTWARE_DEFAULT_FUNCTION(length,      softwarestate &state, object &out)
 			bool LORELAI_SOFTWARE_DEFAULT_FUNCTION(lessthan,    softwarestate &state, object &rhs);
@@ -100,7 +101,6 @@ namespace lorelai {
 			}
 
 		public:
-
 			LORELAI_INLINE void set(referenceobject &ref) {
 				type = TABLE;
 				raw.ref = &ref;
@@ -136,10 +136,6 @@ namespace lorelai {
 					return false;
 				}
 
-				if (type >= TABLE) {
-					return raw.ref == other.raw.ref;
-				}
-
 				switch (type) {
 				case NUMBER:
 					return raw.num == other.raw.num;
@@ -148,7 +144,7 @@ namespace lorelai {
 				case NIL:
 					return true;
 				default:
-					throw;
+					return raw.ref == other.raw.ref;
 				}
 			}
 
@@ -310,6 +306,15 @@ namespace lorelai {
 
 				return raw.ref->index(state, out, index);
 			}
+			
+			void setindex            (softwarestate &state, object &key, object &value) {
+				if (type < TABLE) {
+					throw exception(string("NYI: cannot setindex ") + gettypename());
+				}
+
+				return raw.ref->setindex(state, key, value);
+			}
+
 			state::_retdata call  (softwarestate &state, int nargs, int nrets) {
 				if (type < TABLE) {
 					throw exception(string("NYI: cannot call ") + gettypename());
@@ -332,7 +337,7 @@ namespace lorelai {
 				convertexception("number");
 			}
 
-			inline string tostring    (softwarestate &state) {
+			inline string tostring    (softwarestate &state) const {
 				switch (type) {
 				case NIL:
 					return "nil";
@@ -426,7 +431,7 @@ namespace lorelai {
 				return lorelai::tonumber(str);
 			}
 
-			string tostring(softwarestate &state) override {
+			string tostring(softwarestate &state) const override {
 				return str;
 			}
 
@@ -445,6 +450,11 @@ namespace lorelai {
 		};
 
 		class luafunctionobject : public functionobject {
+			struct tabledata {
+				std::vector<std::pair<bytecode::tablevalue, bytecode::tablevalue>> hashpart;
+				std::vector<bytecode::tablevalue> arraypart;
+			};
+			void fromtablevalue(object &out, const bytecode::tablevalue &data);
 		public:
 			static object create(softwarestate &state, std::shared_ptr<bytecode::prototype> proto);
 
@@ -466,6 +476,7 @@ namespace lorelai {
 			std::uint32_t stacksize;
 			std::vector<object> strings;
 			std::vector<object> numbers;
+			std::vector<tabledata> tables;
 		};
 
 		class cfunctionobject : public functionobject {
@@ -517,6 +528,11 @@ namespace lorelai {
 					out.set(found->second);
 					return true;
 				}
+			}
+
+			
+			void setindex(softwarestate &state, object &key, object &value) override {
+				rawset(state, key, value);
 			}
 
 		public:
