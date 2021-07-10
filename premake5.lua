@@ -6,11 +6,13 @@ newoption {
 newoption {
 	trigger     = "clang",
 	description = "Use clang compiler",
- }
+}
 
 local protobuf_include = os.findheader "google/protobuf/port_def.inc"
 
-os.execute "protoc --proto_path=src/vm/proto/src --cpp_out=src/vm/proto src/vm/proto/src/bytecode.proto"
+if (not os.isfile "src/vm/proto/bytecode.pb.h") then
+	os.execute "protoc --proto_path=src/vm/proto/src --cpp_out=src/vm/proto src/vm/proto/src/bytecode.proto"
+end
 
 local libs = {
 	lexer = {
