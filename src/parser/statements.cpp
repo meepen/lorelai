@@ -18,16 +18,11 @@ const static std::unordered_map<string, node *(*)(lexer &lex)> lookupmap = {
 	{ "local", [](lexer &lex) -> node * {
 		lex.expect("local", "local deducer");
 		auto ahead = lex.lookahead();
-		if (ahead) {
-			if (ahead.value() == "function") {
-				return new localfunctionstatement(lex);
-			}
-			else {
-				return new localassignmentstatement(lex);
-			}
+		if (ahead && ahead.value() == "function") {
+			return new localfunctionstatement(lex);
 		}
 
-		return nullptr;
+		return new localassignmentstatement(lex);
 	} },
 	{ "for", [](lexer &lex) -> node * {
 		lex.expect("for", "for deducer");

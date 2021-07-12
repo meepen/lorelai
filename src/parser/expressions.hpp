@@ -209,7 +209,7 @@ namespace lorelai {
 				}
 
 			public:
-				node *lhs, *rhs;
+				node *lhs = nullptr, *rhs = nullptr;
 				string op;
 			};
 
@@ -227,7 +227,7 @@ namespace lorelai {
 				}
 
 			public:
-				node *expr;
+				node *expr = nullptr;
 				string op;
 			};
 
@@ -246,9 +246,9 @@ namespace lorelai {
 				}
 
 			public:
-				node *funcexpr;
+				node *funcexpr = nullptr;
 				optional<string> methodname { };
-				node *arglist;
+				node *arglist = nullptr;
 			};
 
 			class indexexpression : public branch, public varexpression {
@@ -267,7 +267,7 @@ namespace lorelai {
 				}
 
 			public:
-				node *prefix, *index;
+				node *prefix = nullptr, *index = nullptr;
 			};
 
 			class dotexpression : public branch, public varexpression {
@@ -284,7 +284,7 @@ namespace lorelai {
 				}
 
 			public:
-				node *prefix;
+				node *prefix = nullptr;
 				string index;
 			};
 
@@ -301,7 +301,7 @@ namespace lorelai {
 				}
 
 			public:
-				node *body;
+				node *body = nullptr;
 			};
 	
 		}

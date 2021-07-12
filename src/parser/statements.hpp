@@ -46,7 +46,7 @@ namespace lorelai {
 			virtual ~blockstatement() { destroy(); }
 
 		public:
-			node *block;
+			node *block = nullptr;
 		};
 
 		class loopstatement : public blockstatement {
@@ -56,7 +56,7 @@ namespace lorelai {
 			}
 
 		public:
-			node *conditional;
+			node *conditional = nullptr;
 		};
 
 		namespace statements {
@@ -89,6 +89,7 @@ namespace lorelai {
 				dostatement() { }
 			public:
 				dostatement(lexer &lex);
+				virtual ~dostatement() { destroy(); }
 
 				void accept(visitor &visit, node *&container) override;
 				string tostring() override;
@@ -97,6 +98,7 @@ namespace lorelai {
 			class whilestatement : public loopstatement {
 			public:
 				whilestatement(lexer &lex);
+				virtual ~whilestatement() { destroy(); }
 
 				void accept(visitor &visit, node *&container) override;
 				string tostring() override;
@@ -105,6 +107,7 @@ namespace lorelai {
 			class repeatstatement : public loopstatement {
 			public:
 				repeatstatement(lexer &lex);
+				virtual ~repeatstatement() { destroy(); }
 
 				void accept(visitor &visit, node *&container) override;
 				string tostring() override;
@@ -136,6 +139,7 @@ namespace lorelai {
 			class localfunctionstatement : public blockstatement {
 			public:
 				localfunctionstatement(lexer &lex);
+				virtual ~localfunctionstatement() { destroy(); }
 
 				void accept(visitor &visit, node *&container) override;
 				string tostring() override;
@@ -145,12 +149,13 @@ namespace lorelai {
 				}
 
 			public:
-				node *name;
+				node *name = nullptr;
 			};
 
 			class fornumstatement : public loopstatement {
 			public:
 				fornumstatement(string name, lexer &lex);
+				virtual ~fornumstatement() { destroy(); }
 
 				void accept(visitor &visit, node *&container) override;
 				string tostring() override;
@@ -170,12 +175,13 @@ namespace lorelai {
 
 			public:
 				string itername;
-				node *startexpr, *endexpr, *stepexpr;
+				node *startexpr = nullptr, *endexpr = nullptr, *stepexpr = nullptr;
 			};
 
 			class forinstatement : public loopstatement {
 			public:
 				forinstatement(string name, lexer &lex);
+				virtual ~forinstatement() { destroy(); }
 
 				void accept(visitor &visit, node *&container) override;
 				string tostring() override;
@@ -210,6 +216,7 @@ namespace lorelai {
 			class ifstatement : public blockstatement {
 			public:
 				ifstatement(lexer &lex);
+				virtual ~ifstatement() { destroy(); }
 
 				void accept(visitor &visit, node *&container) override;
 				string tostring() override;
@@ -230,14 +237,15 @@ namespace lorelai {
 				}
 
 			public:
-				node *conditional;
-				node *elseblock;
+				node *conditional = nullptr;
+				node *elseblock = nullptr;
 				std::vector<node *> elseifs;
 			};
 
 			class elseifstatement : public blockstatement {
 			public:
 				elseifstatement(lexer &lex);
+				virtual ~elseifstatement() { destroy(); }
 
 				void accept(visitor &visit, node *&container) override;
 				string tostring() override;
@@ -247,12 +255,13 @@ namespace lorelai {
 				}
 
 			public:
-				node *conditional;
+				node *conditional = nullptr;
 			};
 
 			class elsestatement : public blockstatement {
 			public:
 				elsestatement(lexer &lex);
+				virtual ~elsestatement() { destroy(); }
 
 				void accept(visitor &visit, node *&container) override;
 				string tostring() override;
@@ -261,6 +270,7 @@ namespace lorelai {
 			class functionstatement : public blockstatement {
 			public:
 				functionstatement(lexer &lex);
+				virtual ~functionstatement() { destroy(); }
 
 				void accept(visitor &visit, node *&container) override;
 				string tostring() override;
@@ -270,7 +280,7 @@ namespace lorelai {
 				}
 
 			public:
-				node *name;
+				node *name = nullptr;
 				optional<string> method;
 			};
 
@@ -287,7 +297,7 @@ namespace lorelai {
 				}
 
 			public:
-				node *callexpr;
+				node *callexpr = nullptr;
 			};
 
 			class assignmentstatement : public branch, public statement {

@@ -25,10 +25,7 @@ void chunk::initialize(lexer &lex) {
 		if (dynamic_cast<parser::statement *>(statement)->isfinal()) {
 			break;
 		}
-		lex.skipwhite();
 	}
-
-	lex.skipwhite();
 }
 
 LORELAI_ACCEPT_BRANCH(chunk)
