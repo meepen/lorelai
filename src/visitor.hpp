@@ -11,30 +11,32 @@
 
 
 
-#define LORELAI_VISIT_FUNCTION(name) bool visit(lorelai::parser:: name &obj, std::shared_ptr<lorelai::parser::node> &container) override
-#define LORELAI_VISIT_DEFINE(clasname, type) bool clasname::visit(lorelai::parser:: type &obj, std::shared_ptr<lorelai::parser::node> &container)
-#define LORELAI_POSTVISIT_FUNCTION(name) void postvisit(lorelai::parser:: name &obj, std::shared_ptr<lorelai::parser::node> &container) override
-#define LORELAI_POSTVISIT_DEFINE(clasname, type) void clasname::postvisit(lorelai::parser:: type &obj, std::shared_ptr<lorelai::parser::node> &container)
-#define LORELAI_VISIT_MACRO(name) virtual bool visit(lorelai::parser:: name &obj, std::shared_ptr<lorelai::parser::node> &container) { return false; }
-#define LORELAI_POSTVISIT_MACRO(name) virtual void postvisit(lorelai::parser:: name &obj, std::shared_ptr<lorelai::parser::node> &container) { }
-#define LORELAI_VISIT_BRANCH_DEFINE(name) \
-	bool name::accept(visitor &visit, std::shared_ptr<lorelai::parser::node> &container) { \
-		if (!visit.visit(*this, container)) { \
-			visitchildren(visit); \
-			visit.postvisit(*this, container); \
-			return false; \
-		} \
- \
-		return true; \
-	}
+#define LORELAI_VISIT_FUNCTION(name) bool visit(lorelai::parser:: name &obj, lorelai::parser::node *&container) override
+#define LORELAI_VISIT_DEFINE(clasname, type) bool clasname::visit(lorelai::parser:: type &obj, lorelai::parser::node *&container)
+#define LORELAI_POSTVISIT_FUNCTION(name) void postvisit(lorelai::parser:: name &obj, lorelai::parser::node *&container) override
+#define LORELAI_POSTVISIT_DEFINE(clasname, type) void clasname::postvisit(lorelai::parser:: type &obj, lorelai::parser::node *&container)
+#define LORELAI_VISIT_MACRO(name) virtual bool visit(lorelai::parser:: name &obj, lorelai::parser::node *&container) { return false; }
+#define LORELAI_POSTVISIT_MACRO(name) virtual void postvisit(lorelai::parser:: name &obj, lorelai::parser::node *&container) { }
+
+#define LORELAI_ACCEPT_DEFINE(clasname) void clasname::accept(visitor &visit, lorelai::parser::node *&container)
+#define LORELAI_ACCEPT_BRANCH(clasname) LORELAI_ACCEPT_DEFINE(clasname) { \
+	if (!visit.visit(*this, container)) { \
+		visitchildren(visit); \
+		visit.postvisit(*this, container); \
+		return; \
+	} \
+	delete container; \
+	container = nullptr; \
+}
 
 #define LORELAI_VISIT_NODE_DEFINE(name) \
-	bool name::accept(visitor &visit, std::shared_ptr<lorelai::parser::node> &container) { \
+	void name::accept(visitor &visit, lorelai::parser::node *&container) { \
 		if (!visit.visit(*this, container)) { \
 			visit.postvisit(*this, container); \
-			return false; \
+			return; \
 		} \
-		return true; \
+		delete container; \
+		container = nullptr; \
 	}
 
 

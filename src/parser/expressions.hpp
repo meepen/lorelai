@@ -39,19 +39,19 @@ namespace lorelai {
 		// ANY expression, containing literals expression unary and binary ops indexing etc.
 		class expression {
 		public:
-			static std::shared_ptr<node> read(lexer &lex, bool postexp = true);
+			static node *read(lexer &lex, bool postexp = true);
 		};
 
 		// lvalue, functioncall or enclosed expression `(` expr `)`
 		class prefixexpression : public expression {
 		public:
-			static std::shared_ptr<node> read(lexer &lex);
+			static node *read(lexer &lex);
 		};
 
 		// actually just lvalue
 		class varexpression : public prefixexpression {
 		public:
-			static std::shared_ptr<node> read(std::shared_ptr<node> prefixexp, lexer &lex);
+			static node *read(node *prefixexp, lexer &lex);
 		};
 
 		namespace expressions {
@@ -60,7 +60,7 @@ namespace lorelai {
 				nilexpression() { }
 				nilexpression(lexer &lex);
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				void accept(visitor &visit, node *&container) override;
 				string tostring() override;
 			};
 
@@ -69,7 +69,7 @@ namespace lorelai {
 				falseexpression() { }
 				falseexpression(lexer &lex);
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				void accept(visitor &visit, node *&container) override;
 				string tostring() override;
 			};
 
@@ -78,7 +78,7 @@ namespace lorelai {
 				trueexpression() { }
 				trueexpression(lexer &lex);
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				void accept(visitor &visit, node *&container) override;
 				string tostring() override;
 			};
 
@@ -87,7 +87,7 @@ namespace lorelai {
 				numberexpression(lexer &lex);
 				numberexpression(number num) : data(num) { }
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				void accept(visitor &visit, node *&container) override;
 				string tostring() override;
 
 			public:
@@ -113,7 +113,7 @@ namespace lorelai {
 
 				static bool applicable(lexer &lex);
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				void accept(visitor &visit, node *&container) override;
 				string tostring() override;
 			public:
 				using type = enum {
@@ -132,7 +132,7 @@ namespace lorelai {
 				varargexpression() { }
 				varargexpression(lexer &lex);
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				void accept(visitor &visit, node *&container) override;
 				string tostring() override;
 			};
 
@@ -141,7 +141,7 @@ namespace lorelai {
 				nameexpression(string data) : name(data) { }
 				nameexpression(lexer &lex);
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				void accept(visitor &visit, node *&container) override;
 				string tostring() override;
 			public:
 				string name;
@@ -150,21 +150,45 @@ namespace lorelai {
 			class tableexpression : public branch, public expression {
 			public:
 				tableexpression(lexer &lex);
+				virtual ~tableexpression() { destroy(); }
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				void accept(visitor &visit, node *&container) override;
 				string tostring() override;
+				std::vector<node **> getchildren() override {
+					std::vector<node **> children;
+					for (auto &child : arraypart) {
+						children.push_back(&child);
+					}
+
+					for (auto &hash : hashpart) {
+						children.push_back(&hash.first);
+						children.push_back(&hash.second);
+					}
+
+					return children;
+				}
+
 			public:
-				std::vector<std::shared_ptr<node>> arraypart;
-				std::vector<std::pair<std::shared_ptr<node>, std::shared_ptr<node>>> hashpart;
+				std::vector<node *> arraypart;
+				std::vector<std::pair<node *, node *>> hashpart;
 			};
 
 
 			class enclosedexpression : public branch, public prefixexpression {
 			public:
 				enclosedexpression(lexer &lex);
+				virtual ~enclosedexpression() { destroy(); }
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				void accept(visitor &visit, node *&container) override;
 				string tostring() override;
+
+
+				std::vector<node **> getchildren() override {
+					return { &enclosed };
+				}
+
+			public:
+				node *enclosed = nullptr;
 			};
 
 
@@ -173,82 +197,111 @@ namespace lorelai {
 				const static std::vector<std::pair<bool, std::vector<string>>> priorities;
 				const static std::unordered_map<string, int> prioritymap;
 
-				binopexpression(std::shared_ptr<node> _lhs, string _op, std::shared_ptr<node> _rhs) : lhs(_lhs), op(_op), rhs(_rhs) {
-					children.push_back(lhs);
-					children.push_back(rhs);
-				}
+				binopexpression(node *_lhs, string _op, node *_rhs)
+					: lhs(_lhs), op(_op), rhs(_rhs) { }
+				virtual ~binopexpression() { destroy(); }
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				void accept(visitor &visit, node *&container) override;
 				string tostring() override;
 
+				std::vector<node **> getchildren() override {
+					return { &lhs, &rhs };
+				}
+
 			public:
-				std::shared_ptr<node> lhs, rhs;
+				node *lhs, *rhs;
 				string op;
 			};
 
 			class unopexpression : public branch, public expression {
 			public:
-				unopexpression(string _op, std::shared_ptr<node> _expr) : op(_op), expr(_expr) {
-					children.push_back(expr);
-				}
+				unopexpression(string _op, node *_expr)
+					: op(_op), expr(_expr) { }
+				virtual ~unopexpression() { destroy(); }
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				void accept(visitor &visit, node *&container) override;
 				string tostring() override;
 
+				std::vector<node **> getchildren() override {
+					return { &expr };
+				}
+
 			public:
-				std::shared_ptr<node> expr;
+				node *expr;
 				string op;
 			};
 
 			class functioncallexpression : public branch, public prefixexpression {
 			public:
-				functioncallexpression(std::shared_ptr<node> prefixexp, lexer &lex);
+				functioncallexpression(node *prefixexp, lexer &lex);
 				functioncallexpression(lexer &lex) : functioncallexpression(prefixexpression::read(lex), lex) { }
+				virtual ~functioncallexpression() { destroy(); }
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				void accept(visitor &visit, node *&container) override;
 				string tostring() override;
 				static bool applicable(lexer &lex);
 
+				std::vector<node **> getchildren() override {
+					return { &funcexpr, &arglist };
+				}
+
 			public:
-				std::shared_ptr<node> funcexpr;
+				node *funcexpr;
 				optional<string> methodname { };
-				std::shared_ptr<node> arglist;
+				node *arglist;
 			};
 
 			class indexexpression : public branch, public varexpression {
 			protected:
 				indexexpression() { }
 			public:
-				indexexpression(std::shared_ptr<node> prefixexp, lexer &lex);
+				indexexpression(node *prefixexp, lexer &lex);
 				indexexpression(lexer &lex) : indexexpression(prefixexpression::read(lex), lex) { }
+				virtual ~indexexpression() { destroy(); }
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				void accept(visitor &visit, node *&container) override;
 				string tostring() override;
+
+				std::vector<node **> getchildren() override {
+					return { &prefix, &index };
+				}
+
 			public:
-				std::shared_ptr<node> prefix, index;
+				node *prefix, *index;
 			};
 
-			class dotexpression : public indexexpression {
+			class dotexpression : public branch, public varexpression {
 			public:
-				dotexpression(std::shared_ptr<node> prefixexp, lexer &lex);
+				dotexpression(node *prefixexp, lexer &lex);
 				dotexpression(lexer &lex) : dotexpression(prefixexpression::read(lex), lex) { }
-				dotexpression(std::shared_ptr<node> &_prefix, string &_index) : prefix(_prefix), index(_index) { }
+				dotexpression(node *&_prefix, string &_index) : prefix(_prefix), index(_index) { }
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				void accept(visitor &visit, node *&container) override;
 				string tostring() override;
+
+				std::vector<node **> getchildren() override {
+					return { &prefix };
+				}
+
 			public:
-				std::shared_ptr<node> prefix;
+				node *prefix;
 				string index;
 			};
 
 			class functionexpression : public branch, public expression {
 			public:
 				functionexpression(lexer &lex);
+				virtual ~functionexpression() { destroy(); }
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				void accept(visitor &visit, node *&container) override;
 				string tostring() override;
+
+				std::vector<node **> getchildren() override {
+					return { &body };
+				}
+
 			public:
-				std::shared_ptr<node> body;
+				node *body;
 			};
 	
 		}

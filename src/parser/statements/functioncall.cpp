@@ -7,5 +7,5 @@ using namespace lorelai::parser::statements;
 using namespace lorelai::parser::expressions;
 
 string functioncallstatement::tostring() {
-	return children[0]->tostring();
+	return callexpr->tostring();
 }

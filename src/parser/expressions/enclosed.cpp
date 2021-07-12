@@ -8,12 +8,15 @@ using namespace lorelai::parser::expressions;
 
 enclosedexpression::enclosedexpression(lexer &lex) {
 	lex.expect("(", "enclosed expression");
-	children.push_back(expression::read(lex));
+	enclosed = expression::read(lex);
+	if (!enclosed) {
+		lex.wasexpected("<expression>", "unclosed expression");
+	}
 	lex.expect(")", "enclosed expression");
 }
 
 string enclosedexpression::tostring() {
 	std::stringstream stream;
-	stream << "(" << children[0]->tostring() << ")";
+	stream << "(" << enclosed->tostring() << ")";
 	return stream.str();
 }

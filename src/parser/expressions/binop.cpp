@@ -7,7 +7,7 @@ using namespace lorelai;
 using namespace lorelai::parser;
 using namespace lorelai::parser::expressions;
 
-LORELAI_VISIT_BRANCH_DEFINE(binopexpression)
+LORELAI_ACCEPT_BRANCH(binopexpression)
 
 const std::vector<std::pair<bool, std::vector<string>>> binopexpression::priorities = {
 	{ true, { "^" } },

@@ -11,18 +11,18 @@ using namespace lorelai::parser::expressions;
 
 LORELAI_EXPRESSION_NODES_CLASS_MACRO(LORELAI_VISIT_NODE_DEFINE)
 
-LORELAI_VISIT_BRANCH_DEFINE(enclosedexpression)
+LORELAI_ACCEPT_BRANCH(enclosedexpression)
 
-const static std::unordered_map<string, std::shared_ptr<node>(*)(lexer &lex)> expressionmap = {
-	{ "false", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<falseexpression>(lex); } },
-	{ "true", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<trueexpression>(lex); } },
-	{ "nil", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<nilexpression>(lex); } },
-	{ "...", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<varargexpression>(lex); } },
-	{ "\"", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<stringexpression>(lex); } },
-	{ "[", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<stringexpression>(lex); } },
-	{ "'", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<stringexpression>(lex); } },
-	{ "{", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<tableexpression>(lex); } },
-	{ "function", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<functionexpression>(lex); } }
+const static std::unordered_map<string, node *(*)(lexer &lex)> expressionmap = {
+	{ "false", [](lexer &lex) -> node * { return new falseexpression(lex); } },
+	{ "true",  [](lexer &lex) -> node * { return new trueexpression(lex); } },
+	{ "nil",   [](lexer &lex) -> node * { return new nilexpression(lex); } },
+	{ "...",   [](lexer &lex) -> node * { return new varargexpression(lex); } },
+	{ "\"",    [](lexer &lex) -> node * { return new stringexpression(lex); } },
+	{ "[",     [](lexer &lex) -> node * { return new stringexpression(lex); } },
+	{ "'",     [](lexer &lex) -> node * { return new stringexpression(lex); } },
+	{ "{",     [](lexer &lex) -> node * { return new tableexpression(lex); } },
+	{ "function", [](lexer &lex) -> node * { return new functionexpression(lex); } }
 };
 
 
@@ -49,12 +49,12 @@ const static std::unordered_set<string> unops = {
 	"#"
 };
 
-static std::shared_ptr<node> readone(lexer &lex) {
-	std::shared_ptr<node> expr;
-
+static node *readone(lexer &lex) {
 	if (!lex.lookahead()) {
-		return expr;
+		return nullptr;
 	}
+
+	node *expr = nullptr;
 
 	auto word = lex.lookahead().value();
 
@@ -63,7 +63,7 @@ static std::shared_ptr<node> readone(lexer &lex) {
 		expr = has_initializer->second(lex);
 	}
 	else if (word.size() > 0 && lexer::isnumberstart(word[0])) {
-		expr = std::make_shared<numberexpression>(lex);
+		expr = new numberexpression(lex);
 	}
 
 	if (!expr) {
@@ -76,22 +76,22 @@ static std::shared_ptr<node> readone(lexer &lex) {
 
 struct liststruct {
 	std::vector<string> unop = {};
-	std::shared_ptr<node> expr = nullptr;
+	node *expr = nullptr;
 	string binop = "";
 };
 
 static bool tryprocess(liststruct &lhs, liststruct &rhs, const std::vector<string> &list) {
 	if (list.size() == 0 && lhs.unop.size() > 0) {
-		std::shared_ptr<node> expr = lhs.expr;
+		auto expr = lhs.expr;
 		for (auto cur = lhs.unop.rbegin(); cur != lhs.unop.rend(); cur++) {
-			expr = std::make_shared<unopexpression>(*cur, expr);
+			expr = new unopexpression(*cur, expr);
 		}
 
 		lhs.expr = expr;
 		lhs.unop.clear();
 	}
 	else if (&rhs != &lhs && lhs.binop[0] != 0 && std::find(list.begin(), list.end(), lhs.binop) != list.end()) {
-		lhs.expr = std::make_shared<binopexpression>(lhs.expr, lhs.binop, rhs.expr);
+		lhs.expr = new binopexpression(lhs.expr, lhs.binop, rhs.expr);
 		lhs.binop = rhs.binop;
 
 		return true;
@@ -169,7 +169,7 @@ struct linkedlist {
 	linkedlist<T> **begin, **end;
 };
 
-std::shared_ptr<node> expression::read(lexer &lex, bool postexp) {
+node *expression::read(lexer &lex, bool postexp) {
 	/*
 	exp ::=  nil | false | true | Number | String | `...´ | function | 
 		 prefixexp | tableconstructor | exp binop exp | unop exp 
@@ -303,20 +303,20 @@ std::shared_ptr<node> expression::read(lexer &lex, bool postexp) {
 // so no mater if we can or can not make a prefixexpression, try var
 // since var can just be a name expression as well!!!
 
-std::shared_ptr<node> prefixexpression::read(lexer &lex) {
+node *prefixexpression::read(lexer &lex) {
 	if (!lex.lookahead()) {
 		return nullptr;
 	}
 
-	std::shared_ptr<node> expr;
+	node *expr = nullptr;
 	auto word = lex.lookahead().value();
 
 	if (word == "(") {
-		expr = std::make_shared<enclosedexpression>(lex);
+		expr = new enclosedexpression(lex);
 	}
 	else if (!expr && lexer::isname(word)) {
 		// when we reach here it's the end, it has to be a name
-		expr = std::make_shared<nameexpression>(lex);
+		expr = new nameexpression(lex);
 	}
 
 	if (!expr) {
@@ -327,7 +327,7 @@ std::shared_ptr<node> prefixexpression::read(lexer &lex) {
 	// for the var-functioncall loop
 	while (true) {
 		if (functioncallexpression::applicable(lex)) {
-			expr = std::make_shared<functioncallexpression>(expr, lex);
+			expr = new functioncallexpression(expr, lex);
 		}
 		else if (auto var = varexpression::read(expr, lex)) {
 			expr = var;
@@ -341,7 +341,7 @@ std::shared_ptr<node> prefixexpression::read(lexer &lex) {
 }
 
 // only reads index operations
-std::shared_ptr<node> varexpression::read(std::shared_ptr<node> prefixexp, lexer &lex) {
+node *varexpression::read(node *prefixexp, lexer &lex) {
 	if (!lex.lookahead()) {
 		return nullptr;
 	}
@@ -351,15 +351,15 @@ std::shared_ptr<node> varexpression::read(std::shared_ptr<node> prefixexp, lexer
 	// however, Name is already handled in prefixexpression::read
 	// as long as prefixexp is not null
 	if (!prefixexp && lexer::isname(ahead)) {
-		return std::make_shared<nameexpression>(lex);
+		return new nameexpression(lex);
 	}
 	
 	// look for indexing via `[` exp `]` | `.` Name
 	if (ahead == "[") {
-		return std::make_shared<indexexpression>(prefixexp, lex);
+		return new indexexpression(prefixexp, lex);
 	}
 	else if (ahead == ".") {
-		return std::make_shared<dotexpression>(prefixexp, lex);
+		return new dotexpression(prefixexp, lex);
 	}
 
 	return nullptr;

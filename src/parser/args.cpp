@@ -31,19 +31,19 @@ args::args(lexer &lex) {
 	// args ::=  `(´ [explist] `)´ | tableconstructor | String 
 
 	if (ahead == "{") {
-		auto arg = std::make_shared<tableexpression>(lex);
-		children.push_back(arg);
+		auto arg = new tableexpression(lex);
+		arglist.push_back(arg);
 	}
 	else if (ahead == "(") {
 		// arglist
 		lex.expect("(", "args parser");
 		while (true) {
 			auto arg = expression::read(lex);
-			if (!arg && children.size() == 0) {
+			if (!arg && arglist.size() == 0) {
 				break;
 			}
 
-			children.push_back(arg);
+			arglist.push_back(arg);
 
 			if (!lex.read(",")) {
 				break;
@@ -53,18 +53,17 @@ args::args(lexer &lex) {
 		lex.expect(")", "args parser");
 	}
 	else {
-		auto arg = std::make_shared<stringexpression>(lex);
-		children.push_back(arg);
+		arglist.push_back(new stringexpression(lex));
 	}
 }
 
-LORELAI_VISIT_BRANCH_DEFINE(args)
+LORELAI_ACCEPT_BRANCH(args)
 
 string args::tostring() {
 	std::stringstream stream;
 
 	bool first = true;
-	for (auto &arg : children) {
+	for (auto &arg : arglist) {
 		if (!first) {
 			stream << ", ";
 		}

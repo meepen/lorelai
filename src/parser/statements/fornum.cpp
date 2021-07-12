@@ -17,20 +17,16 @@ fornumstatement::fornumstatement(string _itername, lexer &lex) : itername(_itern
 	lex.expect("=", "for .. = .., ..[, ..] do .. end");
 
 	startexpr = expression::read(lex);
-	children.push_back(startexpr);
 	lex.expect(",", "for .. = .., ..[, ..] do .. end");
 
 	endexpr = expression::read(lex);
-	children.push_back(endexpr);
 	if (lex.read(",")) {
 		stepexpr = expression::read(lex);
-		children.push_back(stepexpr);
 	}
 
 	lex.expect("do", "for .. = .., ..[, ..] do .. end");
 
-	block = std::make_shared<chunk>(lex);
-	children.push_back(block);
+	block = new chunk(lex);
 	
 	lex.expect("end", "for .. = .., ..[, ..] do .. end");
 }

@@ -33,30 +33,55 @@ namespace lorelai {
 
 		class statement {
 		public:
-			static std::shared_ptr<node> read(lexer &lex);
+			static node *read(lexer &lex);
 
 			virtual bool isfinal() { return false; }
 		};
 
 		class blockstatement : public branch, public statement {
 		public:
-			std::shared_ptr<node> block;
+			std::vector<node **> getchildren() override {
+				return { &block };
+			}
+			virtual ~blockstatement() { destroy(); }
+
+		public:
+			node *block;
 		};
 
 		class loopstatement : public blockstatement {
 		public:
-			std::shared_ptr<node> conditional;
+			std::vector<node **> getchildren() override {
+				return { &conditional, &block };
+			}
+
+		public:
+			node *conditional;
 		};
 
 		namespace statements {
 			class returnstatement : public branch, public statement {
 			public:
 				returnstatement(lexer &lex);
+				virtual ~returnstatement() { destroy(); }
 
 				bool isfinal() override { return true; }
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				void accept(visitor &visit, node *&container) override;
 				string tostring() override;
+
+				std::vector<node **> getchildren() override {
+					std::vector<node **> children;
+
+					for (auto &ret : retlist) {
+						children.push_back(&ret);
+					}
+
+					return children;
+				}
+
+			public:
+				std::vector<node *> retlist;
 			};
 			
 			class dostatement : public blockstatement {
@@ -65,7 +90,7 @@ namespace lorelai {
 			public:
 				dostatement(lexer &lex);
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				void accept(visitor &visit, node *&container) override;
 				string tostring() override;
 			};
 
@@ -73,7 +98,7 @@ namespace lorelai {
 			public:
 				whilestatement(lexer &lex);
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				void accept(visitor &visit, node *&container) override;
 				string tostring() override;
 			};
 
@@ -81,56 +106,95 @@ namespace lorelai {
 			public:
 				repeatstatement(lexer &lex);
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				void accept(visitor &visit, node *&container) override;
 				string tostring() override;
 			};
 
 			class localassignmentstatement : public branch, public statement {
 			public:
 				localassignmentstatement(lexer &lex);
+				virtual ~localassignmentstatement() { destroy(); }
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				void accept(visitor &visit, node *&container) override;
 				string tostring() override;
+
+				std::vector<node **> getchildren() override {
+					std::vector<node **> children;
+
+					for (auto &rt : right) {
+						children.push_back(&rt);
+					}
+
+					return children;
+				}
 
 			public:
 				std::vector<string> left;
-				std::vector<std::shared_ptr<node>> right;
+				std::vector<node *> right;
 			};
 
-			class localfunctionstatement : public branch, public statement {
+			class localfunctionstatement : public blockstatement {
 			public:
 				localfunctionstatement(lexer &lex);
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				void accept(visitor &visit, node *&container) override;
 				string tostring() override;
 
+				std::vector<node **> getchildren() override {
+					return { &name, &block };
+				}
+
 			public:
-				std::shared_ptr<node> name;
-				std::shared_ptr<node> body;
+				node *name;
 			};
 
 			class fornumstatement : public loopstatement {
 			public:
 				fornumstatement(string name, lexer &lex);
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				void accept(visitor &visit, node *&container) override;
 				string tostring() override;
+
+				std::vector<node **> getchildren() override {
+					std::vector<node **> children;
+
+					children.push_back(&startexpr);
+					children.push_back(&endexpr);
+					if (stepexpr) {
+						children.push_back(&stepexpr);
+					}
+					children.push_back(&block);
+
+					return children;
+				}
 
 			public:
 				string itername;
-				std::shared_ptr<node> startexpr, endexpr, stepexpr;
+				node *startexpr, *endexpr, *stepexpr;
 			};
 
 			class forinstatement : public loopstatement {
 			public:
 				forinstatement(string name, lexer &lex);
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				void accept(visitor &visit, node *&container) override;
 				string tostring() override;
+
+				std::vector<node **> getchildren() override {
+					std::vector<node **> children;
+
+					for (auto &inexpr : inexprs) {
+						children.push_back(&inexpr);
+					}
+
+					children.push_back(&block);
+
+					return children;
+				}
 
 			public:
 				std::vector<string> iternames;
-				std::vector<std::shared_ptr<node>> inexprs;
+				std::vector<node *> inexprs;
 			};
 
 			class breakstatement : public node, public statement {
@@ -139,80 +203,117 @@ namespace lorelai {
 
 				bool isfinal() override { return true; }
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				void accept(visitor &visit, node *&container) override;
 				string tostring() override;
 			};
 			
-			class ifstatement : public branch, public statement {
+			class ifstatement : public blockstatement {
 			public:
 				ifstatement(lexer &lex);
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				void accept(visitor &visit, node *&container) override;
 				string tostring() override;
 
+				std::vector<node **> getchildren() override {
+					std::vector<node **> children;
+
+					children.push_back(&conditional);
+					children.push_back(&block);
+					for (auto &elseif : elseifs) {
+						children.push_back(&elseif);
+					}
+					if (elseblock) {
+						children.push_back(&elseblock);
+					}
+
+					return children;
+				}
+
 			public:
-				std::shared_ptr<node> conditional;
-				std::shared_ptr<node> block;
-				std::shared_ptr<node> elseblock;
-				std::vector<std::shared_ptr<node>> elseifs;
+				node *conditional;
+				node *elseblock;
+				std::vector<node *> elseifs;
 			};
 
-			class elseifstatement : public branch, public statement {
+			class elseifstatement : public blockstatement {
 			public:
 				elseifstatement(lexer &lex);
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				void accept(visitor &visit, node *&container) override;
 				string tostring() override;
 
+				std::vector<node **> getchildren() override {
+					return { &conditional, &block };
+				}
+
 			public:
-				std::shared_ptr<node> conditional;
-				std::shared_ptr<node> block;
+				node *conditional;
 			};
 
-			class elsestatement : public branch, public statement {
+			class elsestatement : public blockstatement {
 			public:
 				elsestatement(lexer &lex);
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				void accept(visitor &visit, node *&container) override;
 				string tostring() override;
-
-			public:
-				std::shared_ptr<node> block;
 			};
 
-			class functionstatement : public statement, public branch {
+			class functionstatement : public blockstatement {
 			public:
 				functionstatement(lexer &lex);
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				void accept(visitor &visit, node *&container) override;
 				string tostring() override;
 
+				std::vector<node **> getchildren() override {
+					return { &name, &block };
+				}
+
 			public:
-				std::shared_ptr<node> name;
+				node *name;
 				optional<string> method;
-				std::shared_ptr<node> body;
 			};
 
 			class functioncallstatement : public branch, public statement {
 			public:
-				functioncallstatement(std::shared_ptr<node> functioncall) {
-					children.push_back(functioncall);
+				functioncallstatement(node *functioncall) : callexpr(functioncall) { }
+				virtual ~functioncallstatement() { destroy(); }
+
+				void accept(visitor &visit, node *&container) override;
+				string tostring() override;
+
+				std::vector<node **> getchildren() override {
+					return { &callexpr };
 				}
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
-				string tostring() override;
+			public:
+				node *callexpr;
 			};
 
 			class assignmentstatement : public branch, public statement {
 			public:
-				assignmentstatement(std::shared_ptr<node> exp, lexer &lex);
+				assignmentstatement(node *exp, lexer &lex);
+				virtual ~assignmentstatement() { destroy(); }
 
-				bool accept(visitor &visit, std::shared_ptr<node> &container) override;
+				void accept(visitor &visit, node *&container) override;
 				string tostring() override;
 
+				std::vector<node **> getchildren() override {
+					std::vector<node **> children;
+
+					for (auto &l : left) {
+						children.push_back(&l);
+					}
+					for (auto &r : right) {
+						children.push_back(&r);
+					}
+
+					return children;
+				}
+
 			public:
-				std::vector<std::shared_ptr<node>> left;
-				std::vector<std::shared_ptr<node>> right;
+				std::vector<node *> left;
+				std::vector<node *> right;
 			};
 		}
 	}

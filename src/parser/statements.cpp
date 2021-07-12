@@ -10,26 +10,26 @@ using namespace lorelai::parser;
 using namespace lorelai::parser::statements;
 
 
-const static std::unordered_map<string, std::shared_ptr<node>(*)(lexer &lex)> lookupmap = {
-	{ "return", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<returnstatement>(lex); } },
-	{ "while", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<whilestatement>(lex); } },
-	{ "do", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<dostatement>(lex); } },
-	{ "repeat", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<repeatstatement>(lex); } },
-	{ "local", [](lexer &lex) -> std::shared_ptr<node> {
+const static std::unordered_map<string, node *(*)(lexer &lex)> lookupmap = {
+	{ "return", [](lexer &lex) -> node * { return new returnstatement(lex); } },
+	{ "while", [](lexer &lex) -> node * { return new whilestatement(lex); } },
+	{ "do", [](lexer &lex) -> node * { return new dostatement(lex); } },
+	{ "repeat", [](lexer &lex) -> node * { return new repeatstatement(lex); } },
+	{ "local", [](lexer &lex) -> node * {
 		lex.expect("local", "local deducer");
 		auto ahead = lex.lookahead();
 		if (ahead) {
 			if (ahead.value() == "function") {
-				return std::make_shared<localfunctionstatement>(lex);
+				return new localfunctionstatement(lex);
 			}
 			else {
-				return std::make_shared<localassignmentstatement>(lex);
+				return new localassignmentstatement(lex);
 			}
 		}
 
 		return nullptr;
 	} },
-	{ "for", [](lexer &lex) -> std::shared_ptr<node> {
+	{ "for", [](lexer &lex) -> node * {
 		lex.expect("for", "for deducer");
 
 		auto name = expressions::nameexpression(lex).name;
@@ -37,19 +37,19 @@ const static std::unordered_map<string, std::shared_ptr<node>(*)(lexer &lex)> lo
 			lex.wasexpected("<token>", "for deducer");
 		}
 		else if (lex.lookahead().value() == "=") {
-			return std::make_shared<fornumstatement>(name, lex);
+			return new fornumstatement(name, lex);
 		}
-		return std::make_shared<forinstatement>(name, lex);
+		return new forinstatement(name, lex);
 	} },
-	{ "break", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<breakstatement>(lex); } },
-	{ "if", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<ifstatement>(lex); } },
-	{ "function", [](lexer &lex) -> std::shared_ptr<node> { return std::make_shared<functionstatement>(lex); } }
-	/* { "function", [](lexer &lex) -> std::shared_ptr<node> {
+	{ "break", [](lexer &lex) -> node * { return new breakstatement(lex); } },
+	{ "if", [](lexer &lex) -> node * { return new ifstatement(lex); } },
+	{ "function", [](lexer &lex) -> node * { return new functionstatement(lex); } }
+	/* { "function", [](lexer &lex) -> node * {
 		return std::make_shared<functionstatement>(lex);
 	} } */
 };
 
-std::shared_ptr<node> statement::read(lexer &lex) {
+node *statement::read(lexer &lex) {
 	/*
 	stat ::=
 !        varlist `=´ explist | 
@@ -72,7 +72,7 @@ std::shared_ptr<node> statement::read(lexer &lex) {
 	}
 	auto word = word_or_none.value();
 
-	std::shared_ptr<node> stmt;
+	node *stmt = nullptr;
 
 	auto lookup = lookupmap.find(word);
 	if (lookup != lookupmap.end()) {
@@ -83,11 +83,11 @@ std::shared_ptr<node> statement::read(lexer &lex) {
 		// varlist = exprlist | functioncall
 		auto exp = expression::read(lex);
 		if (exp) {
-			if (dynamic_cast<expressions::functioncallexpression *>(exp.get())) {
-				stmt = std::make_shared<functioncallstatement>(exp);
+			if (dynamic_cast<expressions::functioncallexpression *>(exp)) {
+				stmt = new functioncallstatement(exp);
 			}
 			else {
-				stmt = std::make_shared<assignmentstatement>(exp, lex);
+				stmt = new assignmentstatement(exp, lex);
 			}
 		}
 	}
@@ -99,4 +99,4 @@ std::shared_ptr<node> statement::read(lexer &lex) {
 	return stmt;
 }
 
-LORELAI_STATEMENT_BRANCH_CLASS_MACRO(LORELAI_VISIT_BRANCH_DEFINE)
+LORELAI_STATEMENT_BRANCH_CLASS_MACRO(LORELAI_ACCEPT_BRANCH)

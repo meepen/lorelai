@@ -32,13 +32,11 @@ forinstatement::forinstatement(string _itername, lexer &lex) {
 			break;
 		}
 		inexprs.push_back(inexpr);
-		children.push_back(inexpr);
 	}
 
 	lex.expect("do", "for ..{, ..} in .. do .. end");
 
-	block = std::make_shared<chunk>(lex);
-	children.push_back(block);
+	block = new chunk(lex);
 	
 	lex.expect("end", "for ..{, ..} in .. do .. end");
 }

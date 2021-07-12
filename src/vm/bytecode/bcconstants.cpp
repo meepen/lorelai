@@ -9,11 +9,10 @@ public:
 	using visitor::postvisit;
 
 	LORELAI_VISIT_FUNCTION(statements::assignmentstatement) {
-
+		return false;
 	}
 
 	LORELAI_VISIT_FUNCTION(statements::localassignmentstatement) {
-
+		return false;
 	}
-
 };

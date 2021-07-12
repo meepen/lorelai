@@ -56,9 +56,9 @@ LORELAI_VISIT_DEFINE(bytecodegenerator, statements::assignmentstatement) { // TO
 
 	for (int i = 0; i < std::max(obj.left.size(), obj.right.size()); i++) {
 		if (i < obj.left.size()) {
-			auto &lhs = obj.left[i];
+			auto lhs = obj.left[i];
 
-			if (auto name = dynamic_cast<expressions::nameexpression *>(lhs.get())) {
+			if (auto name = dynamic_cast<expressions::nameexpression *>(lhs)) {
 				if (curfunc.hasvariable(name->name)) {
 					pushornil(obj.right, i, curfunc.varlookup[name->name]);
 				} // TODO: upvalues
@@ -71,19 +71,19 @@ LORELAI_VISIT_DEFINE(bytecodegenerator, statements::assignmentstatement) { // TO
 					curfunc.freeslots(target, 2);
 				}
 			}
-			else if (auto index = dynamic_cast<expressions::dotexpression *>(lhs.get())) {
+			else if (auto index = dynamic_cast<expressions::dotexpression *>(lhs)) {
 				auto target = curfunc.getslots(3);
 				
 				runexpressionhandler(index->prefix, target, 1);
-				expressions::stringexpression string(index->index);
-				runexpressionhandler(string, target + 1, 1);
+				expressions::stringexpression indexstr(index->index);
+				runexpressionhandler(&indexstr, target + 1, 1);
 				pushornil(obj.right, i, target + 2);
 
 				emit(instruction_opcode_SETINDEX, target, target + 1, target + 2);
 
 				curfunc.freeslots(target, 3);
 			}
-			else if (auto index = dynamic_cast<expressions::indexexpression *>(lhs.get())) {
+			else if (auto index = dynamic_cast<expressions::indexexpression *>(lhs)) {
 				auto target = curfunc.getslots(3);
 				
 				runexpressionhandler(index->prefix, target, 1);
@@ -263,8 +263,8 @@ LORELAI_VISIT_DEFINE(bytecodegenerator, statements::fornumstatement) {
 		runexpressionhandler(obj.stepexpr, queue.stackreserved + 2, 1);
 	}
 	else {
-		expressions::numberexpression data(1.0);
-		runexpressionhandler(data, queue.stackreserved + 2, 1);
+		expressions::numberexpression num(1.0);
+		runexpressionhandler(&num, queue.stackreserved + 2, 1);
 	}
 
 	// start loop
@@ -298,18 +298,18 @@ LORELAI_POSTVISIT_DEFINE(bytecodegenerator, statements::fornumstatement) {
 
 
 LORELAI_VISIT_DEFINE(bytecodegenerator, statements::returnstatement) {
-	auto realrets = obj.children.size();
+	auto realrets = obj.retlist.size();
 	auto rets = realrets;
 	auto target = curfunc.getslots(realrets);
 	std::uint32_t varargtype = 0;
-	for (int i = 0; i < obj.children.size(); i++) {
-		auto &child = obj.children[i];
+	for (int i = 0; i < obj.retlist.size(); i++) {
+		auto &child = obj.retlist[i];
 
-		if (i == rets - 1 && dynamic_cast<expressions::varargexpression *>(child.get())) {
+		if (i == rets - 1 && dynamic_cast<expressions::varargexpression *>(child)) {
 			rets--;
 			varargtype = 2;
 		}
-		else if (i == rets - 1 && dynamic_cast<expressions::functioncallexpression *>(child.get())) {
+		else if (i == rets - 1 && dynamic_cast<expressions::functioncallexpression *>(child)) {
 			rets--;
 			varargtype = 1;
 			runexpressionhandler(child, -1, 0);
@@ -325,34 +325,13 @@ LORELAI_VISIT_DEFINE(bytecodegenerator, statements::returnstatement) {
 	return false;
 }
 
-void bytecodegenerator::pushornil(std::vector<std::shared_ptr<lorelai::parser::node>> &v, int index, std::uint32_t target) {
+void bytecodegenerator::pushornil(std::vector<lorelai::parser::node *> &v, int index, std::uint32_t target) {
 	if (index < v.size()) {
 		runexpressionhandler(v[index], target, 1);
 	}
 	else {
 		emit(bytecode::instruction_opcode_CONSTANT, target, 2);
 	}
-}
-
-instruction *bytecodegenerator::emit(instruction_opcode opcode) {
-	auto instruction = curfunc.proto->add_instructions();
-	instruction->set_op(opcode);
-	return instruction;
-}
-
-instruction *bytecodegenerator::emit(instruction_opcode opcode, std::uint32_t a) {
-	auto instruction = curfunc.proto->add_instructions();
-	instruction->set_op(opcode);
-	instruction->set_a(a);
-	return instruction;
-}
-
-instruction *bytecodegenerator::emit(instruction_opcode opcode, std::uint32_t a, std::uint32_t b) {
-	auto instruction = curfunc.proto->add_instructions();
-	instruction->set_op(opcode);
-	instruction->set_a(a);
-	instruction->set_b(b);
-	return instruction;
 }
 
 instruction *bytecodegenerator::emit(instruction_opcode opcode, std::uint32_t a, std::uint32_t b, std::uint32_t c) {

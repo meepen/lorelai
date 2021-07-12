@@ -12,19 +12,17 @@ using namespace lorelai::parser::expressions;
 functionstatement::functionstatement(lexer &lex) {
 	lex.expect("function", "function");
 
-	name = std::make_shared<nameexpression>(lex);
+	name = new nameexpression(lex);
 	while (lex.read(".")) {
 		auto index = nameexpression(lex).name;
-		name = std::make_shared<dotexpression>(name, index);
+		name = new dotexpression(name, index);
 	}
-
-	children.push_back(name);
 
 	if (lex.read(":")) {
 		method = nameexpression(lex).name;
 	}
 
-	body = std::make_shared<funcbody>(lex);
+	block = new funcbody(lex, method);
 }
 
 string functionstatement::tostring() {

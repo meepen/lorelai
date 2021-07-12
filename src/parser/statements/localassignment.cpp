@@ -25,7 +25,6 @@ localassignmentstatement::localassignmentstatement(lexer &lex) {
 			lex.wasexpected("<expression>", "assignment statement");
 		}
 		right.push_back(expr);
-		children.push_back(expr);
 	}
 	while(lex.read(","));
 }

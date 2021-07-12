@@ -17,22 +17,20 @@ bool functioncallexpression::applicable(lexer &lex) {
 
 // functioncall ::=  prefixexp args | prefixexp `:´ Name args 
 
-functioncallexpression::functioncallexpression(std::shared_ptr<node> prefixexp, lexer &lex) {
+functioncallexpression::functioncallexpression(node *prefixexp, lexer &lex) {
 	funcexpr = prefixexp;
 	if (!funcexpr) {
 		lex.wasexpected("<prefixexp>", "function call expression");
 	}
-	children.push_back(funcexpr);
 
 	if (lex.read(":")) {
 		methodname = nameexpression(lex).name;
 	}
 
-	arglist = std::make_shared<args>(lex);
-	children.push_back(arglist);
+	arglist = new args(lex);
 }
 
-LORELAI_VISIT_BRANCH_DEFINE(functioncallexpression)
+LORELAI_ACCEPT_BRANCH(functioncallexpression)
 
 string functioncallexpression::tostring() {
 	std::stringstream stream;

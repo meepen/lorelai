@@ -4,3 +4,4 @@ bin
 *.pb.h
 gmon.out
 *callgrind*
+*valgrind*

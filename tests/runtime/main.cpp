@@ -32,13 +32,11 @@ static void print_branch(size_t idx, lorelai::parser::node &node) {
 
 	try {
 		lorelai::parser::branch &branch = dynamic_cast<lorelai::parser::branch &>(node);
-		for (auto &child : branch.children) {
-			print_branch(idx + 1, *child);
+		for (auto &child : branch.getchildren()) {
+			print_branch(idx + 1, **child);
 		}
 	}
-	catch (std::exception &e) {
-		(e);
-	}
+	catch (std::exception &e) { }
 }
 
 static void print_scopes(std::vector<std::shared_ptr<lorelai::bytecode::scope>> &list, std::shared_ptr<lorelai::bytecode::scope> with_parent = nullptr, size_t idx = 0) {
@@ -154,8 +152,7 @@ int main(int argc, char *argv[]) {
 		}
 
 		if (scopesonly.getValue()) {
-			auto container = std::shared_ptr<lorelai::parser::node>(new lorelai::parser::chunk(mainchunk));
-			auto map = lorelai::bytecode::generatescopemap(container);
+			auto map = lorelai::bytecode::generatescopemap(&mainchunk);
 
 			print_scopes(map.scopes);
 

@@ -13,17 +13,14 @@ elseifstatement::elseifstatement(lexer &lex) {
 	if (!conditional) {
 		lex.wasexpected("<expression>", "if .. then .. elseif .. end");
 	}
-	children.push_back(conditional);
 
 	lex.expect("then", "if .. then .. elseif .. end");
 	
-	block = std::make_shared<chunk>(lex);
-	children.push_back(block);
+	block = new chunk(lex);
 }
 
 elsestatement::elsestatement(lexer &lex) {
-	block = std::make_shared<chunk>(lex);
-	children.push_back(block);
+	block = new chunk(lex);
 }
 
 ifstatement::ifstatement(lexer &lex) {
@@ -33,22 +30,18 @@ ifstatement::ifstatement(lexer &lex) {
 	if (!conditional) {
 		lex.wasexpected("<expression>", "if .. then .. end");
 	}
-	children.push_back(conditional);
 
 	lex.expect("then", "if .. then .. end");
 
-	block = std::make_shared<chunk>(lex);
-	children.push_back(block);
+	block = new chunk(lex);
 
 	while (lex.read("elseif")) {
-		auto elseif = std::make_shared<elseifstatement>(lex);
+		auto elseif = new elseifstatement(lex);
 		elseifs.push_back(elseif);
-		children.push_back(elseif);
 	}
 
 	if (lex.read("else")) {
-		elseblock = std::make_shared<elsestatement>(lex);
-		children.push_back(elseblock);
+		elseblock = new elsestatement(lex);
 	}
 
 	lex.expect("end", "if .. then .. end");

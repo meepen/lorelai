@@ -11,8 +11,8 @@ returnstatement::returnstatement(lexer &lex) {
 	lex.expect("return", "return ..");
 
 	// try to read explist
-	while (std::shared_ptr<node> exp = expression::read(lex)) {
-		children.push_back(exp);
+	while (auto exp = expression::read(lex)) {
+		retlist.push_back(exp);
 		if (!lex.read(",")) {
 			break;
 		}
@@ -22,11 +22,11 @@ returnstatement::returnstatement(lexer &lex) {
 string returnstatement::tostring() {
 	std::stringstream stream;
 	stream << "return";
-	if (children.size() > 0) {
+	if (retlist.size() > 0) {
 		stream << " ";
 		bool first = true;
 
-		for (auto &child : children) {
+		for (auto &child : retlist) {
 			if (!first) {
 				stream << ", ";
 			}

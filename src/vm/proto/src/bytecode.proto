@@ -60,6 +60,8 @@ message instruction {
 		VARARG   = 39; // A .. A+C = ...
 
 		FORCHECK = 40; // if (!((A + 2) > 0 ? (A) <= (A + 1) : (A + 2) <= 0 && (A) >= (A + 1)) { JMP(instruction(B)) }
+
+		FNEW     = 41; // A = function(B)
 	}
 
 	opcode op = 1;

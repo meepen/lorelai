@@ -67,7 +67,10 @@
 			"strstream": "cpp",
 			"iomanip": "cpp",
 			"codecvt": "cpp",
-			"filesystem": "cpp"
+			"filesystem": "cpp",
+			"hash_map": "cpp",
+			"hash_set": "cpp",
+			"cinttypes": "cpp"
 		}
 	}
 }

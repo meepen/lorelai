@@ -18,12 +18,12 @@ using namespace lorelai;
 using namespace lorelai::parser;
 
 #define BASIC_TEST(classname) \
-	bool visit(classname &_node, std::shared_ptr<node> &container) override { \
+	LORELAI_VISIT_FUNCTION(classname) { \
 		visited++; \
 		std::cout << "visited: " << #classname << std::endl; \
 		return false; \
 	} \
-	void postvisit(classname &_node, std::shared_ptr<node> &container) override { \
+	LORELAI_POSTVISIT_FUNCTION(classname) { \
 		postvisited++; \
 		std::cout << "post visit: " << #classname << std::endl; \
 	}
@@ -36,26 +36,27 @@ public:
 };
 
 class printer_visitor : public visitor {
-	bool visit(expressions::stringexpression &node, std::shared_ptr<lorelai::parser::node> &container) override {
-		std::cout << "STRING: " << node.data << std::endl;
+	LORELAI_VISIT_FUNCTION(expressions::stringexpression) {
+		std::cout << "STRING: " << obj.data << std::endl;
 		return false;
 	}
-	bool visit(expressions::numberexpression &node, std::shared_ptr<lorelai::parser::node> &container) override {
-		std::cout << "NUMBER: " << node.data << std::endl;
+	LORELAI_VISIT_FUNCTION(expressions::numberexpression) {
+		std::cout << "NUMBER: " << obj.data << std::endl;
 		return false;
 	}
 };
 
 class number_to_false_visitor : public visitor {
-	bool visit(expressions::numberexpression &node, std::shared_ptr<lorelai::parser::node> &container) override {
-		container = std::make_shared<expressions::falseexpression>();
+	LORELAI_VISIT_FUNCTION(expressions::numberexpression) {
+		delete container;
+		container = new expressions::falseexpression();
 		std::cout << "REPLACED!!" << std::endl;
 		return false;
 	}
 };
 
 class return_delete_visitor : public visitor {
-	bool visit(statements::returnstatement &node, std::shared_ptr<lorelai::parser::node> &container) override {
+	LORELAI_VISIT_FUNCTION(statements::returnstatement) {
 		std::cout << "DELETED!" << std::endl;
 		return true;
 	}
@@ -87,8 +88,8 @@ static void print_branch(size_t idx, lorelai::parser::node &node) {
 
 	try {
 		lorelai::parser::branch &branch = dynamic_cast<lorelai::parser::branch &>(node);
-		for (auto &child : branch.children) {
-			print_branch(idx + 1, *child);
+		for (auto &child : branch.getchildren()) {
+			print_branch(idx + 1, **child);
 		}
 	}
 	catch (std::exception &e) {
@@ -109,25 +110,26 @@ int main(int argc, char *argv[]) {
 	);
 
 	try {
-		std::shared_ptr<node> main = std::make_shared<chunk>(luacode);
+		chunk main(luacode);
+		node *container = &main;
 		visitor_printer printer;
-		main->accept(printer, main);
+		main.accept(printer, container);
 		if (printer.postvisited != printer.visited) {
 			std::cerr << "postvisited (" << printer.postvisited << ") != visited (" << printer.visited << ")" << std::endl;
 			return 1;
 		}
 
 		printer_visitor string_printer;
-		main->accept(string_printer, main);
-		print_branch(0, *main);
+		main.accept(string_printer, container);
+		print_branch(0, main);
 
 		number_to_false_visitor replacer;
-		main->accept(replacer, main);
-		print_branch(0, *main);
+		main.accept(replacer, container);
+		print_branch(0, main);
 
 		return_delete_visitor deleter;
-		main->accept(deleter, main);
-		print_branch(0, *main);
+		main.accept(deleter, container);
+		print_branch(0, main);
 
 		std::cout << "success (visit)" << std::endl;
 	}

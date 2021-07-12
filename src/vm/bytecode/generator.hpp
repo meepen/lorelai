@@ -54,17 +54,17 @@ namespace lorelai {
 			std::vector<_loopqueue> loopqueue;
 
 		public:
-			bytecodegenerator() { }
-
 			using variablevisitor::visit;
 			using variablevisitor::postvisit;
+
+			bytecodegenerator(std::unordered_map<parser::node *, std::uint32_t> _protomap) : protomap(_protomap) { }
 
 			LORELAI_VISIT_FUNCTION(statements::localassignmentstatement);
 			LORELAI_POSTVISIT_FUNCTION(statements::localassignmentstatement);
 			LORELAI_VISIT_FUNCTION(statements::assignmentstatement);
 
 			LORELAI_VISIT_FUNCTION(statements::functioncallstatement) {
-				runexpressionhandler(obj.children[0], 0, 0);
+				runexpressionhandler(obj.callexpr, 0, 0);
 				return false;
 			}
 
@@ -111,11 +111,11 @@ namespace lorelai {
 			}
 
 		private:
-			void pushornil(std::vector<std::shared_ptr<lorelai::parser::node>> &v, int index, std::uint32_t target);
+			void pushornil(std::vector<lorelai::parser::node *> &v, int index, std::uint32_t target);
 
 		public:
-			void runexpressionhandler(lorelai::parser::node &_expr, std::uint32_t target, std::uint32_t size) {
-				auto found = expressionmap.find(typeid(_expr));
+			void runexpressionhandler(lorelai::parser::node *_expr, std::uint32_t target, std::uint32_t size) {
+				auto found = expressionmap.find(typeid(*_expr));
 
 				if (found == expressionmap.end()) {
 					throw exception(string("Unsupported expression when generating: ") + gettypename(_expr));
@@ -124,15 +124,8 @@ namespace lorelai {
 				return found->second(*this, _expr, target, size);
 			}
 
-			void runexpressionhandler(std::shared_ptr<lorelai::parser::node> _expr, std::uint32_t target, std::uint32_t size) {
-				return runexpressionhandler(*_expr.get(), target, size);
-			}
-
 		public:
-			instruction *emit(instruction_opcode opcode);
-			instruction *emit(instruction_opcode opcode, std::uint32_t a);
-			instruction *emit(instruction_opcode opcode, std::uint32_t a, std::uint32_t b);
-			instruction *emit(instruction_opcode opcode, std::uint32_t a, std::uint32_t b, std::uint32_t c);
+			instruction *emit(instruction_opcode opcode, std::uint32_t a = 0, std::uint32_t b = 0, std::uint32_t c = 0);
 
 			void mov(std::uint32_t to, std::uint32_t from, std::uint32_t size = 1) {
 				if (curfunc.proto->instructions_size() > 0) {
@@ -157,6 +150,8 @@ namespace lorelai {
 
 		public:
 			function curfunc;
+
+			std::unordered_map<parser::node *, std::uint32_t> protomap;
 		};
 	}
 }

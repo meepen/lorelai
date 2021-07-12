@@ -29,12 +29,11 @@ funcbody::funcbody(lexer &lex) {
 		}
 
 		params.push_back(param);
-		children.push_back(param);
 
-		if (dynamic_cast<expressions::varargexpression *>(param.get())) {
+		if (dynamic_cast<expressions::varargexpression *>(param)) {
 			break;
 		}
-		else if (!dynamic_cast<expressions::nameexpression *>(param.get())) {
+		else if (!dynamic_cast<expressions::nameexpression *>(param)) {
 			lex.wasexpected("<name or vararg>", "funcbody");
 		}
 
@@ -45,15 +44,10 @@ funcbody::funcbody(lexer &lex) {
 
 	lex.expect(")", "funcbody");
 
-	block = std::make_shared<chunk>(lex);
-
-	children.push_back(block);
+	block = new chunk(lex);
 
 	lex.expect("end", "funcbody");
 }
-
-
-LORELAI_VISIT_BRANCH_DEFINE(funcbody)
 
 string funcbody::tostring() {
 	std::stringstream stream;
@@ -69,3 +63,5 @@ string funcbody::tostring() {
 
 	return stream.str();
 }
+
+LORELAI_ACCEPT_BRANCH(funcbody)

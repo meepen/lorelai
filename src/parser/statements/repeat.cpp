@@ -11,8 +11,7 @@ using namespace lorelai::parser::statements;
 repeatstatement::repeatstatement(lexer &lex) {
 	lex.expect("repeat", "repeat .. until ..");
 
-	block = std::make_shared<chunk>(lex);
-	children.push_back(block);
+	block = new chunk(lex);
 
 	lex.expect("until", "repeat .. until ..");
 
@@ -20,7 +19,6 @@ repeatstatement::repeatstatement(lexer &lex) {
 	if (!conditional) {
 		lex.wasexpected("<expression>", "repeat .. until ..");
 	}
-	children.push_back(conditional);
 }
 
 string repeatstatement::tostring() {

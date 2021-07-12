@@ -7,7 +7,7 @@ using namespace lorelai;
 using namespace lorelai::parser;
 using namespace lorelai::parser::expressions;
 
-LORELAI_VISIT_BRANCH_DEFINE(unopexpression)
+LORELAI_ACCEPT_BRANCH(unopexpression)
 
 string unopexpression::tostring() {
 	std::stringstream stream;

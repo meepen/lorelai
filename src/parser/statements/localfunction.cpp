@@ -14,11 +14,8 @@ localfunctionstatement::localfunctionstatement(lexer &lex) {
 
 	lex.expect("function", "local function");
 
-	name = std::make_shared<nameexpression>(lex);
-	children.push_back(name);
-
-	body = std::make_shared<funcbody>(lex);
-	children.push_back(body);
+	name  = new nameexpression(lex);
+	block = new funcbody(lex);
 }
 
 string localfunctionstatement::tostring() {

@@ -15,12 +15,10 @@ whilestatement::whilestatement(lexer &lex) {
 	if (!conditional) {
 		lex.wasexpected("<expression>", "while .. do .. end");
 	}
-	children.push_back(conditional);
 
 	lex.expect("do", "while .. do .. end");
 
-	block = std::make_shared<chunk>(lex);
-	children.push_back(block);
+	block = new chunk(lex);
 
 	lex.expect("end", "while .. do .. end");
 }

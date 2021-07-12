@@ -8,30 +8,25 @@ using namespace lorelai::parser;
 using namespace lorelai::parser::expressions;
 
 
-indexexpression::indexexpression(std::shared_ptr<node> _prefix, lexer &lex) {
-	prefix = _prefix;
-	children.push_back(prefix);
+indexexpression::indexexpression(node *_prefix, lexer &lex) : prefix(_prefix) {
 	lex.expect("[", "index expression");
 
 	index = expression::read(lex);
 	if (!index) {
 		lex.wasexpected("<expression>", "index expression");
 	}
-	children.push_back(prefix);
 
 	lex.expect("]", "index expression");
 }
 
-dotexpression::dotexpression(std::shared_ptr<node> _prefix, lexer &lex) {
-	prefix = _prefix;
-	children.push_back(prefix);
+dotexpression::dotexpression(node *_prefix, lexer &lex) : prefix(_prefix) {
 	lex.expect(".", "dot expression");
 
 	index = nameexpression(lex).name;
 }
 
-LORELAI_VISIT_BRANCH_DEFINE(indexexpression)
-LORELAI_VISIT_BRANCH_DEFINE(dotexpression)
+LORELAI_ACCEPT_BRANCH(indexexpression)
+LORELAI_ACCEPT_BRANCH(dotexpression)
 
 string dotexpression::tostring() {
 	std::stringstream stream;

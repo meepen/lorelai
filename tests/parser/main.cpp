@@ -47,8 +47,8 @@ static void print_branch(size_t idx, lorelai::parser::node &node) {
 
 	try {
 		lorelai::parser::branch &branch = dynamic_cast<lorelai::parser::branch &>(node);
-		for (auto &child : branch.children) {
-			print_branch(idx + 1, *child);
+		for (auto &child : branch.getchildren()) {
+			print_branch(idx + 1, **child);
 		}
 	}
 	catch (std::exception &e) {

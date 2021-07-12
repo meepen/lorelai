@@ -7,6 +7,36 @@
 using namespace lorelai;
 using namespace lorelai::vm;
 
+// NYI:
+// unpack
+// _VERSION
+// _G
+// rawequal
+// loadstring
+// loadfile
+// load
+// ipairs
+// pairs
+// next
+// getmetatable
+// setmetatable
+// getfenv
+// dofile
+// collectgarbage
+
+static int Lassert(softwarestate &state, int nargs, int nrets) {
+	if (not state[1].tobool(state)) {
+		throw exception(nargs >= 2 ? state[2].tostring(state) : "assertion failed!");
+	}
+
+	return 0;
+}
+
+static int Lerror(softwarestate &state, int nargs, int nrets) {
+	throw exception(nargs >= 1 ? state[1].tostring(state) : "expected 'string' for argument #1 to 'error'");
+	return 0;
+}
+
 static int print(softwarestate &state, int nargs, int nrets) {
 	for (int i = 1; i <= nargs; i++) {
 		if (i > 1) {
@@ -45,6 +75,8 @@ static int type(softwarestate &state, int nargs, int nrets) {
 }
 
 library vm::global[] = {
+	{ "assert", Lassert },
+	{ "error", Lerror },
 	{ "print", print },
 	{ "rawset", rawset },
 	{ "select", Lselect },

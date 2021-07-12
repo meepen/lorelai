@@ -10,8 +10,7 @@ using namespace lorelai::parser::statements;
 dostatement::dostatement(lexer &lex) {
 	lex.expect("do", "do .. end");
 
-	block = std::make_shared<chunk>(lex);
-	children.push_back(block);
+	block = new chunk(lex);
 
 	lex.expect("end", "do .. end");
 }

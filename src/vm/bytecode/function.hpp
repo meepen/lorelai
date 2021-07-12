@@ -12,6 +12,7 @@ namespace lorelai {
 		class function : public stack {
 		public:
 			function() {}
+			~function() { }
 
 			int add(string str) {
 				auto found = strings.find(str); 
@@ -60,6 +61,8 @@ namespace lorelai {
 			std::unordered_map<string, int> strings;
 			std::unordered_map<number, int> numbers;
 			std::unordered_map<string, std::uint32_t> varlookup;
+
+			std::shared_ptr<function> parent;
 		};
 	}
 }

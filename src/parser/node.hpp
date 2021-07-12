@@ -11,18 +11,32 @@ namespace lorelai {
 		class visitor;
 		class node {
 		public:
-			virtual bool accept(visitor &visit, std::shared_ptr<node> &container) = 0;
+			virtual ~node() { }
+		public:
+			virtual void accept(visitor &visit, node *&container) = 0;
 			virtual string tostring() = 0;
 		};
 
 		class branch : public node {
 		protected:
-			void visitchildren(visitor &visit);
+			void visitchildren(visitor &visit) {
+				for (auto child : getchildren()) {
+					(*child)->accept(visit, *child);
+				}
+			}
+
+			void destroy() {
+				for (auto child : getchildren()) {
+					delete *child;
+					*child = nullptr;
+				}
+			}
 
 		public:
-			branch() : children() { }
+			virtual ~branch() { }
+
 		public:
-			std::vector<std::shared_ptr<node>> children;
+			virtual std::vector<node **> getchildren() = 0;
 		};
 	}
 }

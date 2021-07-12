@@ -7,23 +7,35 @@ using namespace lorelai::parser;
 using namespace lorelai::parser;
 using namespace lorelai::bytecode;
 
-static void generate_numberexpression(bytecodegenerator &gen, node &expr, std::uint32_t target, std::uint32_t size) {
+#define GENERATEFUNC(t) static void generate_##t(bytecodegenerator &gen, parser::node *_expr, std::uint32_t target, std::uint32_t size)
+#define INIT(t) expressions::t &expr = dynamic_cast<expressions::t &>(*_expr)
+
+
+GENERATEFUNC(numberexpression) {
+	// when size = 0, no need to init
 	if (size == 0) {
 		return;
 	}
-	gen.emit(bytecode::instruction_opcode_NUMBER, target, gen.add(dynamic_cast<expressions::numberexpression *>(&expr)->data));
+	INIT(numberexpression);
+	gen.emit(bytecode::instruction_opcode_NUMBER, target, gen.add(expr.data));
 }
 
-static void generate_stringexpression(bytecodegenerator &gen, node &expr, std::uint32_t target, std::uint32_t size) {
+GENERATEFUNC(stringexpression) {
+	// when size = 0, no need to init
 	if (size == 0) {
 		return;
 	}
-	gen.emit(bytecode::instruction_opcode_STRING, target, gen.add(dynamic_cast<expressions::stringexpression *>(&expr)->data));
+	INIT(stringexpression);
+	gen.emit(bytecode::instruction_opcode_STRING, target, gen.add(expr.data));
 }
 
-static void generate_enclosedexpression(bytecodegenerator &gen, node &expr, std::uint32_t target, std::uint32_t size) {
-	auto &child = *dynamic_cast<expressions::enclosedexpression *>(&expr)->children[0].get();
-	gen.runexpressionhandler(child, target, size > 0 ? 1 : 0);
+GENERATEFUNC(enclosedexpression) {
+	// when size = 0, no need to init
+	if (size == 0) {
+		return;
+	}
+	INIT(enclosedexpression);
+	gen.runexpressionhandler(expr.enclosed, target, size > 0 ? 1 : 0);
 }
 
 std::unordered_map<string, bytecode::instruction_opcode> binoplookup = {
@@ -115,8 +127,8 @@ public:
 		}
 	}
 
-	bool get(std::shared_ptr<node> &expr, std::uint32_t *stackposout, bool leftside) {
-		if (auto name = dynamic_cast<expressions::nameexpression *>(expr.get())) {
+	bool get(parser::node *expr, std::uint32_t *stackposout, bool leftside) {
+		if (auto name = dynamic_cast<expressions::nameexpression *>(expr)) {
 			if (gen.curfunc.hasvariable(name->name)) {
 				*stackposout = gen.curfunc.varlookup[name->name];
 				return true;
@@ -130,8 +142,8 @@ public:
 	bytecodegenerator &gen;
 };
 
-static void generate_binopexpression(bytecodegenerator &gen, node &_expr, std::uint32_t target, std::uint32_t size) {
-	auto &expr = *dynamic_cast<expressions::binopexpression *>(&_expr);
+GENERATEFUNC(binopexpression) {
+	INIT(binopexpression);
 	binopsimplifier simplify(gen, expr, target, size);
 }
 
@@ -142,8 +154,8 @@ std::unordered_map<string, bytecode::instruction_opcode> unoplookup = {
 	{ "-", bytecode::instruction_opcode_MINUS },
 };
 
-static void generate_unopexpression(bytecodegenerator &gen, node &_expr, std::uint32_t target, std::uint32_t size) {
-	auto &expr = *dynamic_cast<expressions::unopexpression *>(&_expr);
+GENERATEFUNC(unopexpression) {
+	INIT(unopexpression);
 
 	if (size > 0) {
 		gen.runexpressionhandler(expr.expr, target, 1);
@@ -162,23 +174,21 @@ static void generate_unopexpression(bytecodegenerator &gen, node &_expr, std::ui
 	}
 }
 
-static void generate_nilexpression(bytecodegenerator &gen, node &expr, std::uint32_t target, std::uint32_t size) {
+GENERATEFUNC(nilexpression) {
 	if (size == 0) {
 		return;
 	}
 
 	gen.emit(bytecode::instruction_opcode_CONSTANT, target, 2);
 }
-
-static void generate_falseexpression(bytecodegenerator &gen, node &expr, std::uint32_t target, std::uint32_t size) {
+GENERATEFUNC(falseexpression) {
 	if (size == 0) {
 		return;
 	}
 
 	gen.emit(bytecode::instruction_opcode_CONSTANT, target, 1);
 }
-
-static void generate_trueexpression(bytecodegenerator &gen, node &expr, std::uint32_t target, std::uint32_t size) {
+GENERATEFUNC(trueexpression) {
 	if (size == 0) {
 		return;
 	}
@@ -186,9 +196,9 @@ static void generate_trueexpression(bytecodegenerator &gen, node &expr, std::uin
 	gen.emit(bytecode::instruction_opcode_CONSTANT, target, 0);
 }
 
-static void generate_indexexpression(bytecodegenerator &gen, node &_expr, std::uint32_t target, std::uint32_t size) {
-	auto &expr = *dynamic_cast<expressions::indexexpression *>(&_expr);
-
+GENERATEFUNC(indexexpression) {
+	INIT(indexexpression);
+	
 	bool is_temp = size == 0;
 
 	if (is_temp) {
@@ -207,8 +217,10 @@ static void generate_indexexpression(bytecodegenerator &gen, node &_expr, std::u
 	}
 }
 
-static void generate_dotexpression(bytecodegenerator &gen, node &_expr, std::uint32_t target, std::uint32_t size) {
-	auto &expr = *dynamic_cast<expressions::dotexpression *>(&_expr);
+
+GENERATEFUNC(dotexpression) {
+	INIT(dotexpression);
+
 	bool is_temp = size == 0;
 
 	if (is_temp) {
@@ -218,8 +230,8 @@ static void generate_dotexpression(bytecodegenerator &gen, node &_expr, std::uin
 	gen.runexpressionhandler(expr.prefix, target, 1);
 
 	auto temp = gen.curfunc.getslots(1);
-	expressions::stringexpression name(expr.index);
-	gen.runexpressionhandler(name, temp, 1);
+	expressions::stringexpression index(expr.index);
+	gen.runexpressionhandler(&index, temp, 1);
 	gen.emit(bytecode::instruction_opcode_INDEX, target, target, temp);
 	gen.curfunc.freeslots(temp, 1);
 
@@ -228,12 +240,13 @@ static void generate_dotexpression(bytecodegenerator &gen, node &_expr, std::uin
 	}
 }
 
-static void generate_nameexpression(bytecodegenerator &gen, node &_expr, std::uint32_t target, std::uint32_t size) {
+GENERATEFUNC(nameexpression) {
 	if (size == 0) {
 		return;
 	}
 
-	auto &expr = *dynamic_cast<expressions::nameexpression *>(&_expr);
+	INIT(nameexpression);
+
 	if (gen.curfunc.hasvariable(expr.name)) {
 		gen.mov(target, gen.curfunc.varlookup[expr.name], 1);
 	}
@@ -241,7 +254,7 @@ static void generate_nameexpression(bytecodegenerator &gen, node &_expr, std::ui
 	else if(gen.curfunc.hasupvalue(expr.name)) {
 		// TODO
 	} */
-	else if (expr.name == "_ENV" || expr.name == "_G") {
+	else if (expr.name == "_ENV") {
 		gen.emit(bytecode::instruction_opcode_ENVIRONMENT, target);
 	}
 	else {
@@ -249,11 +262,11 @@ static void generate_nameexpression(bytecodegenerator &gen, node &_expr, std::ui
 	}
 }
 
-static void generate_functioncallexpression(bytecodegenerator &gen, node &_expr, std::uint32_t target, std::uint32_t size) {
-	auto &expr = *dynamic_cast<expressions::functioncallexpression *>(&_expr);
-	auto &arglist = *dynamic_cast<args *>(expr.arglist.get());
+GENERATEFUNC(functioncallexpression) {
+	INIT(functioncallexpression);
+	auto &arglist = *dynamic_cast<args *>(expr.arglist);
 
-	std::uint32_t stacksize = std::max(size, static_cast<std::uint32_t>(arglist.children.size() + 1 + (expr.methodname ? 1 : 0)));
+	std::uint32_t stacksize = std::max(size, static_cast<std::uint32_t>(arglist.arglist.size() + 1 + (expr.methodname ? 1 : 0)));
 
 	bool using_temp = stacksize > size || target == -1;
 	auto functionindex = target;
@@ -264,8 +277,8 @@ static void generate_functioncallexpression(bytecodegenerator &gen, node &_expr,
 
 	if (expr.methodname) {
 		gen.runexpressionhandler(expr.funcexpr, argsindex, 1);
-		expressions::stringexpression name(*expr.methodname);
-		gen.runexpressionhandler(name, functionindex, 1);
+		expressions::stringexpression method(*expr.methodname);
+		gen.runexpressionhandler(&method, functionindex, 1);
 		gen.emit(bytecode::instruction_opcode_INDEX, functionindex, argsindex, functionindex);
 
 		argsindex++;
@@ -276,15 +289,15 @@ static void generate_functioncallexpression(bytecodegenerator &gen, node &_expr,
 
 	auto opcode = bytecode::instruction_opcode_CALL;
 
-	auto argsize = arglist.children.size();
+	auto argsize = arglist.arglist.size();
 
-	for (int i = 0; i < arglist.children.size(); i++) {
-		auto &arg = arglist.children[i];	
-		if (dynamic_cast<expressions::varargexpression *>(arg.get()) && i == arglist.children.size() - 1) {
+	for (int i = 0; i < arglist.arglist.size(); i++) {
+		auto &arg = arglist.arglist[i];	
+		if (dynamic_cast<expressions::varargexpression *>(arg) && i == arglist.arglist.size() - 1) {
 			opcode = bytecode::instruction_opcode_CALLV;
 			argsize--;
 		}
-		else if (auto call = dynamic_cast<expressions::functioncallexpression *>(arg.get()) && i == arglist.children.size() - 1) {
+		else if (auto call = dynamic_cast<expressions::functioncallexpression *>(arg) && i == arglist.arglist.size() - 1) {
 			opcode = bytecode::instruction_opcode_CALLM;
 			gen.runexpressionhandler(arg, -1, 0);
 			argsize--;
@@ -304,42 +317,42 @@ static void generate_functioncallexpression(bytecodegenerator &gen, node &_expr,
 	}
 }
 
-static void populate_tablevalue(bytecode::tablevalue *val, bytecodegenerator &gen, node &_expr) {
-	if (auto numvalue = dynamic_cast<expressions::numberexpression *>(&_expr)) {
+static void populate_tablevalue(bytecode::tablevalue *val, bytecodegenerator &gen, node *_expr) {
+	if (auto numvalue = dynamic_cast<expressions::numberexpression *>(_expr)) {
 		val->set_type(bytecode::tablevalue_valuetype_NUMBER);
 		val->set_index(gen.add(numvalue->data));
 	}
-	else if (auto strvalue = dynamic_cast<expressions::stringexpression *>(&_expr)) {
+	else if (auto strvalue = dynamic_cast<expressions::stringexpression *>(_expr)) {
 		val->set_type(bytecode::tablevalue_valuetype_STRING);
 		val->set_index(gen.add(strvalue->data));
 	}
-	else if (auto strvalue = dynamic_cast<expressions::trueexpression *>(&_expr)) {
+	else if (auto strvalue = dynamic_cast<expressions::trueexpression *>(_expr)) {
 		val->set_type(bytecode::tablevalue_valuetype_CONSTANT);
 		val->set_index(0);
 	}
-	else if (auto strvalue = dynamic_cast<expressions::falseexpression *>(&_expr)) {
+	else if (auto strvalue = dynamic_cast<expressions::falseexpression *>(_expr)) {
 		val->set_type(bytecode::tablevalue_valuetype_CONSTANT);
 		val->set_index(1);
 	}
-	else if (auto strvalue = dynamic_cast<expressions::nilexpression *>(&_expr)) {
+	else if (auto strvalue = dynamic_cast<expressions::nilexpression *>(_expr)) {
 		val->set_type(bytecode::tablevalue_valuetype_CONSTANT);
 		val->set_index(2);
 	}
 	else {
-		throw exception(string("cannot create tablevalue for ") + _expr.tostring());
+		throw exception(string("cannot create tablevalue for ") + _expr->tostring());
 	}
 }
 
-static void generate_tableexpression(bytecodegenerator &gen, node &_expr, std::uint32_t target, std::uint32_t size) {
-	auto obj = *dynamic_cast<expressions::tableexpression *>(&_expr);
+GENERATEFUNC(tableexpression) {
+	INIT(tableexpression);
 	auto bcid = gen.curfunc.proto->tables_size();
 	gen.emit(bytecode::instruction_opcode_TABLE, target, bcid);
 	auto bcobj = gen.curfunc.proto->add_tables();
-	for (auto &hashpart : obj.hashpart) {
+	for (auto &hashpart : expr.hashpart) {
 		auto bckv = bcobj->add_hashpart();
 		auto key = new bytecode::tablevalue;
 		try {
-			populate_tablevalue(key, gen, *hashpart.first.get());
+			populate_tablevalue(key, gen, hashpart.first);
 		}
 		catch (std::exception &e) {
 			delete key;
@@ -349,7 +362,7 @@ static void generate_tableexpression(bytecodegenerator &gen, node &_expr, std::u
 		bckv->set_allocated_key(key);
 		auto value = new bytecode::tablevalue;
 		try {
-			populate_tablevalue(value, gen, *hashpart.second.get());
+			populate_tablevalue(value, gen, hashpart.second);
 		}
 		catch (std::exception &e) {
 			delete value;
@@ -358,10 +371,15 @@ static void generate_tableexpression(bytecodegenerator &gen, node &_expr, std::u
 		bckv->set_allocated_value(value);
 	}
 
-	for (auto &arraypart : obj.arraypart) {
+	for (auto &arraypart : expr.arraypart) {
 		auto bcarraypart = bcobj->add_arraypart();
-		populate_tablevalue(bcarraypart, gen, *arraypart.get());
+		populate_tablevalue(bcarraypart, gen, arraypart);
 	}
+}
+
+GENERATEFUNC(functionexpression) {
+	INIT(functionexpression);
+	gen.emit(bytecode::instruction_opcode_FNEW, gen.protomap[_expr]);
 }
 
 
@@ -375,7 +393,7 @@ std::unordered_map<std::type_index, expressiongenerator> bytecode::expressionmap
 	ADD(enclosedexpression),
 	ADD(binopexpression),
 	ADD(unopexpression),
-	// ADD(functioncallexpression),
+	ADD(functioncallexpression),
 	ADD(tableexpression),
 	ADD(indexexpression),
 	ADD(dotexpression),

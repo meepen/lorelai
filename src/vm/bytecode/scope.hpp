@@ -143,7 +143,7 @@ namespace lorelai {
 			LORELAI_VISIT_NAME_MACRO(LORELAI_SCOPE_VISIT_MACRO)
 
 		protected:
-			void setnodescope(std::shared_ptr<parser::node> &node) {
+			void setnodescope(parser::node *node) {
 				scopemap[node] = curscope;
 			}
 
@@ -151,7 +151,7 @@ namespace lorelai {
 			std::shared_ptr<scope> curscope = std::make_shared<scope>(0);
 
 		public:
-			std::unordered_map<std::shared_ptr<parser::node>, std::shared_ptr<scope>> scopemap;
+			std::unordered_map<parser::node *, std::shared_ptr<scope>> scopemap;
 			std::vector<std::shared_ptr<scope>> scopes;
 		};
 
@@ -365,8 +365,8 @@ namespace lorelai {
 				onnewvariable(v);
 			}
 
-			void findandaddwrite(std::shared_ptr<parser::node> &obj) {
-				if (auto name = dynamic_cast<parser::expressions::nameexpression *>(obj.get())) {
+			void findandaddwrite(parser::node *obj) {
+				if (auto name = dynamic_cast<parser::expressions::nameexpression *>(obj)) {
 					auto var = curscope->find(name->name);
 					if (var) {
 						var->writes++;
@@ -380,7 +380,7 @@ namespace lorelai {
 			std::vector<std::shared_ptr<scope>> scopes;
 		};
 
-		static _scopemap generatescopemap(std::shared_ptr<parser::node> &container) {
+		static _scopemap generatescopemap(parser::node *container) {
 			variablevisitor visitor;
 			container->accept(visitor, container);
 			return { visitor.scopemap, visitor.scopes };
