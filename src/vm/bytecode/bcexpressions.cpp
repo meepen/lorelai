@@ -307,7 +307,7 @@ GENERATEFUNC(functioncallexpression) {
 		}
 	}
 
-	gen.emit(opcode, functionindex, argsize, target == -1 ? 0 : size + 1);
+	gen.emit(opcode, functionindex, argsize, target == -1 ? 0 : size);
 
 	if (using_temp) {
 		if (target != -1 && size != 0) {

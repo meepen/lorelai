@@ -94,6 +94,11 @@ namespace lorelai {
 			LORELAI_VISIT_FUNCTION(statements::fornumstatement);
 			LORELAI_POSTVISIT_FUNCTION(statements::fornumstatement);
 
+			LORELAI_POSTVISIT_FUNCTION(statements::localfunctionstatement) {
+				variablevisitor::postvisit(obj, container);
+				emit(bytecode::instruction_opcode_FNEW, curfunc.varlookup[obj.name], protomap[&obj]);
+			}
+
 			LORELAI_VISIT_FUNCTION(statements::returnstatement);
 
 			void onnewvariable(scope::variablecontainer var) override {

@@ -47,13 +47,13 @@ namespace lorelai {
 		public:
 			virtual ~state() { }
 			virtual const char *backend() const = 0;
-			virtual void loadfunction(std::shared_ptr<bytecode::prototype> code) = 0;
+			virtual void loadfunction(const bytecode::prototype &code) = 0;
 			virtual void loadnumber(number num) = 0;
 			virtual void loadstring(string str) = 0;
 
 			void loadfunction(const std::string &code);
 
-			virtual _retdata call(int nargs, int nrets) = 0;
+			virtual int call(int nargs, int nrets) = 0;
 
 
 			static std::shared_ptr<state> create();

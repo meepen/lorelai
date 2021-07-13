@@ -40,15 +40,22 @@ void softwarestate::initlibs() {
 	}
 }
 
-state::_retdata softwarestate::call(int nargs, int nrets) {
-	auto old = stack.pushpointer(stack.base + stack.top - nargs - 1);
-	auto tocall = stack[0];
-	auto rets = stack.poppointer(old, tocall.call(*this, nargs, nrets), stack.base + stack.top - nargs - 1, nrets);
+int softwarestate::call(int nargs, int nrets) {
+	stack.stacktop -= nargs + 1;
+	auto oldtop = stack.pushstack(nargs + 1);
+	auto ret = stack[0].call(*this, nargs);
+	auto rets = stack.popstack(oldtop, ret);
+	if (nrets == -1) {
+		nrets = rets;
+	}
 
-	return {
-		stack.base + stack.top - nargs - 1 + nrets,
-		rets
-	};
+	for (int i = rets; i < nrets; i++) {
+		stack.stacktop[i].unset();
+	}
+
+	stack.stacktop += nrets;
+
+	return rets;
 }
 
 softwarestate::softwarestate() : stack(this) {
@@ -56,14 +63,14 @@ softwarestate::softwarestate() : stack(this) {
 	initlibs();
 }
 
-void softwarestate::loadfunction(std::shared_ptr<bytecode::prototype> code) {
-	stack[stack.top++].set(luafunctionobject::create(*this, code));
+void softwarestate::loadfunction(const bytecode::prototype &code) {
+	(stack.stacktop++)->set(luafunctionobject::create(*this, code));
 } 
 void softwarestate::loadnumber(number num) {
-	stack[stack.top++].set(num);
+	(stack.stacktop++)->set(num);
 }
 void softwarestate::loadstring(string str) {
-	stack[stack.top++].set(stringobject::create(*this, str));
+	(stack.stacktop++)->set(stringobject::create(*this, str));
 }
 
 softwarestate::~softwarestate() {

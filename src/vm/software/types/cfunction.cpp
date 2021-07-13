@@ -5,10 +5,10 @@
 using namespace lorelai;
 using namespace lorelai::vm;
 
-state::_retdata cfunctionobject::call(softwarestate &state, int nrets, int nargs) {
-	auto retsize = data(state, nrets, nargs);
+state::_retdata cfunctionobject::call(softwarestate &state, int nargs) {
+	auto retsize = data(state, nargs);
 	return {
-		state->base + state->top - retsize,
+		static_cast<int>(state->stacktop - state->stackptr) - retsize,
 		retsize
 	};
 }

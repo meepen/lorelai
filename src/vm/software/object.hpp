@@ -19,7 +19,7 @@
 namespace lorelai {
 	namespace vm {
 		class softwarestate;
-		using luafunction = int (*)(softwarestate &state, int nargs, int nrets);
+		using luafunction = int (*)(softwarestate &state, int nargs);
 		class object;
 
 		class referenceobject {
@@ -44,7 +44,7 @@ namespace lorelai {
 
 			virtual bool            LORELAI_SOFTWARE_DEFAULT_FUNCTION(rawget,      softwarestate &state, object &out, const object &index)
 			virtual void            LORELAI_SOFTWARE_DEFAULT_FUNCTION(rawset,      softwarestate &state, const object &index, const object &data)
-			virtual state::_retdata LORELAI_SOFTWARE_DEFAULT_FUNCTION(call,        softwarestate &state, int nargs, int nrets)
+			virtual state::_retdata LORELAI_SOFTWARE_DEFAULT_FUNCTION(call,        softwarestate &state, int nargs)
 			virtual void            LORELAI_SOFTWARE_DEFAULT_FUNCTION(setindex,    softwarestate &state, object &key, object &value)
 
 			void LORELAI_SOFTWARE_DEFAULT_FUNCTION(length,      softwarestate &state, object &out)
@@ -315,12 +315,12 @@ namespace lorelai {
 				return raw.ref->setindex(state, key, value);
 			}
 
-			state::_retdata call  (softwarestate &state, int nargs, int nrets) {
+			state::_retdata call  (softwarestate &state, int nargs) {
 				if (type < TABLE) {
 					throw exception(string("NYI: cannot call ") + gettypename());
 				}
 
-				return raw.ref->call(state, nargs, nrets);
+				return raw.ref->call(state, nargs);
 			}
 
 			void convertexception(const char *what) {
@@ -456,10 +456,10 @@ namespace lorelai {
 			};
 			void fromtablevalue(object &out, const bytecode::tablevalue &data);
 		public:
-			static object create(softwarestate &state, std::shared_ptr<bytecode::prototype> proto);
+			static object create(softwarestate &state, const bytecode::prototype &proto);
 
 		public:
-			luafunctionobject(softwarestate &state, std::shared_ptr<bytecode::prototype> proto);
+			luafunctionobject(softwarestate &state, const bytecode::prototype &proto);
 			luafunctionobject();
 
 		public:
@@ -467,7 +467,7 @@ namespace lorelai {
 				return LUAFUNCTION;
 			}
 
-			state::_retdata call(softwarestate &state, int nargs, int nrets) override;
+			state::_retdata call(softwarestate &state, int nargs) override;
 
 		public:
 			struct instruction;
@@ -492,7 +492,7 @@ namespace lorelai {
 				return CFUNCTION;
 			}
 
-			state::_retdata call(softwarestate &state, int nargs, int nrets) override;
+			state::_retdata call(softwarestate &state, int nargs) override;
 
 		public:
 			luafunction data;

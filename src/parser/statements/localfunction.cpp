@@ -14,13 +14,13 @@ localfunctionstatement::localfunctionstatement(lexer &lex) {
 
 	lex.expect("function", "local function");
 
-	name  = new nameexpression(lex);
+	name  = nameexpression(lex).name;
 	block = new funcbody(lex);
 }
 
 string localfunctionstatement::tostring() {
 	std::stringstream stream;
-	stream << "local function " << name->tostring();
+	stream << "local function " << name;
 
 	// do we want to add the child nodes here?
 

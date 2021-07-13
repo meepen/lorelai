@@ -44,5 +44,8 @@ std::shared_ptr<prototype> lorelai::bytecode::create(chunk &data) {
 	bytecodegenerator generator(protomap.protomap);
 	data.accept(generator, n);
 
+	auto r = generator.curfunc.proto;
+	r->set_stacksize(generator.curfunc.maxsize);
+
 	return generator.curfunc.proto;
 }

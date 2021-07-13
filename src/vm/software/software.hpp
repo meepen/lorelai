@@ -24,61 +24,52 @@ namespace lorelai {
 		public:
 			template <int size>
 			class _stack {
-				struct stackpos {
-					int base;
-					int top;
-				};
-
 			private:
 				_stack(const _stack &other) { }
 				_stack(_stack &&other) { }
 
 			public:
-				_stack(softwarestate *_st) : st(_st), data(new object[size]) {
+				_stack(softwarestate *_st) : st(_st), stackbase(new object[size]) {
+					stackptr = stackbase;
+					stacktop = stackbase;
 					for (int i = 0; i < size; i++) {
-						data[i].unset();
+						stackbase[i].unset();
 					}
 				}
 				~_stack() {
-					delete[] data;
+					delete[] stackbase;
 				}
 
-				object &operator[](const int index) {
-					return data[base + index];
+				object &operator[](const int &index) {
+					return stackptr[index];
 				}
 
-				stackpos pushpointer(int _base) {
-					stackpos old = {base, top};
-					base = _base;
-					top = 0;
+				int pushstack(int reserved) {
+					int old = stackptr - stackbase;
+					stackptr = stacktop;
+					stacktop = stackptr + reserved;
 					return old;
 				}
 
-				int poppointer(const stackpos old, const state::_retdata retdata, int to = 0, int amount = 0) {
-					if (amount == -1) {
-						amount = retdata.retsize;
+				int popstack(const int &old, const state::_retdata &retdata) {
+					for (int i = 0; i < retdata.retsize; i++) {
+						stackptr[i].set(stackptr[i + retdata.retbase]);
 					}
 
-					for (int i = 1; i <= std::min(amount, retdata.retsize); i++) {
-						data[to + i - 1] = data[retdata.retbase + i - 1];
-					}
+					stacktop = stackptr;
+					stackptr = stackbase + old;
 
-					for (int i = std::min(amount, retdata.retsize) + 1; i <= amount; i++) {
-						data[to + i - 1] = object();
-					}
+					// TODO: nil old stack
 
-					top = old.top;
-					base = old.base;
-
-					return amount;
+					return retdata.retsize;
 				}
 
 			public:
 				softwarestate *st = nullptr;
 
-				object *data;
-				int base = 0;
-				int top = 0;
+				object *const stackbase = nullptr;
+				object *stackptr = nullptr;
+				object *stacktop = nullptr;
 			};
 		public:
 			softwarestate();
@@ -87,10 +78,10 @@ namespace lorelai {
 			void initlibs();
 
 			const char *backend() const override { return "software"; }
-			void loadfunction(std::shared_ptr<bytecode::prototype> code) override;
+			void loadfunction(const bytecode::prototype &code) override;
 			void loadnumber(number num) override;
 			void loadstring(string num) override;
-			_retdata call(int nargs, int nrets) override;
+			int call(int nargs, int nrets) override;
 
 			object &operator[](int index) {
 				return stack[index];

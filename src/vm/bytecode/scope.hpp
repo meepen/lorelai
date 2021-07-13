@@ -273,6 +273,13 @@ namespace lorelai {
 				createvariable(obj.left);
 			}
 
+			LORELAI_VISIT_FUNCTION(statements::localfunctionstatement) {
+				createvariable(obj.name);
+				scopevisitor::visit(obj, container);
+
+				return false;
+			}
+
 			LORELAI_VISIT_FUNCTION(statements::assignmentstatement) {
 				for (auto &child : obj.left) {
 					findandaddwrite(child);

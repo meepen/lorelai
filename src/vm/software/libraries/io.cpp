@@ -7,7 +7,7 @@
 using namespace lorelai;
 using namespace lorelai::vm;
 
-static int io_write(softwarestate &state, int nargs, int nrets) {
+static int io_write(softwarestate &state, int nargs) {
 	for (int i = 1; i <= nargs; i++) {
 		std::cout << state[i].tostring(state);
 	}

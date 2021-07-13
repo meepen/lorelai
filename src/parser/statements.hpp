@@ -145,11 +145,11 @@ namespace lorelai {
 				string tostring() override;
 
 				std::vector<node **> getchildren() override {
-					return { &name, &block };
+					return { &block };
 				}
 
 			public:
-				node *name = nullptr;
+				string name;
 			};
 
 			class fornumstatement : public loopstatement {

@@ -172,7 +172,7 @@ int main(int argc, char *argv[]) {
 		}
 
 		auto state = lorelai::vm::state::create();
-		state->loadfunction(bytecode);
+		state->loadfunction(*bytecode.get());
 		state->call(0, 0);
 	}
 	catch (ArgException &e) {

@@ -47,13 +47,11 @@ void luafunctionobject::fromtablevalue(object &out, const bytecode::tablevalue &
 }
 
 
-state::_retdata luafunctionobject::call(softwarestate &state, int nrets, int nargs) {
+state::_retdata luafunctionobject::call(softwarestate &state, int nargs) {
 	int multres = 0;
 	state::_retdata retdata {0, 0};
 
-	auto stackptr = &state[0];
-
-	state->top = state->base + stacksize;
+	state->stacktop = state->stackptr + stacksize;
 	auto starts = allocated.get();
 	auto ends = starts + size;
 
@@ -66,19 +64,19 @@ state::_retdata luafunctionobject::call(softwarestate &state, int nrets, int nar
 		vmcase(RETURN)
 			return retdata;
 		vmcase (JMPIFTRUE)
-			if (stackptr[instr->a].tobool(state)) {
+			if (state[instr->a].tobool(state)) {
 				next = starts + instr->b;
 			}
 			vmbreak;
 		vmcase (JMPIFFALSE)
-			if (!stackptr[instr->a].tobool(state)) {
+			if (!state[instr->a].tobool(state)) {
 				next = starts + instr->b;
 			}
 			vmbreak;
 		vmcase (FORCHECK) {
 			auto a = instr->a;
-			if (!(stackptr[a + 2].tonumber(state) > 0 ? stackptr[a].tonumber(state) <= stackptr[a + 1].tonumber(state)
-				: stackptr[a + 2].tonumber(state) <= 0 && stackptr[a].tonumber(state) >= stackptr[a + 1].tonumber(state))) {
+			if (!(state[a + 2].tonumber(state) > 0 ? state[a].tonumber(state) <= state[a + 1].tonumber(state)
+				: state[a + 2].tonumber(state) <= 0 && state[a].tonumber(state) >= state[a + 1].tonumber(state))) {
 				next = starts + instr->b;
 			}
 			vmbreak;
@@ -89,13 +87,13 @@ state::_retdata luafunctionobject::call(softwarestate &state, int nrets, int nar
 		vmcase (CONSTANT) {
 			switch (instr->b) {
 			case 0:
-				stackptr[instr->a].set(true);
+				state[instr->a].set(true);
 				vmbreak;
 			case 1:
-				stackptr[instr->a].set(false);
+				state[instr->a].set(false);
 				vmbreak;
 			default:
-				stackptr[instr->a].unset();
+				state[instr->a].unset();
 				vmbreak;
 			}
 			vmbreak;
@@ -104,98 +102,104 @@ state::_retdata luafunctionobject::call(softwarestate &state, int nrets, int nar
 			auto a = instr->a, b = instr->b, c = instr->c + 1;
 
 			while (c--) {
-				stackptr[a++].set(stackptr[b++]);
+				state[a++].set(state[b++]);
 			}
 			vmbreak;
 		}
-		vmcase (CALLM) {
+		/*vmcase (CALLM) {
 			// A .. A+C-2 = A(A+1 .. A + B, ...)
 			for (int i = multres - 1; i >= 0; i--) {
-				stackptr[state->top + i + instr->b + 1].set(stackptr[state->top + i]);
+				state->stacktop[i + instr->b + 1].set(state->stacktop[i]);
 			}
 			for (unsigned i = 0; i <= instr->b; i++) {
-				stackptr[state->top + i].set(stackptr[instr->a + i]);
+				state->stacktop[i].set(state[instr->a + i]);
 			}
 
-			auto old = state->pushpointer(state->base + state->top);
-			auto data = stackptr[0];
-			auto nret = data.call(state, instr->b + multres, instr->c - 1);
+			state[0].call(state, instr->b + multres, instr->c - 1);
 			if (instr->c >= 1) {
-				state->poppointer(old, nret, old.base + instr->a, instr->c - 1);
+				// x res
 			}
 			else {
-				multres = state->poppointer(old, nret, old.base + old.top, -1);
+				// multres
 			}
 			vmbreak;
-		}
+		}*/
 		vmcase (CALL) {
-			// A .. A+C-2 = A(A+1 .. A + B)
-			auto old = state->pushpointer(state->base + instr->a);
-			auto nret = state[0].call(state, instr->b, instr->c - 1);
-			if (instr->c >= 1) {
-				state->poppointer(old, nret, old.base + instr->a, instr->c - 1);
+			// A .. A+C-1, ... = A(A+1 .. A + B)
+			for (int i = 0; i <= instr->b; i++) {
+				state->stacktop[i].set(state[instr->a + i]);
 			}
-			else {
-				multres = state->poppointer(old, nret, old.base + old.top, -1);
+			auto old = state->pushstack(instr->b + 1);
+			auto retdata = state[0].call(state, instr->b);
+			auto nrets = state->popstack(old, retdata);
+
+			for (int i = 0; i < instr->c; i++) {
+				state[instr->a + i].set(state->stacktop[i]);
 			}
+
+			multres = nrets - instr->c;
+			for (int i = instr->c; i < nrets; i++) {
+				state->stacktop[i].set(state->stacktop[i + instr->c]);
+			}
+
 			vmbreak;
 		}
 		vmcase (MINUS)
-			stackptr[instr->a].set(-stackptr[instr->b].tonumber(state));
+			state[instr->a].set(-state[instr->b].tonumber(state));
 			vmbreak;
 		vmcase (ENVIRONMENTGET)
-			state.registry.index(state, stackptr[instr->a], strings[instr->b]);
+			state.registry.index(state, state[instr->a], strings[instr->b]);
 			vmbreak;
 		vmcase (STRING)
-			stackptr[instr->a].set(strings[instr->b]);
+			state[instr->a].set(strings[instr->b]);
 			vmbreak;
 		vmcase (NUMBER)
-			stackptr[instr->a].set(numbers[instr->b]);
+			state[instr->a].set(numbers[instr->b]);
 			vmbreak;
 		vmcase (INDEX)
-			stackptr[instr->b].index(state, stackptr[instr->a], stackptr[instr->c]);
+			state[instr->b].index(state, state[instr->a], state[instr->c]);
 			vmbreak;
 		vmcase (SETINDEX)
-			stackptr[instr->a].setindex(state, stackptr[instr->b], stackptr[instr->c]);
+			state[instr->a].setindex(state, state[instr->b], state[instr->c]);
 			vmbreak;
 		vmcase (NOT)
-			stackptr[instr->a].set(!stackptr[instr->b].tobool(state));
+			state[instr->a].set(!state[instr->b].tobool(state));
 			vmbreak;
 		vmcase (NOTEQUALS)
-			stackptr[instr->a].set(!stackptr[instr->c].equals(state, stackptr[instr->b]));
+			state[instr->a].set(!state[instr->c].equals(state, state[instr->b]));
 			vmbreak;
 		vmcase (LESSTHANEQUAL)
-			stackptr[instr->a].set(!stackptr[instr->c].lessthan(state, stackptr[instr->b]));
+			state[instr->a].set(!state[instr->c].lessthan(state, state[instr->b]));
 			vmbreak;
 		vmcase (LESSTHAN)
-			stackptr[instr->a].set(stackptr[instr->b].lessthan(state, stackptr[instr->c]));
+			state[instr->a].set(state[instr->b].lessthan(state, state[instr->c]));
 			vmbreak;
 		vmcase (EQUALS)
-			stackptr[instr->a].set(stackptr[instr->b].equals(state, stackptr[instr->c]));
+			state[instr->a].set(state[instr->b].equals(state, state[instr->c]));
 			vmbreak;
 		vmcase (GREATERTHANEQUAL)
-			stackptr[instr->a].set(!stackptr[instr->c].greaterthan(state, stackptr[instr->b]));
+			state[instr->a].set(!state[instr->c].greaterthan(state, state[instr->b]));
 			vmbreak;
 		vmcase (GREATERTHAN)
-			stackptr[instr->a].set(stackptr[instr->b].greaterthan(state, stackptr[instr->c]));
+			state[instr->a].set(state[instr->b].greaterthan(state, state[instr->c]));
 			vmbreak;
 		vmcase (ADD)
-			stackptr[instr->b].add(state, stackptr[instr->a], stackptr[instr->c]);
+			state[instr->b].add(state, state[instr->a], state[instr->c]);
 			vmbreak;
 		vmcase (SUBTRACT)
-			stackptr[instr->b].subtract(state, stackptr[instr->a], stackptr[instr->c]);
+			state[instr->b].subtract(state, state[instr->a], state[instr->c]);
 			vmbreak;
 		vmcase (MODULO)
-			stackptr[instr->b].modulo(state, stackptr[instr->a], stackptr[instr->c]);
+			state[instr->b].modulo(state, state[instr->a], state[instr->c]);
 			vmbreak;
 		vmcase (CONCAT)
-			stackptr[instr->b].concat(state, stackptr[instr->a], stackptr[instr->c]);
+			state[instr->b].concat(state, state[instr->a], state[instr->c]);
 			vmbreak;
 		vmcase (MULTIPLY)
-			stackptr[instr->b].multiply(state, stackptr[instr->a], stackptr[instr->c]);
+			state[instr->b].multiply(state, state[instr->a], state[instr->c]);
 			vmbreak;
 		vmcase (DIVIDE)
-			stackptr[instr->b].divide(state, stackptr[instr->a], stackptr[instr->c]);
+			state[instr->b].divide(state, state[instr->a], state[instr->c]);
 			vmbreak;
 		vmcase (TABLE) {
 			auto tbl = tableobject::create(state);
@@ -213,7 +217,11 @@ state::_retdata luafunctionobject::call(softwarestate &state, int nrets, int nar
 				fromtablevalue(val, arr);
 				tbl.rawset(state, static_cast<double>(++i), val);
 			}
-			stackptr[instr->a].set(tbl);
+			state[instr->a].set(tbl);
+			vmbreak;
+		}
+		vmcase (FNEW) {
+			state[instr->a].set();
 			vmbreak;
 		}
 		default:
@@ -221,12 +229,12 @@ state::_retdata luafunctionobject::call(softwarestate &state, int nrets, int nar
 	}
 }
 
-object luafunctionobject::create(softwarestate &state, std::shared_ptr<bytecode::prototype> proto) {
+object luafunctionobject::create(softwarestate &state, const bytecode::prototype &proto) {
 	return *state.memory.allocate<luafunctionobject>(LUAFUNCTION, state, proto)->get<luafunctionobject>();
 }
 
-luafunctionobject::luafunctionobject(softwarestate &state, std::shared_ptr<bytecode::prototype> proto) {
-	auto oob = proto->instructions_size();
+luafunctionobject::luafunctionobject(softwarestate &state, const bytecode::prototype &proto) {
+	auto oob = proto.instructions_size();
 	size = oob + 1;
 	allocated = std::shared_ptr<instruction>(new instruction[size], std::default_delete<instruction[]>());
 	allocated.get()[oob] = {
@@ -238,8 +246,8 @@ luafunctionobject::luafunctionobject(softwarestate &state, std::shared_ptr<bytec
 
 	auto instructions = allocated.get();
 
-	for (int i = 0; i < proto->instructions_size(); i++) {
-		auto &instr = proto->instructions(i);
+	for (int i = 0; i < proto.instructions_size(); i++) {
+		auto &instr = proto.instructions(i);
 
 		if (instr.op() > bytecode::instruction_opcode_opcode_MAX) {
 			throw exception(string("unknown opcode: ") + bytecode::instruction_opcode_Name(instr.op()));
@@ -254,8 +262,8 @@ luafunctionobject::luafunctionobject(softwarestate &state, std::shared_ptr<bytec
 
 	// add fastlookup alternative jump to necessary ops
 
-	for (int i = 0; i < proto->instructions_size(); i++) {
-		auto &patchproto = proto->instructions(i);
+	for (int i = 0; i < proto.instructions_size(); i++) {
+		auto &patchproto = proto.instructions(i);
 		auto &patchinstr = instructions[i];
 
 		switch (patchproto.op()) {
@@ -272,16 +280,16 @@ luafunctionobject::luafunctionobject(softwarestate &state, std::shared_ptr<bytec
 		}
 	}
 
-	for (int i = 0; i < proto->strings_size(); i++) {
-		strings.push_back(stringobject::create(state, proto->strings(i)));
+	for (int i = 0; i < proto.strings_size(); i++) {
+		strings.push_back(stringobject::create(state, proto.strings(i)));
 	}
 
-	for (int i = 0; i < proto->numbers_size(); i++) {
-		numbers.push_back(object(proto->numbers(i)));
+	for (int i = 0; i < proto.numbers_size(); i++) {
+		numbers.push_back(object(proto.numbers(i)));
 	}
 
-	for (int i = 0; i < proto->tables_size(); i++) {
-		auto &tbl = proto->tables(i);
+	for (int i = 0; i < proto.tables_size(); i++) {
+		auto &tbl = proto.tables(i);
 		tabledata data;
 		for (int j = 0; j < tbl.hashpart_size(); j++) {
 			auto &hashpart = tbl.hashpart(j);
@@ -293,7 +301,7 @@ luafunctionobject::luafunctionobject(softwarestate &state, std::shared_ptr<bytec
 		tables.push_back(data);
 	}
 
-	stacksize = proto->stacksize();
+	stacksize = proto.stacksize();
 }
 
 luafunctionobject::luafunctionobject() { }
