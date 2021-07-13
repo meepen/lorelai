@@ -221,7 +221,8 @@ state::_retdata luafunctionobject::call(softwarestate &state, int nargs) {
 			vmbreak;
 		}
 		vmcase (FNEW) {
-			state[instr->a].set();
+			auto &fn = *state.memory.allocate<luafunctionobject>(LUAFUNCTION, protos[instr->b])->get<luafunctionobject>();
+			state[instr->a].set(fn);
 			vmbreak;
 		}
 		default:
@@ -299,6 +300,10 @@ luafunctionobject::luafunctionobject(softwarestate &state, const bytecode::proto
 			data.arraypart.push_back(tbl.arraypart(j));
 		}
 		tables.push_back(data);
+	}
+
+	for (int i = 0; i < proto.protos_size(); i++) {
+		protos.push_back(luafunctionobject(state, proto.protos(i)));
 	}
 
 	stacksize = proto.stacksize();

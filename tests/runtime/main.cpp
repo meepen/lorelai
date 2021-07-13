@@ -159,7 +159,7 @@ int main(int argc, char *argv[]) {
 			return 0;
 		}
 
-		auto bytecode = lorelai::bytecode::create(mainchunk);
+		std::unique_ptr<lorelai::bytecode::prototype> bytecode(lorelai::bytecode::create(mainchunk));
 
 		if (bytecodeonly.getValue()) {
 			if (raw.getValue()) {

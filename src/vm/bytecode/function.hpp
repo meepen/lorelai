@@ -11,8 +11,25 @@ namespace lorelai {
 	namespace bytecode {
 		class function : public stack {
 		public:
-			function() {}
+			function(function *_parent = nullptr) : parent(_parent) {
+				if (parent) {
+					proto = parent->proto->add_protos();
+				}
+				else {
+					proto = new bytecode::prototype();
+				}
+			}
 			~function() { }
+
+			bytecode::prototype * release() {
+				if (parent) {
+					throw;
+				}
+				auto r = proto;
+				r->set_stacksize(maxsize);
+				proto = nullptr;
+				return r;
+			}
 
 			int add(string str) {
 				auto found = strings.find(str); 
@@ -57,12 +74,13 @@ namespace lorelai {
 			}
 
 		public:
-			std::shared_ptr<bytecode::prototype> proto = std::make_shared<bytecode::prototype>();
+			bytecode::prototype *proto;
 			std::unordered_map<string, int> strings;
 			std::unordered_map<number, int> numbers;
 			std::unordered_map<string, std::uint32_t> varlookup;
+			std::vector<function> children;
 
-			std::shared_ptr<function> parent;
+			function *parent;
 		};
 	}
 }

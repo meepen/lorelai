@@ -477,6 +477,7 @@ namespace lorelai {
 			std::vector<object> strings;
 			std::vector<object> numbers;
 			std::vector<tabledata> tables;
+			std::vector<luafunctionobject> protos;
 		};
 
 		class cfunctionobject : public functionobject {

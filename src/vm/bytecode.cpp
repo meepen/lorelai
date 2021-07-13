@@ -36,7 +36,7 @@ public:
 	std::unordered_map<node *, std::uint32_t> protomap;
 };
 
-std::shared_ptr<prototype> lorelai::bytecode::create(chunk &data) {
+prototype *lorelai::bytecode::create(chunk &data) {
 	node *n = &data;
 	protogen protomap;
 	data.accept(protomap, n);
@@ -44,8 +44,5 @@ std::shared_ptr<prototype> lorelai::bytecode::create(chunk &data) {
 	bytecodegenerator generator(protomap.protomap);
 	data.accept(generator, n);
 
-	auto r = generator.curfunc.proto;
-	r->set_stacksize(generator.curfunc.maxsize);
-
-	return generator.curfunc.proto;
+	return generator.funcptr->release();
 }
