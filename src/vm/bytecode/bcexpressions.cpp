@@ -114,7 +114,7 @@ public:
 			bool free_right = false;
 			gen.runexpressionhandler(expr.lhs, target, 1);
 
-			if (free_right = !get(expr.rhs, &rhs_stack, false)) {
+			if ((free_right = !get(expr.rhs, &rhs_stack, false))) {
 				rhs_stack = gen.funcptr->getslots(1);
 				gen.runexpressionhandler(expr.rhs, rhs_stack, 1);
 			}

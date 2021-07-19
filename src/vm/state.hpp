@@ -5,16 +5,25 @@
 #include <memory>
 #include "types.hpp"
 
+// STRING must be a power of two
+// NUMBER must be a power of two
 #define LORELAI_TYPES(fn) \
+	fn(UNUSED) \
 	fn(NIL) \
-	fn(BOOL) \
 	fn(NUMBER) \
-	fn(TABLE) \
+	fn(BOOL) \
 	fn(STRING) \
 	fn(LUAFUNCTION) \
-	fn(CFUNCTION)
+	fn(CFUNCTION) \
+	fn(TABLE)
+
 
 namespace lorelai {
+	template<int N>
+	struct poweroftwo {
+		enum {val = (N > 0) & !(N & (N - 1))};
+	};
+
 	namespace bytecode {
 		class prototype;
 	}
@@ -25,6 +34,14 @@ namespace lorelai {
 			LORELAI_TYPES(LORELAI_LITERAL)
 		};
 #undef LORELAI_LITERAL
+
+		static_assert(-1 == ~0, "must be two's complement");
+
+		static_assert(poweroftwo<NUMBER>::val, "NUMBER must be a power of two");
+		static_assert(poweroftwo<STRING>::val, "STRING must be a power of two");
+
+#define LORELAI_ISREFERENCETYPE(x) (((x) & ~(lorelai::vm::_type::STRING - 1)) != 0)
+
 #define LORELAI_STRING(x) #x,
 		static const char *typenames[] = {
 			LORELAI_TYPES(LORELAI_STRING)

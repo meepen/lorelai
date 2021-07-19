@@ -193,7 +193,7 @@ state::_retdata luafunctionobject::call(softwarestate &state, int nargs) {
 			state[instr->b].modulo(state, state[instr->a], state[instr->c]);
 			vmbreak;
 		vmcase (CONCAT)
-			state[instr->b].concat(state, state[instr->a], state[instr->c]);
+			state[instr->b].set(stringobject::create(state, state[instr->a].tostring(state) + state[instr->c].tostring(state)));
 			vmbreak;
 		vmcase (MULTIPLY)
 			state[instr->b].multiply(state, state[instr->a], state[instr->c]);
