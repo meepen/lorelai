@@ -62,6 +62,9 @@ message instruction {
 		FORCHECK = 40; // if (!((A + 2) > 0 ? (A) <= (A + 1) : (A + 2) <= 0 && (A) >= (A + 1)) { JMP(instruction(B)) }
 
 		FNEW     = 41; // A = function(B)
+
+		
+		MOV1      = 42;  // A = B
 	}
 
 	opcode op = 1;

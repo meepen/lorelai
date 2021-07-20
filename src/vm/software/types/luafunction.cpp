@@ -53,10 +53,9 @@ state::_retdata luafunctionobject::call(softwarestate &state, int nargs) {
 
 	state->stacktop = state->stackptr + stacksize;
 	auto starts = allocated.get();
-	auto ends = starts + size;
 
-	instruction *instr = starts;
-	instruction *next = instr;
+	instruction *instr;
+	instruction *next = starts;
 
 	instructionstart:
 	instr = next++;
@@ -109,6 +108,9 @@ state::_retdata luafunctionobject::call(softwarestate &state, int nargs) {
 			}
 			vmbreak;
 		}
+		vmcase (MOV1)
+			state[instr->a].set(state[instr->b]);
+			vmbreak;
 		/*vmcase (CALLM) {
 			// A .. A+C-2 = A(A+1 .. A + B, ...)
 			for (int i = multres - 1; i >= 0; i--) {

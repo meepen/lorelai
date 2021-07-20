@@ -29,17 +29,16 @@ namespace lorelai {
 		};
 		static_assert(sizeof(number) == sizeof(std::uint64_t), "number must be 64 bit");
 
+		constexpr auto exponentmask = static_cast<std::uint64_t>(0x7FF) << 52;
+
 		LORELAI_INLINE constexpr std::uint64_t encodetype(const boxed_type t) {
-			return (static_cast<std::uint64_t>(t) << 48) | (static_cast<std::uint64_t>(0x7FF) << 52);
+			return (static_cast<std::uint64_t>(t) << 48) | exponentmask;
 		}
 		LORELAI_INLINE constexpr boxed_type decodetype(std::uint64_t d) {
 			return static_cast<boxed_type>((d >> 48) & 7);
 		}
 		LORELAI_INLINE constexpr bool hasencodedtype(std::uint64_t d) {
-			return ((d >> 52) & 0x7FF) == 0x7FF;
-		}
-		LORELAI_INLINE constexpr std::uint64_t exponents(std::uint64_t a) {
-			return a & (static_cast<std::uint64_t>(0x7FF) << 52);
+			return (d & exponentmask) == exponentmask;
 		}
 
 		class softwarestate;
@@ -145,23 +144,23 @@ namespace lorelai {
 				data = encodetype(BOXED_TYPE_REFERENCE) | reinterpret_cast<std::uintptr_t>(&ref);
 			}
 
-			LORELAI_INLINE void set(const bool &b) {
-				data = (b ? encodetype(BOXED_TYPE_TRUE) : encodetype(BOXED_TYPE_FALSE));
+			LORELAI_INLINE constexpr void set(const bool &b) {
+				data = (b * encodetype(BOXED_TYPE_TRUE)) | (!b * encodetype(BOXED_TYPE_FALSE));
 			}
 
-			LORELAI_INLINE void set(const number &n) {
+			LORELAI_INLINE constexpr void set(const number &n) {
 				num = n;
 			}
 
-			LORELAI_INLINE void set(const object &other) {
+			LORELAI_INLINE constexpr void set(const object &other) {
 				data = other.data;
 			}
 
-			LORELAI_INLINE void set() {
+			LORELAI_INLINE constexpr void set() {
 				data = encodetype(BOXED_TYPE_NIL);
 			}
 
-			LORELAI_INLINE void unset() {
+			LORELAI_INLINE constexpr void unset() {
 				set();
 			}
 

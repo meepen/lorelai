@@ -335,6 +335,12 @@ void bytecodegenerator::pushornil(std::vector<lorelai::parser::node *> &v, int i
 }
 
 instruction *bytecodegenerator::emit(instruction_opcode opcode, std::uint32_t a, std::uint32_t b, std::uint32_t c) {
+	if (funcptr->proto->instructions_size() > 0) {
+		auto last = funcptr->proto->mutable_instructions(funcptr->proto->instructions_size() - 1);
+		if (last->op() == bytecode::instruction_opcode_MOV && last->c() == 0) {
+			last->set_op(bytecode::instruction_opcode_MOV1);
+		}
+	}
 	auto instruction = funcptr->proto->add_instructions();
 	instruction->set_op(opcode);
 	instruction->set_a(a);
