@@ -5,7 +5,7 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "(gdb) test-parser",
+			"name": "(gdb) run test file",
 			"type": "cppdbg",
 			"request": "launch",
 			"program": "${workspaceFolder}/bin/debug/x86-64/lorelai",

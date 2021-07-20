@@ -75,8 +75,11 @@ state::_retdata luafunctionobject::call(softwarestate &state, int nargs) {
 			vmbreak;
 		vmcase (FORCHECK) {
 			auto a = instr->a;
-			if (!(state[a + 2].tonumber(state) > 0 ? state[a].tonumber(state) <= state[a + 1].tonumber(state)
-				: state[a + 2].tonumber(state) <= 0 && state[a].tonumber(state) >= state[a + 1].tonumber(state))) {
+			auto start = state[a].tonumber(state);
+			auto ends = state[a + 1].tonumber(state);
+			auto step = state[a + 2].tonumber(state);
+
+			if (!(step > 0 ? start <= ends : step <= 0 && start >= ends)) {
 				next = starts + instr->b;
 			}
 			vmbreak;

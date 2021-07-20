@@ -18,14 +18,38 @@
 
 namespace lorelai {
 	namespace vm {
+		static_assert(-1 == ~0, "must be two's complement");
+
+		enum boxed_type {
+			BOXED_TYPE_NUMBER = 0,
+			BOXED_TYPE_NIL,
+			BOXED_TYPE_REFERENCE, // MUST BE POWER OF TWO
+			BOXED_TYPE_TRUE,
+			BOXED_TYPE_FALSE,
+		};
+		static_assert(sizeof(number) == sizeof(std::uint64_t), "number must be 64 bit");
+
+		LORELAI_INLINE constexpr std::uint64_t encodetype(const boxed_type t) {
+			return (static_cast<std::uint64_t>(t) << 48) | (static_cast<std::uint64_t>(0x7FF) << 52);
+		}
+		LORELAI_INLINE constexpr boxed_type decodetype(std::uint64_t d) {
+			return static_cast<boxed_type>((d >> 48) & 7);
+		}
+		LORELAI_INLINE constexpr bool hasencodedtype(std::uint64_t d) {
+			return ((d >> 52) & 0x7FF) == 0x7FF;
+		}
+		LORELAI_INLINE constexpr std::uint64_t exponents(std::uint64_t a) {
+			return a & (static_cast<std::uint64_t>(0x7FF) << 52);
+		}
+
 		class softwarestate;
 		using luafunction = int (*)(softwarestate &state, int nargs);
-		class object;
+		struct object;
 
 		class referenceobject {
 		public:
 			virtual ~referenceobject() { }
-			virtual _type _typeid() const = 0;
+			virtual data_type _typeid() const = 0;
 
 			virtual size_t hash() const {
 				return std::hash<uintptr_t>()(reinterpret_cast<uintptr_t>(this));
@@ -46,14 +70,25 @@ namespace lorelai {
 			[[noreturn]] virtual void            LORELAI_SOFTWARE_DEFAULT_FUNCTION(length,      softwarestate &state, object &out)
 			[[noreturn]] virtual bool            LORELAI_SOFTWARE_DEFAULT_FUNCTION(lessthan,    softwarestate &state, object &rhs);
 			[[noreturn]] virtual bool            LORELAI_SOFTWARE_DEFAULT_FUNCTION(greaterthan, softwarestate &state, object &rhs);
-			[[noreturn]] virtual void            LORELAI_SOFTWARE_DEFAULT_FUNCTION(add,         softwarestate &state, object &out, object &rhs);
-			[[noreturn]] virtual void            LORELAI_SOFTWARE_DEFAULT_FUNCTION(subtract,    softwarestate &state, object &out, object &rhs);
-			[[noreturn]] virtual void            LORELAI_SOFTWARE_DEFAULT_FUNCTION(divide,      softwarestate &state, object &out, object &rhs);
-			[[noreturn]] virtual void            LORELAI_SOFTWARE_DEFAULT_FUNCTION(multiply,    softwarestate &state, object &out, object &rhs);
-			[[noreturn]] virtual void            LORELAI_SOFTWARE_DEFAULT_FUNCTION(power,       softwarestate &state, object &out, object &rhs);
-			[[noreturn]] virtual void            LORELAI_SOFTWARE_DEFAULT_FUNCTION(modulo,      softwarestate &state, object &out, object &rhs);
 
-			inline bool equals(softwarestate &state, object &other);
+			// math functions
+			[[noreturn]] virtual void            LORELAI_SOFTWARE_DEFAULT_FUNCTION(add_rhs,         softwarestate &state, object &out, object &rhs);
+			[[noreturn]] virtual void            LORELAI_SOFTWARE_DEFAULT_FUNCTION(subtract_rhs,    softwarestate &state, object &out, object &rhs);
+			[[noreturn]] virtual void            LORELAI_SOFTWARE_DEFAULT_FUNCTION(divide_rhs,      softwarestate &state, object &out, object &rhs);
+			[[noreturn]] virtual void            LORELAI_SOFTWARE_DEFAULT_FUNCTION(multiply_rhs,    softwarestate &state, object &out, object &rhs);
+			[[noreturn]] virtual void            LORELAI_SOFTWARE_DEFAULT_FUNCTION(power_rhs,       softwarestate &state, object &out, object &rhs);
+			[[noreturn]] virtual void            LORELAI_SOFTWARE_DEFAULT_FUNCTION(modulo_rhs,      softwarestate &state, object &out, object &rhs);
+
+			[[noreturn]] virtual void            LORELAI_SOFTWARE_DEFAULT_FUNCTION(add_lhs,         softwarestate &state, object &out, object &rhs);
+			[[noreturn]] virtual void            LORELAI_SOFTWARE_DEFAULT_FUNCTION(subtract_lhs,    softwarestate &state, object &out, object &rhs);
+			[[noreturn]] virtual void            LORELAI_SOFTWARE_DEFAULT_FUNCTION(divide_lhs,      softwarestate &state, object &out, object &rhs);
+			[[noreturn]] virtual void            LORELAI_SOFTWARE_DEFAULT_FUNCTION(multiply_lhs,    softwarestate &state, object &out, object &rhs);
+			[[noreturn]] virtual void            LORELAI_SOFTWARE_DEFAULT_FUNCTION(power_lhs,       softwarestate &state, object &out, object &rhs);
+			[[noreturn]] virtual void            LORELAI_SOFTWARE_DEFAULT_FUNCTION(modulo_lhs,      softwarestate &state, object &out, object &rhs);
+
+			// compare functions
+			bool equals_rhs(softwarestate &state, object &rhs);
+			bool equals_lhs(softwarestate &state, object &rhs);
 
 			inline void concat(softwarestate &state, object &out, object &other);
 
@@ -70,18 +105,27 @@ namespace lorelai {
 			virtual object metatable(softwarestate &state) const = 0;
 		};
 
-		class object {
+		struct object {
 		public:
-			union multidata {
-				number num;
-				bool b;
-				referenceobject *ref;
-			};
+			LORELAI_INLINE referenceobject &ref() {
+				return *reinterpret_cast<referenceobject *>(data & ~(static_cast<std::uint64_t>(0xFFFF) << 48));
+			}
+
+			LORELAI_INLINE boxed_type boxtype() {
+				if (!hasencodedtype(data)) {
+					return BOXED_TYPE_NUMBER;
+				}
+
+				return decodetype(data);
+			}
+
+			LORELAI_INLINE bool fast_numbercheck(object &other) {
+				return !(hasencodedtype(data) | hasencodedtype(other.data));
+			}
 
 		public:
 			LORELAI_INLINE object(const object &obj) {
-				type = obj.type;
-				raw = obj.raw;
+				set(obj);
 			}
 			LORELAI_INLINE object(referenceobject &ref) {
 				set(ref);
@@ -98,27 +142,23 @@ namespace lorelai {
 
 		public:
 			LORELAI_INLINE void set(referenceobject &ref) {
-				type = STRING;
-				raw.ref = &ref;
+				data = encodetype(BOXED_TYPE_REFERENCE) | reinterpret_cast<std::uintptr_t>(&ref);
 			}
 
 			LORELAI_INLINE void set(const bool &b) {
-				type = BOOL;
-				raw.b = b;
+				data = (b ? encodetype(BOXED_TYPE_TRUE) : encodetype(BOXED_TYPE_FALSE));
 			}
 
-			LORELAI_INLINE void set(const number &num) {
-				type = NUMBER;
-				raw.num = num;
+			LORELAI_INLINE void set(const number &n) {
+				num = n;
 			}
 
 			LORELAI_INLINE void set(const object &other) {
-				type = other.type;
-				raw = other.raw;
+				data = other.data;
 			}
 
 			LORELAI_INLINE void set() {
-				type = NIL;
+				data = encodetype(BOXED_TYPE_NIL);
 			}
 
 			LORELAI_INLINE void unset() {
@@ -126,48 +166,29 @@ namespace lorelai {
 			}
 
 			// this is used for c++ structures and cannot be modified
-			// easily done with reference comparisons
 			bool operator==(const object &other) const {
-				if (type != other.type) {
-					return false;
+				if (!hasencodedtype(data) & !hasencodedtype(other.data)) {
+					return num == other.num;
 				}
 
-				switch (type) {
-				case NUMBER:
-					return raw.num == other.raw.num;
-				case BOOL:
-					return raw.b == other.raw.b;
-				case NIL:
-					return true;
-				default:
-					return raw.ref == other.raw.ref;
-				}
+				return data == other.data;
 			}
 
 		public:
 			// called in lua vm
 			LORELAI_INLINE bool equals        (softwarestate &state, object &other) {
-				// if either can potentially have a custom metamethod be ran, pass through to the reference object to check
-				if (LORELAI_ISREFERENCETYPE(type | other.type)) {
-					return raw.ref->equals(state, other);
+				if (!hasencodedtype(data) & !hasencodedtype(other.data)) {
+					return num == other.num;
 				}
 
-				// otherwise, check types
-				// regular object can only be equal to the same type
-				if (type != other.type) {
-					return false;
+				if (decodetype(data) & BOXED_TYPE_REFERENCE) {
+					return ref().equals_lhs(state, other);
+				}
+				else if (decodetype(other.data) == BOXED_TYPE_REFERENCE) {
+					return other.ref().equals_rhs(state, *this);
 				}
 
-				switch (type) {
-				case NUMBER:
-					return raw.num == other.raw.num;
-				case BOOL:
-					return raw.b == other.raw.b;
-				case NIL:
-					return true;
-				default:
-					return false;
-				}
+				return data == other.data;
 			}
 
 			LORELAI_INLINE bool lessthan      (softwarestate &state, object &other) {
@@ -178,119 +199,99 @@ namespace lorelai {
 			}
 
 			LORELAI_INLINE void add(softwarestate &state, object &out, object &other) {
-				if ((type | other.type) == NUMBER) {
-					out.set(raw.num + other.raw.num);
-				}
-				else if (LORELAI_ISREFERENCETYPE(type | other.type)) {
-					throw;
+				if (fast_numbercheck(other)) {
+					out.set(num + other.num);
 				}
 				else {
-					out.set(tonumber(state) + other.tonumber(state));
+					convertexception("number");
 				}
 			}
 
 			LORELAI_INLINE void subtract(softwarestate &state, object &out, object &other) {
-				if ((type | other.type) == NUMBER) {
-					out.set(raw.num - other.raw.num);
-				}
-				else if (LORELAI_ISREFERENCETYPE(type | other.type)) {
-					throw;
+				if (fast_numbercheck(other)) {
+					out.set(num - other.num);
 				}
 				else {
-					out.set(tonumber(state) - other.tonumber(state));
+					convertexception("number");
 				}
 			}
 
 			LORELAI_INLINE void divide(softwarestate &state, object &out, object &other) {
-				// if either can potentially have a custom metamethod be ran, pass through to the reference object to check
-				if (type == NUMBER && other.type == NUMBER) {
-					out.set(raw.num / other.raw.num);
-				}
-				else if (LORELAI_ISREFERENCETYPE(type | other.type)) {
-					throw;
+				if (fast_numbercheck(other)) {
+					out.set(num / other.num);
 				}
 				else {
-					out.set(tonumber(state) / other.tonumber(state));
+					convertexception("number");
 				}
 			}
 
 			LORELAI_INLINE void multiply(softwarestate &state, object &out, object &other) {
-				if ((type | other.type) == NUMBER) {
-					out.set(raw.num * other.raw.num);
-				}
-				else if (LORELAI_ISREFERENCETYPE(type | other.type)) {
-					throw;
+				if (fast_numbercheck(other)) {
+					out.set(num * other.num);
 				}
 				else {
-					out.set(tonumber(state) * other.tonumber(state));
+					convertexception("number");
 				}
 			}
 
 			LORELAI_INLINE void power(softwarestate &state, object &out, object &other) {
-				if ((type | other.type) == NUMBER) {
-					out.set(std::pow(raw.num, other.raw.num));
-				}
-				else if (LORELAI_ISREFERENCETYPE(type | other.type)) {
-					throw;
+				if (fast_numbercheck(other)) {
+					out.set(std::pow(num, other.num));
 				}
 				else {
-					out.set(std::pow(tonumber(state), other.tonumber(state)));
+					convertexception("number");
 				}
 			}
 
 			LORELAI_INLINE void modulo(softwarestate &state, object &out, object &other) {
-				if ((type | other.type) == NUMBER) {
-					auto a = raw.num, b = other.raw.num;
+				if (fast_numbercheck(other)) {
+					auto a = num, b = other.num;
 
 					out.set(a - b * std::floor(a / b));
-				}
-				else if (LORELAI_ISREFERENCETYPE(type | other.type)) {
-					throw;
 				}
 				else {
-					auto a = tonumber(state), b = other.tonumber(state);
-
-					out.set(a - b * std::floor(a / b));
+					convertexception("number");
 				}
 			}
 
 			LORELAI_INLINE bool rawget(softwarestate &state, object &out, const object &index) {
-				if (!LORELAI_ISREFERENCETYPE(type)) {
-					throw exception(string("NYI: cannot index ") + gettypename());
+				if (!hasencodedtype(data) || decodetype(data) != BOXED_TYPE_REFERENCE) {
+					throw exception(string("NYI: cannot rawget ") + gettypename());
 				}
 
-				return raw.ref->rawget(state, out, index);
+				return ref().rawget(state, out, index);
 			}
+
 			LORELAI_INLINE void rawset(softwarestate &state, const object &index, const object &value) {
-				if (!LORELAI_ISREFERENCETYPE(type)) {
-					throw exception(string("NYI: cannot set index on ") + gettypename());
+				if (!hasencodedtype(data) || decodetype(data) != BOXED_TYPE_REFERENCE) {
+					throw exception(string("NYI: cannot rawset ") + gettypename());
 				}
 
-				return raw.ref->rawset(state, index, value);
+				return ref().rawset(state, index, value);
 			}
 			
 			LORELAI_INLINE bool index            (softwarestate &state, object &out, object &index) {
-				if (!LORELAI_ISREFERENCETYPE(type)) {
+				if (!hasencodedtype(data) || decodetype(data) != BOXED_TYPE_REFERENCE) {
 					throw exception(string("NYI: cannot index ") + gettypename());
 				}
 
-				return raw.ref->index(state, out, index);
+				return ref().index(state, out, index);
 			}
 			
 			LORELAI_INLINE void setindex            (softwarestate &state, object &key, object &value) {
-				if (!LORELAI_ISREFERENCETYPE(type)) {
+				if (!hasencodedtype(data) || decodetype(data) != BOXED_TYPE_REFERENCE) {
 					throw exception(string("NYI: cannot setindex ") + gettypename());
 				}
 
-				return raw.ref->setindex(state, key, value);
+				return ref().setindex(state, key, value);
 			}
 
 			LORELAI_INLINE state::_retdata call  (softwarestate &state, int nargs) {
-				if (!LORELAI_ISREFERENCETYPE(type)) {
+				if (!hasencodedtype(data) || decodetype(data) != BOXED_TYPE_REFERENCE) {
 					throw exception(string("NYI: cannot call ") + gettypename());
 				}
 
-				return raw.ref->call(state, nargs);
+				return ref().call(state, nargs);
 			}
 
 			[[noreturn]] LORELAI_INLINE void convertexception(const char *what) {
@@ -298,63 +299,92 @@ namespace lorelai {
 			}
 
 			LORELAI_INLINE number tonumber(softwarestate &state) {
-				if (type == NUMBER) {
-					return raw.num;
+				if (!hasencodedtype(data)) {
+					return num;
 				}
-				else if (LORELAI_ISREFERENCETYPE(type)) {
-					return raw.ref->tonumber(state);
+				else if (decodetype(data) == BOXED_TYPE_REFERENCE) {
+					return ref().tonumber(state);
 				}
+
 				convertexception("number");
 			}
 
-			LORELAI_INLINE string tostring(softwarestate &state) const {
-				switch (type) {
-				case NIL:
-					return "nil";
-				case BOOL:
-					return raw.b ? "true" : "false";
-				case NUMBER:
-					{
-						std::ostringstream stream;
-						stream.precision(13);
-						stream << raw.num;
-						return stream.str();
-					}
-				default:
-					return raw.ref->tostring(state);
+			LORELAI_INLINE string tostring(softwarestate &state) {
+				if (!hasencodedtype(data)) {
+					std::ostringstream stream;
+					stream.precision(13);
+					stream << num;
+					return stream.str();
 				}
+				switch (decodetype(data)) {
+				case BOXED_TYPE_NIL:
+					return "nil";
+				case BOXED_TYPE_TRUE:
+					return "true";
+				case BOXED_TYPE_FALSE:
+					return "false";
+				case BOXED_TYPE_NUMBER:
+					return "nan";
+				case BOXED_TYPE_REFERENCE:
+					return ref().tostring(state);
+				}
+
+				throw exception("unknown type");
 			}
 
 			LORELAI_INLINE bool tobool(softwarestate &state) {
-				switch (type) {
-					case NIL:
+				if (!hasencodedtype(data)) {
+					return true;
+				}
+
+				switch (decodetype(data)) {
+					case BOXED_TYPE_NIL:
 						return false;
-					case BOOL:
-						return raw.b;
+					case BOXED_TYPE_FALSE:
+						return false;
 					default:
 						return true;
 				}
 			}
 
 			LORELAI_INLINE object metatable(softwarestate &state) {
-				if (LORELAI_ISREFERENCETYPE(type)) {
-					return raw.ref->metatable(state);
+				if (!hasencodedtype(data)) {
+					return object(); /* todo */
 				}
-
-				return object();
+				switch (decodetype(data)) {
+				case BOXED_TYPE_REFERENCE:
+					return ref().metatable(state);
+				default :
+					return object(); /* todo */
+				}
 			}
 
 		public:
 			LORELAI_INLINE const char *gettypename() {
-				if (LORELAI_ISREFERENCETYPE(type)) {
-					return typenames[raw.ref->_typeid()];
+				if (!hasencodedtype(data)) {
+					return typenames[NUMBER];
 				}
-				return typenames[type];
+				switch (decodetype(data)) {
+				case BOXED_TYPE_REFERENCE:
+					return typenames[ref()._typeid()];
+				case BOXED_TYPE_FALSE:
+					return typenames[BOOL];
+				case BOXED_TYPE_TRUE:
+					return typenames[BOOL];
+				case BOXED_TYPE_NIL:
+					return typenames[NIL];
+				case BOXED_TYPE_NUMBER:
+					return typenames[NUMBER];
+				default:
+					throw exception("unknown type");
+				}
 			}
 
 		public:
-			_type type = NIL;
-			multidata raw;
+			union {
+				std::uint64_t data = encodetype(BOXED_TYPE_NIL);
+				number num;
+			};
 		};
 	}
 }
@@ -363,21 +393,15 @@ namespace std {
 	template<>
 	struct hash<lorelai::vm::object> {
 		size_t operator()(const lorelai::vm::object &obj) const {
-			size_t r = std::hash<int>()(obj.type);
-			switch (r) {
-			case lorelai::vm::NUMBER:
-				r ^= std::hash<lorelai::number>()(obj.raw.num);
-				break;
-			case lorelai::vm::BOOL:
-				r ^= std::hash<bool>()(obj.raw.b);
-			case lorelai::vm::NIL:
-				break;
-			default:
-				r ^= obj.raw.ref->hash();
-				break;
+			if (!lorelai::vm::hasencodedtype(obj.data)) {
+				return std::hash<lorelai::number>()(obj.num);
 			}
-
-			return r;
+			switch (lorelai::vm::decodetype(obj.data)) {
+			case lorelai::vm::BOXED_TYPE_NUMBER:
+				return std::hash<lorelai::number>()(obj.num);
+			default:
+				return std::hash<std::uint64_t>()(obj.data);
+			}
 		}
 	};
 }
@@ -393,7 +417,7 @@ namespace lorelai {
 			static object create(softwarestate &state, string str);
 
 
-			_type _typeid() const override {
+			data_type _typeid() const override {
 				return STRING;
 			}
 
@@ -433,7 +457,7 @@ namespace lorelai {
 			luafunctionobject();
 
 		public:
-			_type _typeid() const override {
+			data_type _typeid() const override {
 				return LUAFUNCTION;
 			}
 
@@ -459,7 +483,7 @@ namespace lorelai {
 			cfunctionobject() { }
 
 		public:
-			_type _typeid() const override {
+			data_type _typeid() const override {
 				return CFUNCTION;
 			}
 
@@ -477,7 +501,7 @@ namespace lorelai {
 			tableobject() { }
 
 		public:
-			_type _typeid() const override {
+			data_type _typeid() const override {
 				return TABLE;
 			}
 
@@ -515,10 +539,6 @@ namespace lorelai {
 
 namespace lorelai {
 	namespace vm {
-		inline bool referenceobject::equals(softwarestate &state, object &other) {
-			return other.type == _typeid() && this == other.raw.ref;
-		}
-
 		inline void referenceobject::concat(softwarestate &state, object &out, object &other) {
 			out.set(stringobject::create(state, tostring(state) + other.tostring(state)));
 		}
