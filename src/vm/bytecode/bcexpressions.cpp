@@ -34,7 +34,7 @@ GENERATEFUNC(enclosedexpression) {
 		return;
 	}
 	INIT(enclosedexpression);
-	gen.runexpressionhandler(expr.enclosed, target, size > 0 ? 1 : 0);
+	gen.runexpressionhandler(expr.enclosed, target, 1);
 }
 
 std::unordered_map<string, bytecode::instruction_opcode> binoplookup = {
