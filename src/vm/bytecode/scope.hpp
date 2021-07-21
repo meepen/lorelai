@@ -247,8 +247,8 @@ namespace lorelai {
 					return true;
 				}
 				LORELAI_VISIT_FUNCTION(expressions::nameexpression) {
-					found = true;
-					return true;
+					names.push_back(obj.name);
+					return false;
 				}
 				LORELAI_VISIT_FUNCTION(expressions::dotexpression) {
 					found = true;
@@ -257,6 +257,7 @@ namespace lorelai {
 
 			public:
 				bool found = false;
+				std::vector<string> names;
 			};
 
 		public:
@@ -277,6 +278,27 @@ namespace lorelai {
 					obj.right[i]->accept(confirmer, obj.right[i]);
 					if (confirmer.found) {
 						findandaddwrite(obj.left[i]);
+					}
+					else {
+						auto var = curscope->find(obj.left[i]);
+						auto &refs = variablereferences[*var];
+						for (auto &name : confirmer.names) {
+							auto refvar = curscope->find(name);
+							if (!refvar) {
+								var->writes++;
+								continue;
+							}
+
+							if (refvar->writes > 0) {
+								var->writes++;
+							}
+							else {
+								refs.push_back(*refvar);
+							}
+						}
+						if (confirmer.found) {
+							var->writes++;
+						}
 					}
 				}
 			}
@@ -398,6 +420,9 @@ namespace lorelai {
 					var->writes++;
 				}
 			}
+
+		public:
+			std::unordered_map<variable, std::vector<variable>> variablereferences;
 		};
 
 		struct _scopemap {

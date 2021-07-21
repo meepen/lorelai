@@ -22,10 +22,19 @@ LORELAI_POSTVISIT_DEFINE(bytecodegenerator, statements::localassignmentstatement
 		}
 
 		if (found->writes == 0) {
-			std::cout << "found initial constant var " << n << std::endl;
-			constantmap[*found] = obj.right[i];
-			constants++;
-			continue;
+			auto good = true;
+			for (auto &ref : variablefinder->variablereferences[*found]) {
+				auto fullref = variablefinder->scopes[ref.scopeid]->find(ref);
+				if (fullref->writes > 0) {
+					good = false;
+					break;
+				}
+			}
+			if (good) {
+				constantmap[*found] = obj.right[i];
+				constants++;
+				continue;
+			}
 		}
 
 		lhs.push_back(*found);

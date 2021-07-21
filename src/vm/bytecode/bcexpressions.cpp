@@ -243,7 +243,6 @@ GENERATEFUNC(nameexpression) {
 		gen.mov(target, gen.funcptr->varlookup[expr.name], 1);
 	}
 	else if (auto constant = gen.findconstant(_expr, expr.name)) {
-		std::cout << "found constant use on " << expr.name << std::endl;
 		gen.runexpressionhandler(constant, target, 1);
 	}
 	/*

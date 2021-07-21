@@ -109,24 +109,26 @@ namespace lorelai {
 			LORELAI_VISIT_FUNCTION(statements::returnstatement);
 
 			void onnewvariable(const variable &var) override {
-				if (findfullvar(var)->writes > 0) {
-					funcptr->newstackvariable(var.name);
+				if (isconstant(*findfullvar(var))) {
+					return;
 				}
+				funcptr->newstackvariable(var.name);
 			}
 
 			void onnewvariables(const std::vector<variable> &list) override {
 				std::vector<string> names;
 				for (auto &child : list) {
-					if (findfullvar(child)->writes > 0) {
+					if (!isconstant(*findfullvar(child))) {
 						names.push_back(child.name);
 					}
 				}
 				funcptr->newstackvariables(names);
 			}
 			void onfreevariable(const variable &var) override {
-				if (findfullvar(var)->writes > 0) {
-					funcptr->freestackvariable(var.name);
+				if (isconstant(*findfullvar(var))) {
+					return;
 				}
+				funcptr->freestackvariable(var.name);
 			}
 
 			variable *findfullvar(const variable &v) {
@@ -177,6 +179,22 @@ namespace lorelai {
 				emit(instruction_opcode_MOV, to, from, size - 1);
 			}
 
+			bool isconstant(const variable &var) {
+				if (var.writes > 0) {
+					return false;
+				}
+				auto constant = true;
+				for (auto &ref : variablefinder->variablereferences[var]) {
+					auto fullref = variablefinder->scopes[ref.scopeid]->find(ref);
+					if (fullref->writes > 0) {
+						constant = false;
+						break;
+					}
+				}
+				
+				return constant;
+			}
+
 		public:
 			int add(string str) {
 				return funcptr->add(str);
@@ -203,6 +221,7 @@ namespace lorelai {
 			std::unordered_map<parser::node *, std::uint32_t> protomap;
 			variablevisitor *variablefinder = nullptr;
 			std::unordered_map<variable, parser::node *> constantmap;
+			std::unordered_map<variable, parser::node *> initmap;
 		};
 	}
 }
