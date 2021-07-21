@@ -38,7 +38,7 @@ namespace lorelai {
 			return static_cast<boxed_type>((d >> 48) & 7);
 		}
 		LORELAI_INLINE constexpr bool hasencodedtype(std::uint64_t d) {
-			return (d & exponentmask) == exponentmask;
+			return !((d & exponentmask) ^ exponentmask);
 		}
 
 		class softwarestate;
@@ -119,7 +119,7 @@ namespace lorelai {
 			}
 
 			LORELAI_INLINE bool fast_numbercheck(object &other) {
-				return !(hasencodedtype(data) | hasencodedtype(other.data));
+				return !(hasencodedtype(data) | hasencodedtype(other.data)) || (boxtype() | other.boxtype()) == BOXED_TYPE_NUMBER;
 			}
 
 		public:

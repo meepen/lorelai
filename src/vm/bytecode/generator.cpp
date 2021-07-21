@@ -6,34 +6,6 @@ using namespace lorelai;
 using namespace lorelai::parser;
 using namespace lorelai::bytecode;
 
-class constantconfirmer : public visitor {
-public:
-	using visitor::visit;
-	LORELAI_VISIT_FUNCTION(expressions::tableexpression) {
-		found = true;
-		return true;
-	}
-	LORELAI_VISIT_FUNCTION(expressions::functioncallexpression) {
-		found = true;
-		return true;
-	}
-	LORELAI_VISIT_FUNCTION(expressions::indexexpression) {
-		found = true;
-		return true;
-	}
-	LORELAI_VISIT_FUNCTION(expressions::nameexpression) {
-		found = true;
-		return true;
-	}
-	LORELAI_VISIT_FUNCTION(expressions::dotexpression) {
-		found = true;
-		return true;
-	}
-
-public:
-	bool found = false;
-};
-
 LORELAI_POSTVISIT_DEFINE(bytecodegenerator, statements::localassignmentstatement) {
 	auto fullscope = variablefinder->scopemap[container].get();
 
@@ -50,15 +22,10 @@ LORELAI_POSTVISIT_DEFINE(bytecodegenerator, statements::localassignmentstatement
 		}
 
 		if (found->writes == 0) {
-			constantconfirmer confirmer;
-			parser::node *tmp = obj.right[i];
-			obj.right[i]->accept(confirmer, tmp);
-			if (!confirmer.found) {
-				std::cout << "found initial constant var " << n << std::endl;
-				constantmap[*found] = obj.right[i];
-				constants++;
-				continue;
-			}
+			std::cout << "found initial constant var " << n << std::endl;
+			constantmap[*found] = obj.right[i];
+			constants++;
+			continue;
 		}
 
 		lhs.push_back(*found);

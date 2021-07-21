@@ -278,7 +278,7 @@ luafunctionobject::luafunctionobject(softwarestate &state, const bytecode::proto
 		case bytecode::instruction_opcode_JMPIFNIL:
 		case bytecode::instruction_opcode_JMPIFTRUE:
 		case bytecode::instruction_opcode_FORCHECK:
-			if (patchinstr.b >= oob) {
+			if (patchinstr.b >= size) {
 				throw exception("invalid bytecode: JMP");
 			}
 		default:

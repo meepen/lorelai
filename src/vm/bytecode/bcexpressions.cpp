@@ -10,7 +10,6 @@ using namespace lorelai::bytecode;
 #define GENERATEFUNC(t) static void generate_##t(bytecodegenerator &gen, parser::node *_expr, std::uint32_t target, std::uint32_t size)
 #define INIT(t) expressions::t &expr = dynamic_cast<expressions::t &>(*_expr)
 
-
 GENERATEFUNC(numberexpression) {
 	// when size = 0, no need to init
 	if (size == 0) {
@@ -122,7 +121,7 @@ public:
 
 	bool get(parser::node *expr, std::uint32_t *stackposout, bool leftside) {
 		if (auto name = dynamic_cast<expressions::nameexpression *>(expr)) {
-			if (gen.funcptr->hasvariable(name->name) && !gen.findconstant(expr, name->name)) {
+			if (gen.funcptr->hasvariable(name->name)) {
 				*stackposout = gen.funcptr->varlookup[name->name];
 				return true;
 			}
@@ -241,14 +240,11 @@ GENERATEFUNC(nameexpression) {
 	INIT(nameexpression);
 
 	if (gen.funcptr->hasvariable(expr.name)) {
-		auto constant = gen.findconstant(_expr, expr.name);
-		if (constant) {
-			std::cout << "found constant use on " << expr.name << std::endl;
-			gen.runexpressionhandler(*constant, target, 1);
-		}
-		else {
-			gen.mov(target, gen.funcptr->varlookup[expr.name], 1);
-		}
+		gen.mov(target, gen.funcptr->varlookup[expr.name], 1);
+	}
+	else if (auto constant = gen.findconstant(_expr, expr.name)) {
+		std::cout << "found constant use on " << expr.name << std::endl;
+		gen.runexpressionhandler(constant, target, 1);
 	}
 	/*
 	else if(gen.funcptr->hasupvalue(expr.name)) {
@@ -378,8 +374,11 @@ GENERATEFUNC(tableexpression) {
 }
 
 GENERATEFUNC(functionexpression) {
+	if (size == 0) {
+		return;
+	}
 	INIT(functionexpression);
-	gen.emit(bytecode::instruction_opcode_FNEW, gen.protomap[_expr]);
+	gen.emit(bytecode::instruction_opcode_FNEW, target, gen.protomap[_expr]);
 }
 
 

@@ -183,12 +183,10 @@ workspace "lorelai"
 		defines {"LORELAI_INLINE=inline __attribute__((always_inline))"}
 
 	filter "configurations:release"
-		optimize "Speed"
+		optimize "Full"
 		defines "NDEBUG"
-		floatingpoint "Fast"
 		intrinsics "On"
 		runtime "Release"
-		vectorextensions "SSE2"
 
 
 	filter "platforms:x86"

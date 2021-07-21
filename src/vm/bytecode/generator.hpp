@@ -108,39 +108,44 @@ namespace lorelai {
 
 			LORELAI_VISIT_FUNCTION(statements::returnstatement);
 
-			void processnewvariable(const variable &var) {
-			}
-
 			void onnewvariable(const variable &var) override {
-				funcptr->newstackvariable(var.name);
-				processnewvariable(var);
+				if (findfullvar(var)->writes > 0) {
+					funcptr->newstackvariable(var.name);
+				}
 			}
 
 			void onnewvariables(const std::vector<variable> &list) override {
 				std::vector<string> names;
 				for (auto &child : list) {
-					names.push_back(child.name);
-					processnewvariable(child);
+					if (findfullvar(child)->writes > 0) {
+						names.push_back(child.name);
+					}
 				}
 				funcptr->newstackvariables(names);
 			}
 			void onfreevariable(const variable &var) override {
-				funcptr->freestackvariable(var.name);
+				if (findfullvar(var)->writes > 0) {
+					funcptr->freestackvariable(var.name);
+				}
 			}
 
-			optional<parser::node *> findconstant(parser::node *_expr, string name) {
+			variable *findfullvar(const variable &v) {
+				return variablefinder->scopes[v.scopeid]->find(v);
+			}
+
+			parser::node *findconstant(parser::node *_expr, string name) {
 				auto v = scopes[protomap[_expr]]->find(name);
 				if (!v) {
-					return { };
+					return nullptr;
 				}
 
 				auto found = constantmap.find(*v);
 
 				if (found != constantmap.end()) {
-					return { found->second };
+					return found->second;
 				}
 
-				return { };
+				return nullptr;
 			}
 
 		private:

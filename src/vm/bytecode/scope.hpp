@@ -120,10 +120,8 @@ namespace lorelai {
 				scopemap[node] = curscope;
 			}
 
-		protected:
-			std::shared_ptr<scope> curscope = std::make_shared<scope>(0);
-
 		public:
+			std::shared_ptr<scope> curscope = std::make_shared<scope>(0);
 			std::unordered_map<parser::node *, std::shared_ptr<scope>> scopemap;
 			std::vector<std::shared_ptr<scope>> scopes;
 		};
@@ -232,6 +230,35 @@ namespace lorelai {
 		};
 
 		class variablevisitor : public scopevisitor {
+		protected:
+			class constantconfirmer : public visitor {
+			public:
+				using visitor::visit;
+				LORELAI_VISIT_FUNCTION(expressions::tableexpression) {
+					found = true;
+					return true;
+				}
+				LORELAI_VISIT_FUNCTION(expressions::functioncallexpression) {
+					found = true;
+					return true;
+				}
+				LORELAI_VISIT_FUNCTION(expressions::indexexpression) {
+					found = true;
+					return true;
+				}
+				LORELAI_VISIT_FUNCTION(expressions::nameexpression) {
+					found = true;
+					return true;
+				}
+				LORELAI_VISIT_FUNCTION(expressions::dotexpression) {
+					found = true;
+					return true;
+				}
+
+			public:
+				bool found = false;
+			};
+
 		public:
 			using scopevisitor::visit;
 			using scopevisitor::postvisit;
@@ -244,10 +271,18 @@ namespace lorelai {
 			// postvisit since left side variables don't exist to right side expressions yet
 			LORELAI_POSTVISIT_FUNCTION(statements::localassignmentstatement) {
 				createvariable(obj.left);
+
+				for (size_t i = 0; i < std::min(obj.left.size(), obj.right.size()); i++) {
+					constantconfirmer confirmer;
+					obj.right[i]->accept(confirmer, obj.right[i]);
+					if (confirmer.found) {
+						findandaddwrite(obj.left[i]);
+					}
+				}
 			}
 
 			LORELAI_VISIT_FUNCTION(statements::localfunctionstatement) {
-				createvariable(obj.name);
+				createvariable(obj.name).writes++;
 				scopevisitor::visit(obj, container);
 
 				return false;
@@ -265,7 +300,7 @@ namespace lorelai {
 				scopevisitor::visit(obj, container);
 				for (auto &child : obj.iternames) {
 					// need to hold this for the loop either way
-					auto &v = curscope->newvariable(child);
+					auto &v = createvariable(child);
 					v.accesses++;
 					v.writes++;
 				}
@@ -276,7 +311,7 @@ namespace lorelai {
 			LORELAI_VISIT_FUNCTION(statements::fornumstatement) {
 				scopevisitor::visit(obj, container);
 				// need to hold this for the loop either way
-				auto &v = curscope->newvariable(obj.itername);
+				auto &v = createvariable(obj.itername);
 				v.accesses++;
 				v.writes++;
 
@@ -331,7 +366,8 @@ namespace lorelai {
 
 				onnewvariables(newvars);
 			}
-			void createvariable(string name) {
+
+			variable &createvariable(string name) {
 				auto &v = curscope->newvariable(name);
 
 				if (v.version > 1) { // variable is now shadowed
@@ -344,6 +380,8 @@ namespace lorelai {
 				}
 				
 				onnewvariable(v);
+
+				return v;
 			}
 
 			void findandaddwrite(parser::node *obj) {
@@ -352,6 +390,12 @@ namespace lorelai {
 					if (var) {
 						var->writes++;
 					}
+				}
+			}
+			void findandaddwrite(string &name) {
+				auto var = curscope->find(name);
+				if (var) {
+					var->writes++;
 				}
 			}
 		};
