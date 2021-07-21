@@ -177,6 +177,7 @@ namespace lorelai {
 			class enclosedexpression : public branch, public prefixexpression {
 			public:
 				enclosedexpression(lexer &lex);
+				enclosedexpression(node *_enclosed) : enclosed(_enclosed) { }
 				virtual ~enclosedexpression() { destroy(); }
 
 				void accept(visitor &visit, node *&container) override;

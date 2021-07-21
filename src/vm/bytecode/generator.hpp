@@ -56,7 +56,13 @@ namespace lorelai {
 			using variablevisitor::postvisit;
 
 			bytecodegenerator(std::unordered_map<parser::node *, std::uint32_t> _protomap, variablevisitor &finder) : protomap(_protomap), funcptr(new function()), variablefinder(&finder) { }
-			~bytecodegenerator() { delete funcptr; }
+			~bytecodegenerator() {
+				for (auto &child : allocatedconsts) {
+					delete child;
+				}
+
+				delete funcptr;
+			}
 
 			LORELAI_POSTVISIT_FUNCTION(statements::localassignmentstatement);
 			LORELAI_VISIT_FUNCTION(statements::assignmentstatement);
@@ -221,6 +227,7 @@ namespace lorelai {
 			std::unordered_map<parser::node *, std::uint32_t> protomap;
 			variablevisitor *variablefinder = nullptr;
 			std::unordered_map<variable, parser::node *> constantmap;
+			std::vector<parser::node *> allocatedconsts;
 			std::unordered_map<variable, parser::node *> initmap;
 		};
 	}

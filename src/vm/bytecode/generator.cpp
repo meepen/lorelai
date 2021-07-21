@@ -1,5 +1,6 @@
 #include "generator.hpp"
 #include "bytecode.hpp"
+#include "bcconstants.hpp"
 #include <deque>
 
 using namespace lorelai;
@@ -21,20 +22,17 @@ LORELAI_POSTVISIT_DEFINE(bytecodegenerator, statements::localassignmentstatement
 			throw exception("couldn't find future variable");
 		}
 
-		if (found->writes == 0) {
-			auto good = true;
-			for (auto &ref : variablefinder->variablereferences[*found]) {
-				auto fullref = variablefinder->scopes[ref.scopeid]->find(ref);
-				if (fullref->writes > 0) {
-					good = false;
-					break;
-				}
-			}
-			if (good) {
-				constantmap[*found] = obj.right[i];
-				constants++;
-				continue;
-			}
+		if (isconstant(*found)) {
+			auto expr = obj.right[i];
+			// TODO: why is this slower?
+			/*
+			if (auto newexpr = collapseconstant(*this, *expr)) {
+				expr = newexpr;
+				allocatedconsts.push_back(expr);
+			}*/
+			constantmap[*found] = expr;
+			constants++;
+			continue;
 		}
 
 		lhs.push_back(*found);
