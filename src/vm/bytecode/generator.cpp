@@ -6,48 +6,93 @@ using namespace lorelai;
 using namespace lorelai::parser;
 using namespace lorelai::bytecode;
 
-
-LORELAI_VISIT_DEFINE(bytecodegenerator, statements::localassignmentstatement) { // TODO: VARARG
-	variablevisitor::visit(obj, container);
-
-	auto size = std::min(obj.right.size(), obj.left.size());
-	_assignmentqueue queue { funcptr->getslots(size), static_cast<std::uint32_t>(size) };
-
-	std::uint32_t target = queue.index;
-
-	for (auto &_expr : obj.right) {
-		size_t size = 0;
-		if (obj.left.size() > 0) {
-			// we still have a local variable to assign to
-			size = 1; // TODO: vararg stuff
-		}
-		else {
-			size = 0;
-		}
-
-		runexpressionhandler(_expr, target, size);
-		target++;
+class constantconfirmer : public visitor {
+public:
+	using visitor::visit;
+	LORELAI_VISIT_FUNCTION(expressions::tableexpression) {
+		found = true;
+		return true;
+	}
+	LORELAI_VISIT_FUNCTION(expressions::functioncallexpression) {
+		found = true;
+		return true;
+	}
+	LORELAI_VISIT_FUNCTION(expressions::indexexpression) {
+		found = true;
+		return true;
+	}
+	LORELAI_VISIT_FUNCTION(expressions::nameexpression) {
+		found = true;
+		return true;
+	}
+	LORELAI_VISIT_FUNCTION(expressions::dotexpression) {
+		found = true;
+		return true;
 	}
 
-	assignmentqueue.push_back(queue);
-
-	return false;
-}
-
-
+public:
+	bool found = false;
+};
 
 LORELAI_POSTVISIT_DEFINE(bytecodegenerator, statements::localassignmentstatement) {
+	auto fullscope = variablefinder->scopemap[container].get();
+
+	size_t constants = 0;
+	std::vector<variable> lhs;
+	std::vector<parser::node *> rhs;
+
+	for (size_t i = 0; i < std::min(obj.right.size(), obj.left.size()); i++) {
+		auto n = obj.left[i];
+		// problem: multiple variables with same name
+		auto found = fullscope->find(n, false, curscope->versionof(n) + 1);
+		if (!found) {
+			throw exception("couldn't find future variable");
+		}
+
+		if (found->writes == 0) {
+			constantconfirmer confirmer;
+			parser::node *tmp = obj.right[i];
+			obj.right[i]->accept(confirmer, tmp);
+			if (!confirmer.found) {
+				std::cout << "found initial constant var " << n << std::endl;
+				constantmap[*found] = obj.right[i];
+				constants++;
+				continue;
+			}
+		}
+
+		lhs.push_back(*found);
+		rhs.push_back(obj.right[i]);
+	}
+
+	for (size_t i = std::min(obj.right.size(), obj.left.size()); i < obj.right.size(); i++) {
+		rhs.push_back(obj.right[i]);	
+	}
+
+
+	auto size = obj.right.size() - constants;
+	auto slots = funcptr->getslots(size);
+	auto current = slots;
+
+	for (size_t i = 0; i < rhs.size(); i++) {
+		std::uint32_t target = obj.left.size() < i ? 0 : current++;
+
+		runexpressionhandler(rhs[i], target, 1);
+	}
+
 	variablevisitor::postvisit(obj, container);
-	auto queue = assignmentqueue.back();
-	assignmentqueue.pop_back();
-	// fill the rest with nil
-	auto minsize = std::min((size_t)queue.size, obj.left.size());
-	for (std::uint32_t i = 0; i < minsize; i++) {
-		mov(funcptr->varlookup[obj.left[i]], queue.index + i, 1);
+
+	for (std::uint32_t i = 0; i < lhs.size(); i++) {
+		auto varid = funcptr->varlookup[lhs[i].name];
+		if (rhs.size() < i) {
+			emit(instruction_opcode_CONSTANT, varid, 2);
+		}
+		else {
+			mov(varid, slots + i);
+		}
 	}
-	for (auto i = minsize + 1; i < obj.left.size(); i++) {
-		emit(instruction_opcode_CONSTANT, funcptr->varlookup[obj.left[i]], 2);
-	}
+
+	funcptr->freeslots(slots, size);
 }
 
 
@@ -143,7 +188,7 @@ LORELAI_VISIT_DEFINE(bytecodegenerator, statements::elsestatement) {
 }
 
 LORELAI_POSTVISIT_DEFINE(bytecodegenerator, statements::ifstatement) {
-	variablevisitor::visit(obj, container);
+	variablevisitor::postvisit(obj, container);
 
 	auto &queue = ifqueue.back();
 	if (queue.patch) {

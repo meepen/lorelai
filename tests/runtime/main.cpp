@@ -53,7 +53,7 @@ static void print_scopes(std::vector<std::shared_ptr<lorelai::bytecode::scope>> 
 		std::cout << tab << "scope #" << child->id << " (" << child->variables.size() << ")" << std::endl;
 
 		for (auto &var : child->variables) {
-			std::cout << tab << var->name << " accesses:" << var->accesses << " writes:" << var->writes << std::endl;
+			std::cout << tab << var.name << " accesses:" << var.accesses << " writes:" << var.writes << std::endl;
 		}
 		print_scopes(list, child, idx + 1);
 	}

@@ -283,17 +283,6 @@ workspace "lorelai"
 			"tests/parser/main.cpp",
 		}
 
-	project "test-visitor"
-		kind "ConsoleApp"
-		addlinks "parser"
-
-		includedirs {
-			"tests/visitor",
-		}
-		files {
-			"tests/visitor/main.cpp",
-		}
-
 	filter "platforms:x86 or x86-64"
 		project "test-asmjit-x86"
 			kind "ConsoleApp"

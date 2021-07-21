@@ -12,44 +12,6 @@
 
 namespace lorelai {
 	namespace bytecode {
-		class OLDscope {
-		public:
-			OLDscope *findvariablescope(string name, std::shared_ptr<OLDscope> highest = nullptr) {
-				auto var = variables.find(name);
-				if (var != variables.end()) {
-					return this;
-				}
-
-				if (parent && parent != highest) {
-					return parent->findvariablescope(name);
-				}
-
-				return nullptr;
-			}
-
-			std::uint32_t addvariable(string name, std::uint32_t stackpos) {
-				variables[name] = stackpos;
-				return stackpos;
-			}
-
-			std::uint32_t getvariableindex(string name) {
-				auto var = variables.find(name);
-				if (var != variables.end()) {
-					return var->second;
-				}
-
-				return -1;
-			}
-
-			std::uint32_t hasvariable(string name) {
-				return variables.find(name) != variables.end();
-			}
-
-		public:
-			std::unordered_map<string, std::uint32_t> variables;
-			std::shared_ptr<OLDscope> parent;
-		};
-
 		class variable {
 			friend class scope;
 			friend class variablevisitor;
@@ -67,9 +29,8 @@ namespace lorelai {
 				return other.scopeid == scopeid && version == other.version && name == other.name;
 			}
 
-		private:
-			std::uint32_t scopeid, version;
 		public:
+			std::uint32_t scopeid, version;
 			string name = "";
 
 			std::uint32_t accesses = 0;
@@ -95,11 +56,11 @@ namespace lorelai {
 			using variablecontainer = std::shared_ptr<variable>;
 			scope(std::uint32_t _id, std::shared_ptr<scope> _parent = nullptr) : id(_id), parent(_parent) { }
 
-			variablecontainer newvariable(string name) {
-				variablecontainer v = std::make_shared<variable>(id, name, versionof(name) + 1);
-				shadowmap[v->name] = v->version;
+			variable &newvariable(string name) {
+				variable v(id, name, versionof(name) + 1);
+				shadowmap[v.name] = v.version;
 				variables.push_back(v);
-				return v;
+				return variables.back();
 			}
 
 			std::uint32_t versionof(string name) {
@@ -110,11 +71,13 @@ namespace lorelai {
 				return 0;
 			}
 
-			variablecontainer find(string name, bool recursive = true) {
+			variable *find(string name, bool recursive = true, optional<int> version = { }) {
 				auto it = variables.rbegin();
 				while (it != variables.rend()) {
-					if ((*it)->name == name) {
-						return *it;
+					if (it->name == name) {
+						if (!version || version.value() == it->version) {
+							return &*it;
+						}
 					}
 					it++;
 				}
@@ -126,8 +89,18 @@ namespace lorelai {
 				return nullptr;
 			}
 
+			variable *find(const variable &other) {
+				for (auto &v : variables) {
+					if (v == other) {
+						return &v;
+					}
+				}
+
+				return nullptr;
+			}
+
 		public:
-			std::vector<variablecontainer> variables;
+			std::vector<variable> variables;
 			std::shared_ptr<scope> parent;
 			std::unordered_map<string, std::uint32_t> shadowmap;
 			std::uint32_t id;
@@ -292,9 +265,9 @@ namespace lorelai {
 				scopevisitor::visit(obj, container);
 				for (auto &child : obj.iternames) {
 					// need to hold this for the loop either way
-					auto v = curscope->newvariable(child);
-					v->accesses++;
-					v->writes++;
+					auto &v = curscope->newvariable(child);
+					v.accesses++;
+					v.writes++;
 				}
 
 				return false;
@@ -303,9 +276,9 @@ namespace lorelai {
 			LORELAI_VISIT_FUNCTION(statements::fornumstatement) {
 				scopevisitor::visit(obj, container);
 				// need to hold this for the loop either way
-				auto v = curscope->newvariable(obj.itername);
-				v->accesses++;
-				v->writes++;
+				auto &v = curscope->newvariable(obj.itername);
+				v.accesses++;
+				v.writes++;
 
 				return false;
 			}
@@ -328,9 +301,9 @@ namespace lorelai {
 			}
 
 		public:
-			virtual void onnewvariable(scope::variablecontainer) { }
-			virtual void onnewvariables(const std::vector<scope::variablecontainer> &) { }
-			virtual void onfreevariable(scope::variablecontainer) { }
+			virtual void onnewvariable(const variable &) { }
+			virtual void onnewvariables(const std::vector<variable> &) { }
+			virtual void onfreevariable(const variable &) { }
 
 			void onfreescope() override {
 				for (auto &child : curscope->variables) {
@@ -340,29 +313,30 @@ namespace lorelai {
 
 		private:
 			void createvariable(const std::vector<string> &names) {
-				std::vector<scope::variablecontainer> newvars;
+				std::vector<variable> newvars;
 				for (auto &name : names) {
-					auto v = curscope->newvariable(name);
-					newvars.push_back(v);
+					auto &v = curscope->newvariable(name);
 
-					if (v->version > 1) { // variable is now shadowed
-						for (auto child : curscope->variables) {
-							if (child->version == v->version - 1) {
+					if (v.version > 1) { // variable is now shadowed
+						for (auto &child : curscope->variables) {
+							if (child.version == v.version - 1) {
 								onfreevariable(child);
 								break;
 							}
 						}
 					}
+
+					newvars.push_back(v);
 				}
 
 				onnewvariables(newvars);
 			}
 			void createvariable(string name) {
-				auto v = curscope->newvariable(name);
+				auto &v = curscope->newvariable(name);
 
-				if (v->version > 1) { // variable is now shadowed
-					for (auto child : curscope->variables) {
-						if (child->version == v->version - 1) {
+				if (v.version > 1) { // variable is now shadowed
+					for (auto &child : curscope->variables) {
+						if (child.version == v.version - 1) {
 							onfreevariable(child);
 							break;
 						}

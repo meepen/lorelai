@@ -42,8 +42,6 @@ namespace lorelai {
 				std::uint32_t size;
 			};
 
-			std::vector<_assignmentqueue> assignmentqueue;
-
 			struct _loopqueue {
 				int startinstr;
 				std::uint32_t stackreserved;
@@ -57,10 +55,9 @@ namespace lorelai {
 			using variablevisitor::visit;
 			using variablevisitor::postvisit;
 
-			bytecodegenerator(std::unordered_map<parser::node *, std::uint32_t> _protomap) : protomap(_protomap), funcptr(new function()) { }
+			bytecodegenerator(std::unordered_map<parser::node *, std::uint32_t> _protomap, variablevisitor &finder) : protomap(_protomap), funcptr(new function()), variablefinder(&finder) { }
 			~bytecodegenerator() { delete funcptr; }
 
-			LORELAI_VISIT_FUNCTION(statements::localassignmentstatement);
 			LORELAI_POSTVISIT_FUNCTION(statements::localassignmentstatement);
 			LORELAI_VISIT_FUNCTION(statements::assignmentstatement);
 
@@ -111,18 +108,39 @@ namespace lorelai {
 
 			LORELAI_VISIT_FUNCTION(statements::returnstatement);
 
-			void onnewvariable(scope::variablecontainer var) override {
-				funcptr->newstackvariable(var->name);
+			void processnewvariable(const variable &var) {
 			}
-			void onnewvariables(const std::vector<scope::variablecontainer> &list) override {
+
+			void onnewvariable(const variable &var) override {
+				funcptr->newstackvariable(var.name);
+				processnewvariable(var);
+			}
+
+			void onnewvariables(const std::vector<variable> &list) override {
 				std::vector<string> names;
 				for (auto &child : list) {
-					names.push_back(child->name);
+					names.push_back(child.name);
+					processnewvariable(child);
 				}
 				funcptr->newstackvariables(names);
 			}
-			void onfreevariable(scope::variablecontainer var) override {
-				funcptr->freestackvariable(var->name);
+			void onfreevariable(const variable &var) override {
+				funcptr->freestackvariable(var.name);
+			}
+
+			optional<parser::node *> findconstant(parser::node *_expr, string name) {
+				auto v = scopes[protomap[_expr]]->find(name);
+				if (!v) {
+					return { };
+				}
+
+				auto found = constantmap.find(*v);
+
+				if (found != constantmap.end()) {
+					return { found->second };
+				}
+
+				return { };
 			}
 
 		private:
@@ -178,6 +196,8 @@ namespace lorelai {
 			function *funcptr = nullptr;
 
 			std::unordered_map<parser::node *, std::uint32_t> protomap;
+			variablevisitor *variablefinder = nullptr;
+			std::unordered_map<variable, parser::node *> constantmap;
 		};
 	}
 }

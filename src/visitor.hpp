@@ -25,8 +25,6 @@
 		visit.postvisit(*this, container); \
 		return; \
 	} \
-	delete container; \
-	container = nullptr; \
 }
 
 #define LORELAI_VISIT_NODE_DEFINE(name) \
@@ -35,8 +33,6 @@
 			visit.postvisit(*this, container); \
 			return; \
 		} \
-		delete container; \
-		container = nullptr; \
 	}
 
 
@@ -49,7 +45,7 @@
 
 namespace lorelai {
 	namespace parser {
-		// return true to delete a node
+		// return true to not recurse into a node
 		class visitor {
 		public:
 			LORELAI_VISIT_NAME_MACRO(LORELAI_VISIT_MACRO)

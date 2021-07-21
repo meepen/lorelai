@@ -74,13 +74,6 @@ the ideal output would be
 #3 | ADD              | 4, 4, 3
 #4 | MOV              | 0, 4, 1
 
-currently:
-
-#4 | MOV              | 0, 1, 1
-#5 | MOV              | 4, 2, 1
-#6 | SUBTRACT         | 0, 0, 4
-#7 | MOV              | 4, 3, 1
-#8 | ADD              | 0, 0, 4
 
 */
 
@@ -129,7 +122,7 @@ public:
 
 	bool get(parser::node *expr, std::uint32_t *stackposout, bool leftside) {
 		if (auto name = dynamic_cast<expressions::nameexpression *>(expr)) {
-			if (gen.funcptr->hasvariable(name->name)) {
+			if (gen.funcptr->hasvariable(name->name) && !gen.findconstant(expr, name->name)) {
 				*stackposout = gen.funcptr->varlookup[name->name];
 				return true;
 			}
@@ -248,7 +241,14 @@ GENERATEFUNC(nameexpression) {
 	INIT(nameexpression);
 
 	if (gen.funcptr->hasvariable(expr.name)) {
-		gen.mov(target, gen.funcptr->varlookup[expr.name], 1);
+		auto constant = gen.findconstant(_expr, expr.name);
+		if (constant) {
+			std::cout << "found constant use on " << expr.name << std::endl;
+			gen.runexpressionhandler(*constant, target, 1);
+		}
+		else {
+			gen.mov(target, gen.funcptr->varlookup[expr.name], 1);
+		}
 	}
 	/*
 	else if(gen.funcptr->hasupvalue(expr.name)) {

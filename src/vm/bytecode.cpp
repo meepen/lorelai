@@ -15,12 +15,13 @@ using namespace lorelai::bytecode;
 */
 
 
-class protogen : public visitor {
+class datagen : public variablevisitor {
 public:
 	using visitor::visit;
 	using visitor::postvisit;
 
 	LORELAI_VISIT_FUNCTION(funcbody) {
+		variablevisitor::visit(obj, container);
 		protomap[container] = idlist.back()++;
 
 		idlist.push_back(0);
@@ -28,6 +29,7 @@ public:
 		return false;
 	}
 	LORELAI_POSTVISIT_FUNCTION(funcbody) {
+		variablevisitor::postvisit(obj, container);
 		idlist.pop_back();
 	}
 
@@ -38,10 +40,10 @@ public:
 
 prototype *lorelai::bytecode::create(chunk &data) {
 	node *n = &data;
-	protogen protomap;
-	data.accept(protomap, n);
+	datagen gen;
+	data.accept(gen, n);
 
-	bytecodegenerator generator(protomap.protomap);
+	bytecodegenerator generator(gen.protomap, gen);
 	data.accept(generator, n);
 
 	return generator.funcptr->release();
