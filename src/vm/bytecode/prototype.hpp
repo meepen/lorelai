@@ -2,6 +2,7 @@
 #define LORELAI_PROTOTYPE_HPP_
 
 #include "bytebuffer.hpp"
+#include "types.hpp"
 
 #define LORELAI_OPCODES(fn) \
 	fn(CONSTANT)         /* A = ({true, false, nil})[B] */ \
@@ -118,40 +119,58 @@ namespace lorelai {
 			};
 
 			struct instruct {
-				using uintop = std::uint32_t;
 				instruct() { }
-				instruct(prototype::_opcode _op, uintop _a = 0, uintop _b = 0, uintop _c = 0) : opcode(static_cast<uintop>(_op)), a(_a), b(_b), c(_c) { }
+				instruct(prototype::_opcode _op, std::uint32_t _a = 0, std::uint32_t _b = 0, std::uint32_t _c = 0) : opcode(static_cast<std::uint32_t>(_op)), a(_a), b(_b), c(_c) { }
 
-				instruct &set_a(const uintop &v) {
+				instruct &set_a(const std::uint32_t &v) {
 					a = v;
 
 					return *this;
 				}
-				instruct &set_b(const uintop &v) {
+				instruct &set_b(const std::uint32_t &v) {
 					b = v;
 
 					return *this;
 				}
-				instruct &set_c(const uintop &v) {
+				instruct &set_c(const std::uint32_t &v) {
 					c = v;
 
 					return *this;
 				}
 				instruct &set_op(const _opcode &v) {
-					opcode = static_cast<const uintop>(v);
+					opcode = static_cast<const std::uint32_t>(v);
 
 					return *this;
 				}
+				instruct &set_bc(const std::uint64_t &v) {
+					b = v >> 32;
+					c = v;
+
+					return *this;
+				}
+				instruct &set_bcnum(const number &v) {
+					return set_bc(*reinterpret_cast<const std::uint64_t *>(&v));
+				}
+				std::uint64_t bc() {
+					return (static_cast<std::uint64_t>(b) << 32) | c;
+				}
+				number bcnum() {
+					auto _bc = bc();
+					return *reinterpret_cast<lorelai::number *>(&_bc);
+				}
+
 
 				instruct *operator->() {
 					return this;
 				}
 
-				uintop opcode;
-				uintop a;
-				uintop b;
-				uintop c;
+				std::uint32_t opcode;
+				std::uint32_t a;
+				std::uint32_t b;
+				std::uint32_t c;
 			};
+
+			static_assert(sizeof(instruct) == 16);
 
 			struct instruct_ptr {
 				prototype *proto;
@@ -166,7 +185,7 @@ namespace lorelai {
 			prototype() { }
 
 		public:
-			instruct_ptr addinstruction(_opcode opcode, instruct::uintop a = 0, instruct::uintop b = 0, instruct::uintop c = 0) {
+			instruct_ptr addinstruction(_opcode opcode, std::uint32_t a = 0, std::uint32_t b = 0, std::uint32_t c = 0) {
 				instruct_ptr ins = { this, instructions.size() };
 				instructions.emplace_back(opcode, a, b, c);
 				

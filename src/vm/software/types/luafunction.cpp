@@ -153,7 +153,7 @@ state::_retdata luafunctionobject::call(softwarestate &state, int nargs) {
 			state[instr->a].set(strings[instr->b]);
 			vmbreak;
 		vmcase (NUMBER)
-			state[instr->a].set(numbers[instr->b]);
+			state[instr->a].set(instr->bcnum());
 			vmbreak;
 		vmcase (INDEX)
 			state[instr->b].index(state, state[instr->a], state[instr->c]);

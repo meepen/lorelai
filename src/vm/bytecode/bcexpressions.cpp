@@ -16,7 +16,7 @@ GENERATEFUNC(numberexpression) {
 		return;
 	}
 	INIT(numberexpression);
-	gen.emit(prototype::OP_NUMBER, target, gen.add(expr.data));
+	gen.emit(prototype::OP_NUMBER, target)->set_bcnum(expr.data);
 }
 
 GENERATEFUNC(stringexpression) {
