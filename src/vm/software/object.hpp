@@ -29,7 +29,7 @@ namespace lorelai {
 		};
 		static_assert(sizeof(number) == sizeof(std::uint64_t), "number must be 64 bit");
 
-		constexpr auto exponentmask = static_cast<std::uint64_t>(0x7FF) << 52;
+		constexpr std::uint64_t exponentmask = 0x7FF8000000000000;
 
 		LORELAI_INLINE constexpr std::uint64_t encodetype(const boxed_type t) {
 			return (static_cast<std::uint64_t>(t) << 48) | exponentmask;
@@ -38,7 +38,7 @@ namespace lorelai {
 			return static_cast<boxed_type>((d >> 48) & 7);
 		}
 		LORELAI_INLINE constexpr bool hasencodedtype(std::uint64_t d) {
-			return !((d & exponentmask) ^ exponentmask);
+			return (d & 0x7FFFFFFFFFFFFFFF) >= exponentmask;
 		}
 
 		class softwarestate;
@@ -326,9 +326,10 @@ namespace lorelai {
 					return "nan";
 				case BOXED_TYPE_REFERENCE:
 					return ref().tostring(state);
+				default:
+					throw exception("unknown type");
 				}
 
-				throw exception("unknown type");
 			}
 
 			LORELAI_INLINE bool tobool(softwarestate &state) {

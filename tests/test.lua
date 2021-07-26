@@ -1,4 +1,5 @@
 local t = {1, [false] = true, [true] = false}
+print(0 / 0, 1 / 0, -1 / 0)
 
 t.a = "lmao"
 
