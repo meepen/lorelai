@@ -95,30 +95,24 @@ static void printproto(lorelai::bytecode::prototype &bytecode) {
 	std::cout << "    Prototypes:   " << bytecode.protos_size() << std::endl;
 	std::cout << "    Numbers:      " << bytecode.numbers_size() << std::endl;
 	for (int i = 0; i < bytecode.numbers_size(); i++) {
-		std::cout << "        #" << i << ": " << std::to_string(bytecode.numbers(i)) << std::endl;
+		std::cout << "        #" << i << ": " << std::to_string(bytecode.number(i)) << std::endl;
 	}
 	std::cout << "    Strings:      " << bytecode.strings_size() << std::endl;
 	for (int i = 0; i < bytecode.strings_size(); i++) {
-		std::cout << "        #" << i << ": " << bytecode.strings(i) << std::endl;
-	}
-
-	size_t longest = 0;
-	auto descriptor = lorelai::bytecode::instruction_opcode_descriptor();
-	for (int i = 0; i < descriptor->value_count(); i++) {
-		longest = std::max(descriptor->value(i)->name().length() + 1, longest);
+		std::cout << "        #" << i << ": " << bytecode.string(i) << std::endl;
 	}
 
 	std::string max_index = std::to_string(bytecode.instructions_size() - 1);
 
 	for (int i = 0; i < bytecode.instructions_size(); i++) {	
-		auto &instruct = bytecode.instructions(i);
-		auto instrname = lorelai::bytecode::instruction_opcode_Name(instruct.op());
+		auto &instruct = bytecode.instruction(i);
+		auto instrname = lorelai::bytecode::opcode_names[instruct->opcode];
 
 		std::string index = std::to_string(i);
 
-		std::cout << "#" << index << std::string(max_index.size() - index.size() + 1, ' ') << "| " <<  instrname << std::string(longest - instrname.size(), ' ') << "| ";
+		std::cout << "#" << index << std::string(max_index.size() - index.size() + 1, ' ') << "| " <<  instrname << " | ";
 
-		std::cout << instruct.a() << ", " << instruct.b() << ", " << instruct.c() << std::endl;
+		std::cout << instruct->a << ", " << instruct->b << ", " << instruct->c << std::endl;
 	}
 }
 
@@ -163,7 +157,7 @@ int main(int argc, char *argv[]) {
 
 		if (bytecodeonly.getValue()) {
 			if (raw.getValue()) {
-				std::cout << bytecode->SerializeAsString();
+				throw; // std::cout << bytecode->SerializeAsString();
 				return 0;
 			}
 

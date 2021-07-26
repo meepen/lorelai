@@ -1,7 +1,7 @@
 #ifndef BYTECODE_HPP_
 #define BYTECODE_HPP_
 
-#include "proto/bytecode.pb.h"
+#include "bytecode/prototype.hpp"
 #include "parser.hpp"
 
 namespace lorelai {

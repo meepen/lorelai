@@ -63,7 +63,7 @@ softwarestate::softwarestate() : stack(this) {
 	initlibs();
 }
 
-void softwarestate::loadfunction(const bytecode::prototype &code) {
+void softwarestate::loadfunction(bytecode::prototype &code) {
 	(stack.stacktop++)->set(luafunctionobject::create(*this, code));
 } 
 void softwarestate::loadnumber(number num) {
@@ -89,7 +89,7 @@ softwarestate::~softwarestate() {
 			item->get<cfunctionobject>()->~cfunctionobject();
 			break;
 		default:
-			std::cerr << "unknown gc object type " << std::to_string(item->type) << " ptr: " << item << std::endl;
+			throw;
 		}
 	}
 }

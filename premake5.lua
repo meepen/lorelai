@@ -8,12 +8,6 @@ newoption {
 	description = "Use clang compiler",
 }
 
-local protobuf_include = os.findheader "google/protobuf/port_def.inc"
-
-if (not os.isfile "src/vm/proto/bytecode.pb.h") then
-	os.execute "protoc --proto_path=src/vm/proto/src --cpp_out=src/vm/proto src/vm/proto/src/bytecode.proto"
-end
-
 local libs = {
 	lexer = {
 		includes = {
@@ -60,7 +54,6 @@ local libs = {
 			dirs = {
 				"src",
 				"src/vm",
-				protobuf_include
 			},
 			files = {
 				"src/vm/**.hpp"
@@ -70,12 +63,8 @@ local libs = {
 			"asmjit",
 			"parser",
 			["system:not windows"] = {
-				"protobuf",
 				"pthread",
 			},
-			["system:windows"] = { -- huge sigh
-				"libprotobuf",
-			}
 		},
 	}
 }
@@ -162,12 +151,6 @@ workspace "lorelai"
 	defines {
 		"ASMJIT_STATIC"
 	}
-
-	if (os.findheader "lib/libprotobuf.lib") then
-		libdirs {
-			os.findheader "lib/libprotobuf.lib" .. "/lib"
-		}
-	end
 
 	filter "configurations:debug"
 		defines "DEBUG"

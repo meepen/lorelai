@@ -3,7 +3,7 @@
 using namespace lorelai;
 using namespace lorelai::vm;
 
-object stringobject::create(softwarestate &state, string str) {
+object stringobject::create(softwarestate &state, const string &str) {
 	auto found = state.stringmap.find(str);
 	if (found != state.stringmap.end()) {
 		return *found->second;

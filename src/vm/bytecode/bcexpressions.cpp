@@ -16,7 +16,7 @@ GENERATEFUNC(numberexpression) {
 		return;
 	}
 	INIT(numberexpression);
-	gen.emit(bytecode::instruction_opcode_NUMBER, target, gen.add(expr.data));
+	gen.emit(prototype::OP_NUMBER, target, gen.add(expr.data));
 }
 
 GENERATEFUNC(stringexpression) {
@@ -25,7 +25,7 @@ GENERATEFUNC(stringexpression) {
 		return;
 	}
 	INIT(stringexpression);
-	gen.emit(bytecode::instruction_opcode_STRING, target, gen.add(expr.data));
+	gen.emit(prototype::OP_STRING, target, gen.add(expr.data));
 }
 
 GENERATEFUNC(enclosedexpression) {
@@ -37,25 +37,25 @@ GENERATEFUNC(enclosedexpression) {
 	gen.runexpressionhandler(expr.enclosed, target, 1);
 }
 
-std::unordered_map<string, bytecode::instruction_opcode> binoplookup = {
-	{ "%", bytecode::instruction_opcode_MODULO },
-	{ "-", bytecode::instruction_opcode_SUBTRACT },
-	{ "+", bytecode::instruction_opcode_ADD },
-	{ "/", bytecode::instruction_opcode_DIVIDE },
-	{ "*", bytecode::instruction_opcode_MULTIPLY },
-	{ "..", bytecode::instruction_opcode_CONCAT },
-	{ "^", bytecode::instruction_opcode_POWER },
-	{ "and", bytecode::instruction_opcode_AND },
-	{ "&&", bytecode::instruction_opcode_AND },
-	{ "or", bytecode::instruction_opcode_OR },
-	{ "||", bytecode::instruction_opcode_OR },
-	{ "<", bytecode::instruction_opcode_LESSTHAN },
-	{ "<=", bytecode::instruction_opcode_LESSTHANEQUAL },
-	{ ">", bytecode::instruction_opcode_GREATERTHAN },
-	{ ">=", bytecode::instruction_opcode_GREATERTHANEQUAL },
-	{ "==", bytecode::instruction_opcode_EQUALS },
-	{ "~=", bytecode::instruction_opcode_NOTEQUALS },
-	{ "!=", bytecode::instruction_opcode_NOTEQUALS },
+std::unordered_map<string, prototype::_opcode> binoplookup = {
+	{ "%", prototype::OP_MODULO },
+	{ "-", prototype::OP_SUBTRACT },
+	{ "+", prototype::OP_ADD },
+	{ "/", prototype::OP_DIVIDE },
+	{ "*", prototype::OP_MULTIPLY },
+	{ "..", prototype::OP_CONCAT },
+	{ "^", prototype::OP_POWER },
+	{ "and", prototype::OP_AND },
+	{ "&&", prototype::OP_AND },
+	{ "or", prototype::OP_OR },
+	{ "||", prototype::OP_OR },
+	{ "<", prototype::OP_LESSTHAN },
+	{ "<=", prototype::OP_LESSTHANEQUAL },
+	{ ">", prototype::OP_GREATERTHAN },
+	{ ">=", prototype::OP_GREATERTHANEQUAL },
+	{ "==", prototype::OP_EQUALS },
+	{ "~=", prototype::OP_NOTEQUALS },
+	{ "!=", prototype::OP_NOTEQUALS },
 };
 
 /*
@@ -86,7 +86,7 @@ public:
 				throw;
 			}
 			auto opcode = find->second;
-			if (opcode == bytecode::instruction_opcode_AND || opcode == bytecode::instruction_opcode_OR) {
+			if (opcode == prototype::OP_AND || opcode == prototype::OP_OR) {
 				// these do not have overloads, can ignore binop part
 				auto temp = gen.funcptr->getslots(1);
 				gen.runexpressionhandler(expr.lhs, temp, 1);
@@ -139,11 +139,11 @@ GENERATEFUNC(binopexpression) {
 	binopsimplifier simplify(gen, expr, target, size);
 }
 
-std::unordered_map<string, bytecode::instruction_opcode> unoplookup = {
-	{ "not", bytecode::instruction_opcode_NOT },
-	{ "!", bytecode::instruction_opcode_NOT },
-	{ "#", bytecode::instruction_opcode_LENGTH },
-	{ "-", bytecode::instruction_opcode_MINUS },
+std::unordered_map<string, prototype::_opcode> unoplookup = {
+	{ "not", prototype::OP_NOT },
+	{ "!", prototype::OP_NOT },
+	{ "#", prototype::OP_LENGTH },
+	{ "-", prototype::OP_MINUS },
 };
 
 GENERATEFUNC(unopexpression) {
@@ -153,7 +153,7 @@ GENERATEFUNC(unopexpression) {
 		gen.runexpressionhandler(expr.expr, target, 1);
 		gen.emit(unoplookup[expr.op], target, target);
 	}
-	else if (unoplookup[expr.op] != bytecode::instruction_opcode_NOT) {
+	else if (unoplookup[expr.op] != prototype::OP_NOT) {
 		auto temp = gen.funcptr->getslots(1);
 
 		gen.runexpressionhandler(expr.expr, temp, 1);
@@ -171,21 +171,21 @@ GENERATEFUNC(nilexpression) {
 		return;
 	}
 
-	gen.emit(bytecode::instruction_opcode_CONSTANT, target, 2);
+	gen.emit(prototype::OP_CONSTANT, target, 2);
 }
 GENERATEFUNC(falseexpression) {
 	if (size == 0) {
 		return;
 	}
 
-	gen.emit(bytecode::instruction_opcode_CONSTANT, target, 1);
+	gen.emit(prototype::OP_CONSTANT, target, 1);
 }
 GENERATEFUNC(trueexpression) {
 	if (size == 0) {
 		return;
 	}
 
-	gen.emit(bytecode::instruction_opcode_CONSTANT, target, 0);
+	gen.emit(prototype::OP_CONSTANT, target, 0);
 }
 
 GENERATEFUNC(indexexpression) {
@@ -201,7 +201,7 @@ GENERATEFUNC(indexexpression) {
 
 	auto temp = gen.funcptr->getslots(1);
 	gen.runexpressionhandler(expr.index, temp, 1);
-	gen.emit(bytecode::instruction_opcode_INDEX, target, target, temp);
+	gen.emit(prototype::OP_INDEX, target, target, temp);
 	gen.funcptr->freeslots(temp, 1);
 
 	if (is_temp) {
@@ -224,7 +224,7 @@ GENERATEFUNC(dotexpression) {
 	auto temp = gen.funcptr->getslots(1);
 	expressions::stringexpression index(expr.index);
 	gen.runexpressionhandler(&index, temp, 1);
-	gen.emit(bytecode::instruction_opcode_INDEX, target, target, temp);
+	gen.emit(prototype::OP_INDEX, target, target, temp);
 	gen.funcptr->freeslots(temp, 1);
 
 	if (is_temp) {
@@ -250,10 +250,10 @@ GENERATEFUNC(nameexpression) {
 		// TODO
 	} */
 	else if (expr.name == "_ENV") {
-		gen.emit(bytecode::instruction_opcode_ENVIRONMENT, target);
+		gen.emit(prototype::OP_ENVIRONMENT, target);
 	}
 	else {
-		gen.emit(bytecode::instruction_opcode_ENVIRONMENTGET, target, gen.add(expr.name));
+		gen.emit(prototype::OP_ENVIRONMENTGET, target, gen.add(expr.name));
 	}
 }
 
@@ -274,7 +274,7 @@ GENERATEFUNC(functioncallexpression) {
 		gen.runexpressionhandler(expr.funcexpr, argsindex, 1);
 		expressions::stringexpression method(*expr.methodname);
 		gen.runexpressionhandler(&method, functionindex, 1);
-		gen.emit(bytecode::instruction_opcode_INDEX, functionindex, argsindex, functionindex);
+		gen.emit(prototype::OP_INDEX, functionindex, argsindex, functionindex);
 
 		argsindex++;
 	}
@@ -282,18 +282,18 @@ GENERATEFUNC(functioncallexpression) {
 		gen.runexpressionhandler(expr.funcexpr, functionindex, 1);
 	}
 
-	auto opcode = bytecode::instruction_opcode_CALL;
+	auto opcode = prototype::OP_CALL;
 
 	auto argsize = arglist.arglist.size();
 
 	for (int i = 0; i < arglist.arglist.size(); i++) {
 		auto &arg = arglist.arglist[i];	
 		if (dynamic_cast<expressions::varargexpression *>(arg) && i == arglist.arglist.size() - 1) {
-			opcode = bytecode::instruction_opcode_CALLV;
+			opcode = prototype::OP_CALLV;
 			argsize--;
 		}
 		else if (auto call = dynamic_cast<expressions::functioncallexpression *>(arg) && i == arglist.arglist.size() - 1) {
-			opcode = bytecode::instruction_opcode_CALLM;
+			opcode = prototype::OP_CALLM;
 			gen.runexpressionhandler(arg, -1, 0);
 			argsize--;
 		}
@@ -312,25 +312,25 @@ GENERATEFUNC(functioncallexpression) {
 	}
 }
 
-static void populate_tablevalue(bytecode::tablevalue *val, bytecodegenerator &gen, node *_expr) {
+static void populate_tablevalue(prototype::_tablevalue *val, bytecodegenerator &gen, node *_expr) {
 	if (auto numvalue = dynamic_cast<expressions::numberexpression *>(_expr)) {
-		val->set_type(bytecode::tablevalue_valuetype_NUMBER);
+		val->set_type(prototype::_tablevalue::NUMBER);
 		val->set_index(gen.add(numvalue->data));
 	}
 	else if (auto strvalue = dynamic_cast<expressions::stringexpression *>(_expr)) {
-		val->set_type(bytecode::tablevalue_valuetype_STRING);
+		val->set_type(prototype::_tablevalue::STRING);
 		val->set_index(gen.add(strvalue->data));
 	}
 	else if (auto strvalue = dynamic_cast<expressions::trueexpression *>(_expr)) {
-		val->set_type(bytecode::tablevalue_valuetype_CONSTANT);
+		val->set_type(prototype::_tablevalue::CONSTANT);
 		val->set_index(0);
 	}
 	else if (auto strvalue = dynamic_cast<expressions::falseexpression *>(_expr)) {
-		val->set_type(bytecode::tablevalue_valuetype_CONSTANT);
+		val->set_type(prototype::_tablevalue::CONSTANT);
 		val->set_index(1);
 	}
 	else if (auto strvalue = dynamic_cast<expressions::nilexpression *>(_expr)) {
-		val->set_type(bytecode::tablevalue_valuetype_CONSTANT);
+		val->set_type(prototype::_tablevalue::CONSTANT);
 		val->set_index(2);
 	}
 	else {
@@ -341,34 +341,16 @@ static void populate_tablevalue(bytecode::tablevalue *val, bytecodegenerator &ge
 GENERATEFUNC(tableexpression) {
 	INIT(tableexpression);
 	auto bcid = gen.funcptr->proto->tables_size();
-	gen.emit(bytecode::instruction_opcode_TABLE, target, bcid);
+	gen.emit(prototype::OP_TABLE, target, bcid);
 	auto bcobj = gen.funcptr->proto->add_tables();
 	for (auto &hashpart : expr.hashpart) {
 		auto bckv = bcobj->add_hashpart();
-		auto key = new bytecode::tablevalue;
-		try {
-			populate_tablevalue(key, gen, hashpart.first);
-		}
-		catch (std::exception &e) {
-			delete key;
-			throw;
-		}
-
-		bckv->set_allocated_key(key);
-		auto value = new bytecode::tablevalue;
-		try {
-			populate_tablevalue(value, gen, hashpart.second);
-		}
-		catch (std::exception &e) {
-			delete value;
-			throw;
-		}
-		bckv->set_allocated_value(value);
+		populate_tablevalue(&bckv->key, gen, hashpart.first);
+		populate_tablevalue(&bckv->value, gen, hashpart.second);
 	}
 
 	for (auto &arraypart : expr.arraypart) {
-		auto bcarraypart = bcobj->add_arraypart();
-		populate_tablevalue(bcarraypart, gen, arraypart);
+		populate_tablevalue(bcobj->add_arraypart(), gen, arraypart);
 	}
 }
 
@@ -377,7 +359,7 @@ GENERATEFUNC(functionexpression) {
 		return;
 	}
 	INIT(functionexpression);
-	gen.emit(bytecode::instruction_opcode_FNEW, target, gen.protomap[_expr]);
+	gen.emit(prototype::OP_FNEW, target, gen.protomap[_expr]);
 }
 
 

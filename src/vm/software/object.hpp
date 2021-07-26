@@ -129,7 +129,7 @@ namespace lorelai {
 			LORELAI_INLINE object(referenceobject &ref) {
 				set(ref);
 			}
-			LORELAI_INLINE object(const number num) {
+			LORELAI_INLINE object(const number &num) {
 				set(num);
 			}
 			LORELAI_INLINE object(const bool b) {
@@ -413,7 +413,7 @@ namespace lorelai {
 		public:
 			stringobject(string _str) : str(_str) { }
 
-			static object create(softwarestate &state, string str);
+			static object create(softwarestate &state, const string &str);
 
 
 			data_type _typeid() const override {
@@ -443,16 +443,12 @@ namespace lorelai {
 		};
 
 		class luafunctionobject : public functionobject {
-			struct tabledata {
-				std::vector<std::pair<bytecode::tablevalue, bytecode::tablevalue>> hashpart;
-				std::vector<bytecode::tablevalue> arraypart;
-			};
-			void fromtablevalue(object &out, const bytecode::tablevalue &data);
+			void fromtablevalue(object &out, const bytecode::prototype::_tablevalue &data);
 		public:
-			static object create(softwarestate &state, const bytecode::prototype &proto);
+			static object create(softwarestate &state, bytecode::prototype &proto);
 
 		public:
-			luafunctionobject(softwarestate &state, const bytecode::prototype &proto);
+			luafunctionobject(softwarestate &state, bytecode::prototype &proto);
 			luafunctionobject();
 
 		public:
@@ -463,13 +459,13 @@ namespace lorelai {
 			state::_retdata call(softwarestate &state, int nargs) override;
 
 		public:
-			struct instruction;
+			using instruction = bytecode::prototype::instruct;
 			std::shared_ptr<instruction> allocated;
 			size_t size;
 			std::uint32_t stacksize;
 			std::vector<object> strings;
 			std::vector<object> numbers;
-			std::vector<tabledata> tables;
+			std::vector<bytecode::prototype::_table> tables;
 			std::vector<luafunctionobject> protos;
 		};
 

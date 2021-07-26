@@ -13,7 +13,9 @@ namespace lorelai {
 		public:
 			function(function *_parent = nullptr) : parent(_parent) {
 				if (parent) {
-					proto = parent->proto->add_protos();
+					proto = parent->proto;
+					protoid = parent->proto->protos.size();
+					parent->proto->protos.emplace_back();
 				}
 				else {
 					proto = new bytecode::prototype();
@@ -26,7 +28,7 @@ namespace lorelai {
 					throw;
 				}
 				auto r = proto;
-				r->set_stacksize(maxsize);
+				r->stacksize = maxsize;
 				proto = nullptr;
 				return r;
 			}
@@ -37,8 +39,9 @@ namespace lorelai {
 					return found->second;
 				}
 
-				auto ret = strings[str] = proto->strings_size();
-				proto->add_strings(str);
+				auto ret = strings[str] = getproto()->strings.size();
+				getproto()->strings.emplace_back(str);
+
 				return ret;
 			}
 
@@ -48,8 +51,9 @@ namespace lorelai {
 					return found->second;
 				}
 
-				auto ret = numbers[num] = proto->numbers_size();
-				proto->add_numbers(num);
+				auto ret = numbers[num] = getproto()->numbers.size();
+				getproto()->numbers.emplace_back(num);
+
 				return ret;
 			}
 
@@ -73,8 +77,18 @@ namespace lorelai {
 				return varlookup.find(name) != varlookup.end();
 			}
 
+		bytecode::prototype *getproto() {
+			if (protoid) {
+				return &proto->protos[protoid.value()];
+			}
+			else {
+				return proto;
+			}
+		}
+
 		public:
 			bytecode::prototype *proto;
+			optional<std::uint32_t> protoid;
 			std::unordered_map<string, int> strings;
 			std::unordered_map<number, int> numbers;
 			std::unordered_map<string, std::uint32_t> varlookup;

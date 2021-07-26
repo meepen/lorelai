@@ -78,7 +78,7 @@ namespace lorelai {
 			void initlibs();
 
 			const char *backend() const override { return "software"; }
-			void loadfunction(const bytecode::prototype &code) override;
+			void loadfunction(bytecode::prototype &code) override;
 			void loadnumber(number num) override;
 			void loadstring(string num) override;
 			int call(int nargs, int nrets) override;

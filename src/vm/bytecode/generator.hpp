@@ -6,6 +6,7 @@
 #include "expressions.hpp"
 #include "function.hpp"
 #include "bytecode.hpp"
+#include "prototype.hpp"
 #ifdef __linux__
 #include <cxxabi.h>
 
@@ -30,8 +31,8 @@ namespace lorelai {
 
 		class bytecodegenerator : public variablevisitor {
 			struct _ifqueue {
-				bytecode::instruction *patch = nullptr;
-				std::vector<bytecode::instruction *> jmpends;
+				optional<prototype::instruct_ptr> patch;
+				std::vector<prototype::instruct_ptr> jmpends;
 				std::uint32_t target;
 			};
 
@@ -46,7 +47,7 @@ namespace lorelai {
 				int startinstr;
 				std::uint32_t stackreserved;
 				std::uint32_t extrastack;
-				std::vector<bytecode::instruction *> patches;
+				std::vector<prototype::instruct_ptr> patches;
 			};
 
 			std::vector<_loopqueue> loopqueue;
@@ -109,7 +110,7 @@ namespace lorelai {
 				variablevisitor::postvisit(obj, container);
 				popfunc();
 
-				emit(bytecode::instruction_opcode_FNEW, funcptr->varlookup[obj.name], protomap[&obj]);
+				emit(prototype::OP_FNEW, funcptr->varlookup[obj.name], protomap[&obj]);
 			}
 
 			LORELAI_VISIT_FUNCTION(statements::returnstatement);
@@ -171,18 +172,15 @@ namespace lorelai {
 			}
 
 		public:
-			instruction *emit(instruction_opcode opcode, std::uint32_t a = 0, std::uint32_t b = 0, std::uint32_t c = 0);
+			prototype::instruct_ptr emit(prototype::_opcode opcode, std::uint8_t a = 0, std::uint8_t b = 0, std::uint8_t c = 0);
 
 			void mov(std::uint32_t to, std::uint32_t from, std::uint32_t size = 1) {
-				if (funcptr->proto->instructions_size() > 0) {
-					auto &last = *funcptr->proto->mutable_instructions(funcptr->proto->instructions_size() - 1);
-					if (last.op() == instruction_opcode_MOV && to == last.a() + last.c() + 1 && from == last.b() + last.c() + 1) {
-						last.set_c(last.c() + size);
-						return;
-					}
+				if (size == 1) {
+					emit(prototype::OP_MOV1, to, from, size - 1);
 				}
-
-				emit(instruction_opcode_MOV, to, from, size - 1);
+				else {
+					emit(prototype::OP_MOV, to, from, size - 1);
+				}
 			}
 
 			bool isconstant(const variable &var) {

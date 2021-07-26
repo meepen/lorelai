@@ -7,20 +7,14 @@
 
 using namespace lorelai;
 using namespace lorelai::vm;
-#define vmcase(x) case bytecode::instruction_opcode_##x:
+using namespace lorelai::bytecode;
+#define vmcase(x) case prototype::OP_##x:
 #define vmbreak goto instructionstart
 
-struct luafunctionobject::instruction {
-	std::uint32_t opcode;
-	std::uint32_t a;
-	std::uint32_t b;
-	std::uint32_t c;
-};
-
-void luafunctionobject::fromtablevalue(object &out, const bytecode::tablevalue &data) {
-	switch (data.type()) {
-	case bytecode::tablevalue_valuetype_CONSTANT:
-		switch (data.index()) {
+void luafunctionobject::fromtablevalue(object &out, const prototype::_tablevalue &data) {
+	switch (data.type) {
+	case prototype::_tablevalue::CONSTANT:
+		switch (data.index) {
 		case 0:
 			out.set(true);
 			break;
@@ -33,12 +27,12 @@ void luafunctionobject::fromtablevalue(object &out, const bytecode::tablevalue &
 		}
 		break;
 
-	case bytecode::tablevalue_valuetype_NUMBER:
-		out.set(numbers[data.index()]);
+	case prototype::_tablevalue::NUMBER:
+		out.set(numbers[data.index]);
 		break;
 
-	case bytecode::tablevalue_valuetype_STRING:
-		out.set(strings[data.index()]);
+	case prototype::_tablevalue::STRING:
+		out.set(strings[data.index]);
 		break;
 
 	default:
@@ -54,8 +48,8 @@ state::_retdata luafunctionobject::call(softwarestate &state, int nargs) {
 	state->stacktop = state->stackptr + stacksize;
 	auto starts = allocated.get();
 
-	instruction *instr;
 	instruction *next = starts;
+	instruction *instr;
 
 	instructionstart:
 	instr = next++;
@@ -101,7 +95,7 @@ state::_retdata luafunctionobject::call(softwarestate &state, int nargs) {
 			vmbreak;
 		}
 		vmcase (MOV) {
-			auto a = instr->a, b = instr->b, c = instr->c + 1;
+			std::uint8_t a = instr->a, b = instr->b, c = instr->c + 1;
 
 			while (c--) {
 				state[a++].set(state[b++]);
@@ -212,8 +206,8 @@ state::_retdata luafunctionobject::call(softwarestate &state, int nargs) {
 			for (auto &kv : tmplate.hashpart) {
 				object key;
 				object value;
-				fromtablevalue(key, kv.first);
-				fromtablevalue(value, kv.second);
+				fromtablevalue(key, kv.key);
+				fromtablevalue(value, kv.value);
 				tbl.rawset(state, key, value);
 			}
 			int i = 0;
@@ -231,20 +225,20 @@ state::_retdata luafunctionobject::call(softwarestate &state, int nargs) {
 			vmbreak;
 		}
 		default:
-			throw exception(string("opcode not implemented: ") + bytecode::instruction_opcode_Name(static_cast<bytecode::instruction_opcode>(instr->opcode)));
+			throw exception(string("opcode not implemented: ") + std::to_string(instr->opcode));
 	}
 }
 
-object luafunctionobject::create(softwarestate &state, const bytecode::prototype &proto) {
+object luafunctionobject::create(softwarestate &state, prototype &proto) {
 	return *state.memory.allocate<luafunctionobject>(LUAFUNCTION, state, proto)->get<luafunctionobject>();
 }
 
-luafunctionobject::luafunctionobject(softwarestate &state, const bytecode::prototype &proto) {
+luafunctionobject::luafunctionobject(softwarestate &state, prototype &proto) {
 	auto oob = proto.instructions_size();
 	size = oob + 1;
 	allocated = std::shared_ptr<instruction>(new instruction[size], std::default_delete<instruction[]>());
 	allocated.get()[oob] = {
-		bytecode::instruction_opcode_RETURN,
+		prototype::OP_RETURN,
 		0,
 		0,
 		0
@@ -253,65 +247,44 @@ luafunctionobject::luafunctionobject(softwarestate &state, const bytecode::proto
 	auto instructions = allocated.get();
 
 	for (int i = 0; i < proto.instructions_size(); i++) {
-		auto &instr = proto.instructions(i);
+		auto &instr = proto.instruction(i);
 
-		if (instr.op() > bytecode::instruction_opcode_opcode_MAX) {
-			throw exception(string("unknown opcode: ") + bytecode::instruction_opcode_Name(instr.op()));
+		if (instr->opcode >= prototype::OP_MAX) {
+			throw exception(string("unknown opcode: ") + std::to_string(instr->opcode));
 		}
 
-		instruction &generated = instructions[i];
-		generated.opcode = instr.op();
-		generated.a = instr.a();
-		generated.b = instr.b();
-		generated.c = instr.c();
+		instructions[i] = instr;
 	}
 
-	// add fastlookup alternative jump to necessary ops
-
-	for (int i = 0; i < proto.instructions_size(); i++) {
-		auto &patchproto = proto.instructions(i);
-		auto &patchinstr = instructions[i];
-
-		switch (patchproto.op()) {
-		case bytecode::instruction_opcode_JMP:
-		case bytecode::instruction_opcode_JMPIFFALSE:
-		case bytecode::instruction_opcode_JMPIFNIL:
-		case bytecode::instruction_opcode_JMPIFTRUE:
-		case bytecode::instruction_opcode_FORCHECK:
-			if (patchinstr.b >= size) {
-				throw exception("invalid bytecode: JMP");
-			}
-		default:
-			break;
-		}
-	}
 
 	for (int i = 0; i < proto.strings_size(); i++) {
-		strings.push_back(stringobject::create(state, proto.strings(i)));
+		strings.push_back(stringobject::create(state, proto.string(i)));
 	}
 
 	for (int i = 0; i < proto.numbers_size(); i++) {
-		numbers.push_back(object(proto.numbers(i)));
+		numbers.push_back(object(proto.number(i)));
 	}
 
 	for (int i = 0; i < proto.tables_size(); i++) {
-		auto &tbl = proto.tables(i);
-		tabledata data;
-		for (int j = 0; j < tbl.hashpart_size(); j++) {
-			auto &hashpart = tbl.hashpart(j);
-			data.hashpart.push_back(std::make_pair(hashpart.key(), hashpart.value()));
+		tables.emplace_back();
+		auto &data = tables.back();
+
+		auto &tbl = proto.table(i);
+		for (int j = 0; j < tbl.hashpart.size(); j++) {
+			auto &hashpart = tbl.hashparts(j);
+			data.hashpart.emplace_back(hashpart);
 		}
-		for (int j = 0; j < tbl.arraypart_size(); j++) {
-			data.arraypart.push_back(tbl.arraypart(j));
+		for (int j = 0; j < tbl.arraypart.size(); j++) {
+			auto &arraypart = tbl.arrayparts(j);
+			data.arraypart.emplace_back(arraypart);
 		}
-		tables.push_back(data);
 	}
 
 	for (int i = 0; i < proto.protos_size(); i++) {
-		protos.push_back(luafunctionobject(state, proto.protos(i)));
+		protos.push_back(luafunctionobject(state, proto.proto(i)));
 	}
 
-	stacksize = proto.stacksize();
+	stacksize = proto.stacksize;
 }
 
 luafunctionobject::luafunctionobject() { }

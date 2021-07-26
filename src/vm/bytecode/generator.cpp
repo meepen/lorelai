@@ -59,7 +59,7 @@ LORELAI_POSTVISIT_DEFINE(bytecodegenerator, statements::localassignmentstatement
 	for (std::uint32_t i = 0; i < lhs.size(); i++) {
 		auto varid = funcptr->varlookup[lhs[i].name];
 		if (rhs.size() < i) {
-			emit(instruction_opcode_CONSTANT, varid, 2);
+			emit(prototype::OP_CONSTANT, varid, 2);
 		}
 		else {
 			mov(varid, slots + i);
@@ -85,7 +85,7 @@ LORELAI_VISIT_DEFINE(bytecodegenerator, statements::assignmentstatement) { // TO
 					auto target = funcptr->getslots(2);
 
 					pushornil(obj.right, i, target + 1);
-					emit(instruction_opcode_ENVIRONMENTSET, target, add(name->name), target + 1);
+					emit(prototype::OP_ENVIRONMENTSET, target, add(name->name), target + 1);
 
 					funcptr->freeslots(target, 2);
 				}
@@ -98,7 +98,7 @@ LORELAI_VISIT_DEFINE(bytecodegenerator, statements::assignmentstatement) { // TO
 				runexpressionhandler(&indexstr, target + 1, 1);
 				pushornil(obj.right, i, target + 2);
 
-				emit(instruction_opcode_SETINDEX, target, target + 1, target + 2);
+				emit(prototype::OP_SETINDEX, target, target + 1, target + 2);
 
 				funcptr->freeslots(target, 3);
 			}
@@ -109,7 +109,7 @@ LORELAI_VISIT_DEFINE(bytecodegenerator, statements::assignmentstatement) { // TO
 				runexpressionhandler(index->index, target + 1, 1);
 				pushornil(obj.right, i, target + 2);
 
-				emit(instruction_opcode_SETINDEX, target, target + 1, target + 2);
+				emit(prototype::OP_SETINDEX, target, target + 1, target + 2);
 
 				funcptr->freeslots(target, 3);
 			}
@@ -131,7 +131,7 @@ LORELAI_VISIT_DEFINE(bytecodegenerator, statements::ifstatement) {
 	_ifqueue queue;
 	queue.target = funcptr->getslots(1);
 	runexpressionhandler(obj.conditional, queue.target, 1);
-	queue.patch = emit(instruction_opcode_JMPIFFALSE, queue.target);
+	queue.patch = emit(prototype::OP_JMPIFFALSE, queue.target);
 	ifqueue.push_back(queue);
 
 	return false;
@@ -141,12 +141,14 @@ LORELAI_VISIT_DEFINE(bytecodegenerator, statements::elseifstatement) {
 	variablevisitor::visit(obj, container);
 	
 	auto &queue = ifqueue.back();
-	queue.jmpends.push_back(emit(instruction_opcode_JMP, 0));
+	queue.jmpends.push_back(emit(prototype::OP_JMP, 0));
 
-	queue.patch->set_b(funcptr->proto->instructions_size());
+	if (queue.patch) {
+		(*queue.patch)->set_b(funcptr->proto->instructions_size());
+	}
 
 	runexpressionhandler(obj.conditional, queue.target, 1);
-	queue.patch = emit(instruction_opcode_JMPIFFALSE, queue.target);
+	queue.patch = emit(prototype::OP_JMPIFFALSE, queue.target);
 	return false;
 }
 
@@ -154,10 +156,13 @@ LORELAI_VISIT_DEFINE(bytecodegenerator, statements::elsestatement) {
 	variablevisitor::visit(obj, container);
 
 	auto &queue = ifqueue.back();
-	queue.jmpends.push_back(emit(instruction_opcode_JMP, 0));
+	queue.jmpends.push_back(emit(prototype::OP_JMP, 0));
 
-	queue.patch->set_b(funcptr->proto->instructions_size());
-	queue.patch = nullptr;
+	if (queue.patch) {
+		(*queue.patch)->set_b(funcptr->proto->instructions_size());
+		queue.patch = {};
+	}
+
 	return false;
 }
 
@@ -166,7 +171,7 @@ LORELAI_POSTVISIT_DEFINE(bytecodegenerator, statements::ifstatement) {
 
 	auto &queue = ifqueue.back();
 	if (queue.patch) {
-		queue.patch->set_b(funcptr->proto->instructions_size());
+		(*queue.patch)->set_b(funcptr->proto->instructions_size());
 	}
 	funcptr->freeslots(queue.target, 1);
 
@@ -185,7 +190,7 @@ LORELAI_VISIT_DEFINE(bytecodegenerator, statements::whilestatement) {
 	data.stackreserved = funcptr->getslots(1);
 
 	runexpressionhandler(obj.conditional, data.stackreserved, 1);
-	data.patches.push_back(emit(instruction_opcode_JMPIFFALSE, data.stackreserved));
+	data.patches.push_back(emit(prototype::OP_JMPIFFALSE, data.stackreserved));
 
 	loopqueue.push_back(data);
 	return false;
@@ -196,7 +201,7 @@ LORELAI_POSTVISIT_DEFINE(bytecodegenerator, statements::whilestatement) {
 
 	auto data = loopqueue.back();
 
-	emit(instruction_opcode_JMP, 0, data.startinstr);
+	emit(prototype::OP_JMP, 0, data.startinstr);
 
 	for (auto &patch : data.patches) {
 		patch->set_b(funcptr->proto->instructions_size());
@@ -214,7 +219,7 @@ LORELAI_POSTVISIT_DEFINE(bytecodegenerator, statements::repeatstatement) {
 	auto target = funcptr->getslots(1);
 
 	runexpressionhandler(obj.conditional, target, 1);
-	emit(instruction_opcode_JMPIFFALSE, target, data.startinstr);
+	emit(prototype::OP_JMPIFFALSE, target, data.startinstr);
 	
 	for (auto &patch : data.patches) {
 		patch->set_b(funcptr->proto->instructions_size());
@@ -229,7 +234,7 @@ LORELAI_VISIT_DEFINE(bytecodegenerator, statements::breakstatement) {
 	if (loopqueue.size() == 0) {
 		throw;
 	}
-	loopqueue.back().patches.push_back(emit(instruction_opcode_JMP, 0));
+	loopqueue.back().patches.push_back(emit(prototype::OP_JMP, 0));
 
 	return false;
 }
@@ -248,8 +253,8 @@ LORELAI_VISIT_DEFINE(bytecodegenerator, statements::forinstatement) {
 	queue.startinstr = funcptr->proto->instructions_size();
 
 	mov(queue.extrastack, queue.stackreserved, 3);
-	emit(bytecode::instruction_opcode_CALL, queue.extrastack, 3, obj.iternames.size() + 1);
-	queue.patches.push_back(emit(bytecode::instruction_opcode_JMPIFNIL, queue.extrastack));
+	emit(bytecode::prototype::OP_CALL, queue.extrastack, 3, obj.iternames.size() + 1);
+	queue.patches.push_back(emit(bytecode::prototype::OP_JMPIFNIL, queue.extrastack));
 
 	loopqueue.push_back(queue);
 	return false;
@@ -263,7 +268,7 @@ LORELAI_POSTVISIT_DEFINE(bytecodegenerator, statements::forinstatement) {
 	funcptr->freeslots(queue.stackreserved, 3);
 	funcptr->freeslots(queue.extrastack, std::max((size_t)3, obj.iternames.size()));
 
-	emit(bytecode::instruction_opcode_JMP, 0, queue.startinstr);
+	emit(bytecode::prototype::OP_JMP, 0, queue.startinstr);
 
 	for (auto &patch : queue.patches) {
 		patch->set_b(funcptr->proto->instructions_size());
@@ -290,7 +295,7 @@ LORELAI_VISIT_DEFINE(bytecodegenerator, statements::fornumstatement) {
 
 	queue.startinstr = funcptr->proto->instructions_size();
 
-	queue.patches.push_back(emit(bytecode::instruction_opcode_FORCHECK, queue.stackreserved));
+	queue.patches.push_back(emit(bytecode::prototype::OP_FORCHECK, queue.stackreserved));
 
 	mov(funcptr->varlookup[obj.itername], queue.stackreserved, 1);
 
@@ -304,8 +309,8 @@ LORELAI_POSTVISIT_DEFINE(bytecodegenerator, statements::fornumstatement) {
 
 	auto &queue = loopqueue.back();
 
-	emit(bytecode::instruction_opcode_ADD, queue.stackreserved, queue.stackreserved, queue.stackreserved + 2);
-	emit(bytecode::instruction_opcode_JMP, 0, queue.startinstr);
+	emit(bytecode::prototype::OP_ADD, queue.stackreserved, queue.stackreserved, queue.stackreserved + 2);
+	emit(bytecode::prototype::OP_JMP, 0, queue.startinstr);
 
 	for (auto &patch : queue.patches) {
 		patch->set_b(funcptr->proto->instructions_size());
@@ -338,7 +343,7 @@ LORELAI_VISIT_DEFINE(bytecodegenerator, statements::returnstatement) {
 		}
 	}
 
-	emit(bytecode::instruction_opcode_RETURN, target, rets, varargtype);
+	emit(bytecode::prototype::OP_RETURN, target, rets, varargtype);
 	
 	funcptr->freeslots(target, rets);
 	return false;
@@ -349,21 +354,10 @@ void bytecodegenerator::pushornil(std::vector<lorelai::parser::node *> &v, int i
 		runexpressionhandler(v[index], target, 1);
 	}
 	else {
-		emit(bytecode::instruction_opcode_CONSTANT, target, 2);
+		emit(bytecode::prototype::OP_CONSTANT, target, 2);
 	}
 }
 
-instruction *bytecodegenerator::emit(instruction_opcode opcode, std::uint32_t a, std::uint32_t b, std::uint32_t c) {
-	if (funcptr->proto->instructions_size() > 0) {
-		auto last = funcptr->proto->mutable_instructions(funcptr->proto->instructions_size() - 1);
-		if (last->op() == bytecode::instruction_opcode_MOV && last->c() == 0) {
-			last->set_op(bytecode::instruction_opcode_MOV1);
-		}
-	}
-	auto instruction = funcptr->proto->add_instructions();
-	instruction->set_op(opcode);
-	instruction->set_a(a);
-	instruction->set_b(b);
-	instruction->set_c(c);
-	return instruction;
+prototype::instruct_ptr bytecodegenerator::emit(prototype::_opcode opcode, std::uint8_t a, std::uint8_t b, std::uint8_t c) {
+	return funcptr->proto->addinstruction(opcode, a, b, c);
 }
