@@ -64,6 +64,7 @@ GENERATEFUNC(binopexpression) {
 		if (auto rhs = rungenerator(gen, expr.rhs)) {
 			if (auto nlhs = dynamic_cast<numberexpression *>(lhs)) {
 				if (auto nrhs = dynamic_cast<numberexpression *>(rhs)) {
+					bool trueorfalse;
 					if (expr.op == "+") {
 						nlhs->data += nrhs->data;
 						nrhs = nullptr;
@@ -84,7 +85,41 @@ GENERATEFUNC(binopexpression) {
 						nlhs->data = std::pow(nlhs->data, nrhs->data);
 						nrhs = nullptr;
 					}
+					else if (expr.op == ">") {
+						trueorfalse = nlhs->data > nrhs->data;
+						nlhs = nullptr;
+					}
+					else if (expr.op == ">=") {
+						trueorfalse = nlhs->data >= nrhs->data;
+						nlhs = nullptr;
+					}
+					else if (expr.op == "<") {
+						trueorfalse = nlhs->data < nrhs->data;
+						nlhs = nullptr;
+					}
+					else if (expr.op == "<=") {
+						trueorfalse = nlhs->data <= nrhs->data;
+						nlhs = nullptr;
+					}
+					else if (expr.op == "==") {
+						trueorfalse = nlhs->data == nrhs->data;
+						nlhs = nullptr;
+					}
+					else if (expr.op == "~=") {
+						trueorfalse = nlhs->data != nrhs->data;
+						nlhs = nullptr;
+					}
 
+					if (!nlhs) {
+						delete rhs;
+						delete lhs;
+						if (trueorfalse) {
+							return new trueexpression();
+						}
+						else {
+							return new falseexpression();
+						}
+					}
 					if (!nrhs) {
 						delete rhs;
 						return lhs;
@@ -105,6 +140,10 @@ GENERATEFUNC(binopexpression) {
 GENERATEFUNC(nameexpression) {
 	INIT(nameexpression);
 	auto var = gen.curscope->find(expr.name);
+
+	if (!var) {
+		return nullptr;
+	}
 
 	auto constant = gen.constantmap[*var];
 	if (!constant) {

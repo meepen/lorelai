@@ -7,6 +7,16 @@ using namespace lorelai;
 using namespace lorelai::parser;
 using namespace lorelai::bytecode;
 
+parser::node *bytecodegenerator::trycollapse(parser::node *expr) {
+	auto collapsed = collapseconstant(*this, *expr);
+	if (!collapsed) {
+		return expr;
+	}
+
+	allocatedconsts.push_back(collapsed);
+	return collapsed;
+}
+
 LORELAI_POSTVISIT_DEFINE(bytecodegenerator, statements::localassignmentstatement) {
 	auto fullscope = variablefinder->scopemap[container].get();
 
@@ -25,12 +35,7 @@ LORELAI_POSTVISIT_DEFINE(bytecodegenerator, statements::localassignmentstatement
 		if (isconstant(*found)) {
 			auto expr = obj.right[i];
 			// TODO: why is this slower?
-			/*
-			if (auto newexpr = collapseconstant(*this, *expr)) {
-				expr = newexpr;
-				allocatedconsts.push_back(expr);
-			}*/
-			constantmap[*found] = expr;
+			constantmap[*found] = trycollapse(expr);
 			constants++;
 			continue;
 		}

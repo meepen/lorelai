@@ -185,7 +185,7 @@ namespace lorelai {
 						return *this;
 					}
 					_info = reinterpret_cast<infoheader *>(reinterpret_cast<byte *>(_info) + _info->size);
-					if (_heap->mode && reinterpret_cast<byte *>(_info) == _heap->freeptr) {
+					if (_heap->mode && reinterpret_cast<void *>(_info) == _heap->freeptr) {
 						curheap++;
 						if (_manager->heapcount == curheap) {
 							_info = nullptr;

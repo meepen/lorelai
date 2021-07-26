@@ -36,7 +36,7 @@ for y=0,height-1 do
 			end
 		end
 		if xbb >= width then
-			for x=width,xbb do bits = bits + bits + 1 end
+			for x=width,xbb do bits = bits + bits + 1 iter = iter + 1 end
 		end
 	end
 end

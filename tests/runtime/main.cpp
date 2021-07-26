@@ -106,13 +106,13 @@ static void printproto(lorelai::bytecode::prototype &bytecode) {
 
 	for (int i = 0; i < bytecode.instructions_size(); i++) {	
 		auto &instruct = bytecode.instruction(i);
-		auto instrname = lorelai::bytecode::opcode_names[instruct->opcode];
+		auto instrname = lorelai::bytecode::opcode_names[instruct->op()];
 
 		std::string index = std::to_string(i);
 
 		std::cout << "#" << index << std::string(max_index.size() - index.size() + 1, ' ') << "| " <<  instrname << " | ";
 
-		std::cout << instruct->a << ", " << instruct->b << ", " << instruct->c << std::endl;
+		std::cout << instruct->a() << ", " << instruct->b() << ", " << instruct->c() << std::endl;
 	}
 }
 

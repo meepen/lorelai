@@ -120,43 +120,66 @@ namespace lorelai {
 
 			struct instruct {
 				instruct() { }
-				instruct(prototype::_opcode _op, std::uint32_t _a = 0, std::uint32_t _b = 0, std::uint32_t _c = 0) : opcode(static_cast<std::uint32_t>(_op)), a(_a), b(_b), c(_c) { }
+				instruct(prototype::_opcode _op, std::uint32_t _a = 0, std::uint32_t _b = 0, std::uint32_t _c = 0) {
+					set_op(_op);
+					set_a(_a);
+					set_b(_b);
+					set_c(_c);
+				}
 
+				std::uint32_t &op() {
+					return fields[0];
+				}
+				std::uint32_t &a() {
+					return fields[1];
+				}
+				std::uint32_t &b() {
+					return fields[2];
+				}
+				std::uint32_t &c() {
+					return fields[3];
+				}
+
+				instruct &set_op(const _opcode &v) {
+					op() = static_cast<const std::uint32_t>(v);
+
+					return *this;
+				}
 				instruct &set_a(const std::uint32_t &v) {
-					a = v;
+					a() = v;
 
 					return *this;
 				}
 				instruct &set_b(const std::uint32_t &v) {
-					b = v;
+					b() = v;
 
 					return *this;
 				}
 				instruct &set_c(const std::uint32_t &v) {
-					c = v;
-
-					return *this;
-				}
-				instruct &set_op(const _opcode &v) {
-					opcode = static_cast<const std::uint32_t>(v);
+					c() = v;
 
 					return *this;
 				}
 				instruct &set_bc(const std::uint64_t &v) {
-					b = v >> 32;
-					c = v;
+					std::memcpy(&fields[2], &v, sizeof(v));
 
 					return *this;
 				}
 				instruct &set_bcnum(const number &v) {
-					return set_bc(*reinterpret_cast<const std::uint64_t *>(&v));
+					std::uint64_t n;
+					std::memcpy(&n, &v, sizeof(v));
+					return set_bc(n);
 				}
 				std::uint64_t bc() {
-					return (static_cast<std::uint64_t>(b) << 32) | c;
+					std::uint64_t _bc;
+					std::memcpy(&_bc, &fields[2], sizeof(_bc));
+					return _bc;
 				}
 				number bcnum() {
 					auto _bc = bc();
-					return *reinterpret_cast<lorelai::number *>(&_bc);
+					lorelai::number num;
+					std::memcpy(&num, &_bc, sizeof(num));
+					return num;
 				}
 
 
@@ -164,10 +187,7 @@ namespace lorelai {
 					return this;
 				}
 
-				std::uint32_t opcode;
-				std::uint32_t a;
-				std::uint32_t b;
-				std::uint32_t c;
+				std::uint32_t fields[4];
 			};
 
 			static_assert(sizeof(instruct) == 16);
@@ -334,22 +354,22 @@ namespace lorelai {
 		template <>
 		struct write<prototype::instruct> {
 			void operator()(const prototype::instruct &t, writebuffer &buffer) const {
-				buffer.write(t.opcode);
-				buffer.write(t.a);
-				buffer.write(t.b);
-				buffer.write(t.c);
+				buffer.write(t.fields[0]);
+				buffer.write(t.fields[1]);
+				buffer.write(t.fields[2]);
+				buffer.write(t.fields[3]);
 			}
 		};
 		template <>
 		struct read<prototype::instruct> {
 			void operator()(prototype::instruct &out, readbuffer &buffer) const {
-				buffer.read(out.opcode);
-				buffer.read(out.a);
-				buffer.read(out.b);
-				buffer.read(out.c);
+				buffer.read(out.fields[0]);
+				buffer.read(out.fields[1]);
+				buffer.read(out.fields[2]);
+				buffer.read(out.fields[3]);
 			}
 		};
-		
+
 		template <>
 		struct write<prototype> {
 			void operator()(const prototype &p, writebuffer &buffer) const {

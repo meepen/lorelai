@@ -162,13 +162,14 @@ namespace lorelai {
 
 		public:
 			void runexpressionhandler(lorelai::parser::node *_expr, std::uint32_t target, std::uint32_t size) {
-				auto found = expressionmap.find(typeid(*_expr));
+				auto expr = trycollapse(_expr);
+				auto found = expressionmap.find(typeid(*expr));
 
 				if (found == expressionmap.end()) {
-					throw exception(string("Unsupported expression when generating: ") + gettypename(_expr));
+					throw exception(string("Unsupported expression when generating: ") + gettypename(expr));
 				}
 
-				return found->second(*this, _expr, target, size);
+				return found->second(*this, expr, target, size);
 			}
 
 		public:
@@ -198,6 +199,8 @@ namespace lorelai {
 				
 				return constant;
 			}
+
+			parser::node *trycollapse(parser::node *);
 
 		public:
 			int add(string str) {

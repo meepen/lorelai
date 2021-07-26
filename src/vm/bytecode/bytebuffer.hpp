@@ -175,13 +175,17 @@ namespace lorelai {
 		template <>
 		struct write<float> {
 			void operator()(const float &data, writebuffer &buffer) const {
-				buffer.writei32(*reinterpret_cast<const std::uint32_t *>(&data));
+				std::uint32_t i;
+				std::memcpy(&i, &data, sizeof(data));
+				buffer.writei32(i);
 			}
 		};
 		template <>
 		struct write<double> {
 			void operator()(const double &data, writebuffer &buffer) const {
-				buffer.writei64(*reinterpret_cast<const uint64_t *>(&data));
+				std::uint64_t i;
+				std::memcpy(&i, &data, sizeof(data));
+				buffer.writei64(i);
 			}
 		};
 
@@ -241,7 +245,7 @@ namespace lorelai {
 		struct read<float> {
 			void operator()(float &out, readbuffer &buffer) const {
 				auto n = buffer.readi32();
-				out = *reinterpret_cast<float *>(&n);
+				std::memcpy(&out, &n, sizeof(n));
 			}
 		};
 		template <>
@@ -254,7 +258,7 @@ namespace lorelai {
 		struct read<double> {
 			void operator()(double &out, readbuffer &buffer) const {
 				auto n = buffer.readi64();
-				out = *reinterpret_cast<double *>(&n);
+				std::memcpy(&out, &n, sizeof(n));
 			}
 		};
 		
