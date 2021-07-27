@@ -23,9 +23,9 @@ namespace lorelai {
 		enum boxed_type {
 			BOXED_TYPE_NUMBER = 0,
 			BOXED_TYPE_NIL,
+			BOXED_TYPE_FALSE, // MUST BE POWER OF TWO
+			BOXED_TYPE_TRUE, // MUST BE AFTER FALSE
 			BOXED_TYPE_REFERENCE, // MUST BE POWER OF TWO
-			BOXED_TYPE_TRUE,
-			BOXED_TYPE_FALSE,
 		};
 		static_assert(sizeof(number) == sizeof(std::uint64_t), "number must be 64 bit");
 
@@ -122,6 +122,18 @@ namespace lorelai {
 				return !(hasencodedtype(data) | hasencodedtype(other.data)) || (boxtype() | other.boxtype()) == BOXED_TYPE_NUMBER;
 			}
 
+			LORELAI_INLINE number num() const {
+				number n;
+				std::memcpy(&n, &data, sizeof(data));
+				return n;
+			}
+
+			LORELAI_INLINE object &set_num(const number &n) {
+				std::memcpy(&data, &n, sizeof(data));
+				
+				return *this;
+			}
+
 		public:
 			LORELAI_INLINE object(const object &obj) {
 				set(obj);
@@ -145,11 +157,11 @@ namespace lorelai {
 			}
 
 			LORELAI_INLINE constexpr void set(const bool &b) {
-				data = (b * encodetype(BOXED_TYPE_TRUE)) | (!b * encodetype(BOXED_TYPE_FALSE));
+				data = encodetype(BOXED_TYPE_FALSE) | (static_cast<std::uint64_t>(b) << 48);
 			}
 
 			LORELAI_INLINE constexpr void set(const number &n) {
-				num = n;
+				set_num(n);
 			}
 
 			LORELAI_INLINE constexpr void set(const object &other) {
@@ -166,10 +178,6 @@ namespace lorelai {
 
 			// this is used for c++ structures and cannot be modified
 			bool operator==(const object &other) const {
-				if (!hasencodedtype(data) & !hasencodedtype(other.data)) {
-					return num == other.num;
-				}
-
 				return data == other.data;
 			}
 
@@ -177,7 +185,7 @@ namespace lorelai {
 			// called in lua vm
 			LORELAI_INLINE bool equals        (softwarestate &state, object &other) {
 				if (!hasencodedtype(data) & !hasencodedtype(other.data)) {
-					return num == other.num;
+					return num() == other.num();
 				}
 
 				if (decodetype(data) & BOXED_TYPE_REFERENCE) {
@@ -199,7 +207,7 @@ namespace lorelai {
 
 			LORELAI_INLINE void add(softwarestate &state, object &out, object &other) {
 				if (fast_numbercheck(other)) {
-					out.set(num + other.num);
+					out.set(num() + other.num());
 				}
 				else {
 					convertexception("number");
@@ -208,7 +216,7 @@ namespace lorelai {
 
 			LORELAI_INLINE void subtract(softwarestate &state, object &out, object &other) {
 				if (fast_numbercheck(other)) {
-					out.set(num - other.num);
+					out.set(num() - other.num());
 				}
 				else {
 					convertexception("number");
@@ -217,7 +225,7 @@ namespace lorelai {
 
 			LORELAI_INLINE void divide(softwarestate &state, object &out, object &other) {
 				if (fast_numbercheck(other)) {
-					out.set(num / other.num);
+					out.set(num() / other.num());
 				}
 				else {
 					convertexception("number");
@@ -226,7 +234,7 @@ namespace lorelai {
 
 			LORELAI_INLINE void multiply(softwarestate &state, object &out, object &other) {
 				if (fast_numbercheck(other)) {
-					out.set(num * other.num);
+					out.set(num() * other.num());
 				}
 				else {
 					convertexception("number");
@@ -235,7 +243,7 @@ namespace lorelai {
 
 			LORELAI_INLINE void power(softwarestate &state, object &out, object &other) {
 				if (fast_numbercheck(other)) {
-					out.set(std::pow(num, other.num));
+					out.set(std::pow(num(), other.num()));
 				}
 				else {
 					convertexception("number");
@@ -244,7 +252,7 @@ namespace lorelai {
 
 			LORELAI_INLINE void modulo(softwarestate &state, object &out, object &other) {
 				if (fast_numbercheck(other)) {
-					auto a = num, b = other.num;
+					auto a = num(), b = other.num();
 
 					out.set(a - b * std::floor(a / b));
 				}
@@ -299,7 +307,7 @@ namespace lorelai {
 
 			LORELAI_INLINE number tonumber(softwarestate &state) {
 				if (!hasencodedtype(data)) {
-					return num;
+					return num();
 				}
 				else if (decodetype(data) == BOXED_TYPE_REFERENCE) {
 					return ref().tonumber(state);
@@ -312,7 +320,7 @@ namespace lorelai {
 				if (!hasencodedtype(data)) {
 					std::ostringstream stream;
 					stream.precision(13);
-					stream << num;
+					stream << num();
 					return stream.str();
 				}
 				switch (decodetype(data)) {
@@ -381,10 +389,7 @@ namespace lorelai {
 			}
 
 		public:
-			union {
-				std::uint64_t data = encodetype(BOXED_TYPE_NIL);
-				number num;
-			};
+			std::uint64_t data = encodetype(BOXED_TYPE_NIL);
 		};
 	}
 }
@@ -394,11 +399,11 @@ namespace std {
 	struct hash<lorelai::vm::object> {
 		size_t operator()(const lorelai::vm::object &obj) const {
 			if (!lorelai::vm::hasencodedtype(obj.data)) {
-				return std::hash<lorelai::number>()(obj.num);
+				return std::hash<lorelai::number>()(obj.num());
 			}
 			switch (lorelai::vm::decodetype(obj.data)) {
 			case lorelai::vm::BOXED_TYPE_NUMBER:
-				return std::hash<lorelai::number>()(obj.num);
+				return std::hash<lorelai::number>()(obj.num());
 			default:
 				return std::hash<std::uint64_t>()(obj.data);
 			}
