@@ -28,12 +28,16 @@ funcbody::funcbody(lexer &lex) {
 			}
 		}
 
-		params.push_back(param);
 
 		if (dynamic_cast<expressions::varargexpression *>(param)) {
+			delete param;
 			break;
 		}
-		else if (!dynamic_cast<expressions::nameexpression *>(param)) {
+		else if (auto name = dynamic_cast<expressions::nameexpression *>(param)) {
+			params.push_back(name->name);
+			delete param;
+		}
+		else {
 			lex.wasexpected("<name or vararg>", "funcbody");
 		}
 
@@ -58,7 +62,7 @@ string funcbody::tostring() {
 			stream << ", ";
 		}
 		first = false;
-		stream << param->tostring();
+		stream << param;
 	}
 
 	return stream.str();

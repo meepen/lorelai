@@ -7,40 +7,26 @@ using namespace lorelai;
 using namespace lorelai::parser;
 using namespace lorelai::bytecode;
 
-parser::node *bytecodegenerator::trycollapse(parser::node *expr) {
-	auto collapsed = collapseconstant(*this, *expr);
+const parser::node &bytecodegenerator::trycollapse(const parser::node &expr) {
+	auto collapsed = collapseconstant(*this, expr);
 	if (!collapsed) {
 		return expr;
 	}
 
 	allocatedconsts.push_back(collapsed);
-	return collapsed;
+	return *collapsed;
 }
 
 LORELAI_POSTVISIT_DEFINE(bytecodegenerator, statements::localassignmentstatement) {
-	auto fullscope = variablefinder->scopemap[container].get();
+	variablevisitor::postvisit(obj, container);
 
-	size_t constants = 0;
 	std::vector<variable> lhs;
 	std::vector<parser::node *> rhs;
 
 	for (size_t i = 0; i < std::min(obj.right.size(), obj.left.size()); i++) {
 		auto n = obj.left[i];
-		// problem: multiple variables with same name
-		auto found = fullscope->find(n, false, curscope->versionof(n) + 1);
-		if (!found) {
-			throw exception("couldn't find future variable");
-		}
 
-		if (isconstant(*found)) {
-			auto expr = obj.right[i];
-			// TODO: why is this slower?
-			constantmap[*found] = trycollapse(expr);
-			constants++;
-			continue;
-		}
-
-		lhs.push_back(*found);
+		lhs.push_back(*findvariable(n));
 		rhs.push_back(obj.right[i]);
 	}
 
@@ -49,21 +35,23 @@ LORELAI_POSTVISIT_DEFINE(bytecodegenerator, statements::localassignmentstatement
 	}
 
 
-	auto size = obj.right.size() - constants;
+	auto size = lhs.size();
 	auto slots = funcptr->getslots(size);
 	auto current = slots;
 
 	for (size_t i = 0; i < rhs.size(); i++) {
-		std::uint32_t target = obj.left.size() < i ? 0 : current++;
-
-		runexpressionhandler(rhs[i], target, 1);
+		if (i >= size) {
+			runexpressionhandler(rhs[i], 0, 0);
+		}
+		else {
+			runexpressionhandler(rhs[i], current++, 1);
+		}
 	}
 
-	variablevisitor::postvisit(obj, container);
 
 	for (std::uint32_t i = 0; i < lhs.size(); i++) {
 		auto varid = funcptr->varlookup[lhs[i].name];
-		if (rhs.size() < i) {
+		if (i >= rhs.size()) {
 			emit(prototype::OP_CONSTANT, varid, 2);
 		}
 		else {
@@ -83,7 +71,7 @@ LORELAI_VISIT_DEFINE(bytecodegenerator, statements::assignmentstatement) { // TO
 			auto lhs = obj.left[i];
 
 			if (auto name = dynamic_cast<expressions::nameexpression *>(lhs)) {
-				if (funcptr->hasvariable(name->name)) {
+				if (auto var = findvariable(name->name)) {
 					pushornil(obj.right, i, funcptr->varlookup[name->name]);
 				} // TODO: upvalues
 				else {
@@ -149,7 +137,7 @@ LORELAI_VISIT_DEFINE(bytecodegenerator, statements::elseifstatement) {
 	queue.jmpends.push_back(emit(prototype::OP_JMP, 0));
 
 	if (queue.patch) {
-		(*queue.patch)->set_b(funcptr->proto->instructions_size());
+		(*queue.patch)->set_b(funcptr->proto.instructions_size());
 	}
 
 	runexpressionhandler(obj.conditional, queue.target, 1);
@@ -164,7 +152,7 @@ LORELAI_VISIT_DEFINE(bytecodegenerator, statements::elsestatement) {
 	queue.jmpends.push_back(emit(prototype::OP_JMP, 0));
 
 	if (queue.patch) {
-		(*queue.patch)->set_b(funcptr->proto->instructions_size());
+		(*queue.patch)->set_b(funcptr->proto.instructions_size());
 		queue.patch = {};
 	}
 
@@ -176,12 +164,12 @@ LORELAI_POSTVISIT_DEFINE(bytecodegenerator, statements::ifstatement) {
 
 	auto &queue = ifqueue.back();
 	if (queue.patch) {
-		(*queue.patch)->set_b(funcptr->proto->instructions_size());
+		(*queue.patch)->set_b(funcptr->proto.instructions_size());
 	}
 	funcptr->freeslots(queue.target, 1);
 
 	for (auto &jmpend : queue.jmpends) {
-		jmpend->set_b(funcptr->proto->instructions_size());
+		jmpend->set_b(funcptr->proto.instructions_size());
 	}
 
 	ifqueue.pop_back();
@@ -191,7 +179,7 @@ LORELAI_VISIT_DEFINE(bytecodegenerator, statements::whilestatement) {
 	variablevisitor::visit(obj, container);
 
 	_loopqueue data;
-	data.startinstr = funcptr->proto->instructions_size();
+	data.startinstr = funcptr->proto.instructions_size();
 	data.stackreserved = funcptr->getslots(1);
 
 	runexpressionhandler(obj.conditional, data.stackreserved, 1);
@@ -209,7 +197,7 @@ LORELAI_POSTVISIT_DEFINE(bytecodegenerator, statements::whilestatement) {
 	emit(prototype::OP_JMP, 0, data.startinstr);
 
 	for (auto &patch : data.patches) {
-		patch->set_b(funcptr->proto->instructions_size());
+		patch->set_b(funcptr->proto.instructions_size());
 	}
 
 	funcptr->freeslots(data.stackreserved, 1);
@@ -227,7 +215,7 @@ LORELAI_POSTVISIT_DEFINE(bytecodegenerator, statements::repeatstatement) {
 	emit(prototype::OP_JMPIFFALSE, target, data.startinstr);
 	
 	for (auto &patch : data.patches) {
-		patch->set_b(funcptr->proto->instructions_size());
+		patch->set_b(funcptr->proto.instructions_size());
 	}
 
 	funcptr->freeslots(target, 1);
@@ -255,7 +243,7 @@ LORELAI_VISIT_DEFINE(bytecodegenerator, statements::forinstatement) {
 
 
 	// begin loop
-	queue.startinstr = funcptr->proto->instructions_size();
+	queue.startinstr = funcptr->proto.instructions_size();
 
 	mov(queue.extrastack, queue.stackreserved, 3);
 	emit(bytecode::prototype::OP_CALL, queue.extrastack, 3, obj.iternames.size() + 1);
@@ -276,7 +264,7 @@ LORELAI_POSTVISIT_DEFINE(bytecodegenerator, statements::forinstatement) {
 	emit(bytecode::prototype::OP_JMP, 0, queue.startinstr);
 
 	for (auto &patch : queue.patches) {
-		patch->set_b(funcptr->proto->instructions_size());
+		patch->set_b(funcptr->proto.instructions_size());
 	}
 	loopqueue.pop_back();
 }
@@ -298,7 +286,7 @@ LORELAI_VISIT_DEFINE(bytecodegenerator, statements::fornumstatement) {
 
 	// start loop
 
-	queue.startinstr = funcptr->proto->instructions_size();
+	queue.startinstr = funcptr->proto.instructions_size();
 
 	queue.patches.push_back(emit(bytecode::prototype::OP_FORCHECK, queue.stackreserved));
 
@@ -318,7 +306,7 @@ LORELAI_POSTVISIT_DEFINE(bytecodegenerator, statements::fornumstatement) {
 	emit(bytecode::prototype::OP_JMP, 0, queue.startinstr);
 
 	for (auto &patch : queue.patches) {
-		patch->set_b(funcptr->proto->instructions_size());
+		patch->set_b(funcptr->proto.instructions_size());
 	}
 
 	funcptr->freeslots(queue.stackreserved, 3);
@@ -364,5 +352,5 @@ void bytecodegenerator::pushornil(std::vector<lorelai::parser::node *> &v, int i
 }
 
 prototype::instruct_ptr bytecodegenerator::emit(prototype::_opcode opcode, std::uint8_t a, std::uint8_t b, std::uint8_t c) {
-	return funcptr->proto->addinstruction(opcode, a, b, c);
+	return funcptr->proto.addinstruction(opcode, a, b, c);
 }

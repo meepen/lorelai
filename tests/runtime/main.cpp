@@ -39,13 +39,13 @@ static void print_branch(size_t idx, lorelai::parser::node &node) {
 	catch (std::exception &e) { }
 }
 
-static void print_scopes(std::vector<std::shared_ptr<lorelai::bytecode::scope>> &list, std::shared_ptr<lorelai::bytecode::scope> with_parent = nullptr, size_t idx = 0) {
+static void print_scopes(std::vector<lorelai::bytecode::scope> &list, lorelai::optional<size_t> with_parent = { }, size_t idx = 0) {
 	auto tab = std::string(idx * 4, ' ');
-	std::vector<std::shared_ptr<lorelai::bytecode::scope>> found;
+	std::vector<lorelai::bytecode::scope *> found;
 
 	for (auto &child : list) {
-		if (child->parent == with_parent) {
-			found.push_back(child);
+		if (with_parent && child.parent && child.parent.value() == with_parent.value()) {
+			found.push_back(&list[child.parent.value()]);
 		}
 	}
 
@@ -55,7 +55,7 @@ static void print_scopes(std::vector<std::shared_ptr<lorelai::bytecode::scope>> 
 		for (auto &var : child->variables) {
 			std::cout << tab << var.name << " accesses:" << var.accesses << " writes:" << var.writes << std::endl;
 		}
-		print_scopes(list, child, idx + 1);
+		print_scopes(list, { child->id }, idx + 1);
 	}
 }
 
@@ -89,8 +89,8 @@ static std::string getcode(ValueArg<std::string> &filename, ValueArg<std::string
 	}
 }
 
-static void printproto(lorelai::bytecode::prototype &bytecode) {
-	std::cout << "Bytecode evaluated: " << std::endl;
+static void printproto(const std::string &protoname, lorelai::bytecode::prototype &bytecode) {
+	std::cout << protoname << ": " << std::endl;
 	std::cout << "    Instructions: " << bytecode.instructions_size() << std::endl;
 	std::cout << "    Prototypes:   " << bytecode.protos_size() << std::endl;
 	std::cout << "    Numbers:      " << bytecode.numbers_size() << std::endl;
@@ -113,6 +113,12 @@ static void printproto(lorelai::bytecode::prototype &bytecode) {
 		std::cout << "#" << index << std::string(max_index.size() - index.size() + 1, ' ') << "| " <<  instrname << " | ";
 
 		std::cout << instruct->a() << ", " << instruct->b() << ", " << instruct->c() << std::endl;
+	}
+
+	
+	for (size_t i = 0; i < bytecode.protos_size(); i++) {
+		auto &proto = bytecode.proto(i);
+		printproto(protoname + "::" + std::to_string(i), proto);
 	}
 }
 
@@ -146,14 +152,16 @@ int main(int argc, char *argv[]) {
 		}
 
 		if (scopesonly.getValue()) {
-			auto map = lorelai::bytecode::generatescopemap(&mainchunk);
+			lorelai::bytecode::variablevisitor visit;
+			lorelai::parser::node *container = &mainchunk;
+			mainchunk.accept(visit, container);
 
-			print_scopes(map.scopes);
+			print_scopes(visit.scopelist);
 
 			return 0;
 		}
 
-		std::unique_ptr<lorelai::bytecode::prototype> bytecode(lorelai::bytecode::create(mainchunk));
+		auto bytecode = lorelai::bytecode::create(mainchunk);
 
 		if (bytecodeonly.getValue()) {
 			if (raw.getValue()) {
@@ -161,12 +169,12 @@ int main(int argc, char *argv[]) {
 				return 0;
 			}
 
-			printproto(*bytecode);
+			printproto("main", bytecode);
 			return 0;
 		}
 
 		auto state = lorelai::vm::state::create();
-		state->loadfunction(*bytecode.get());
+		state->loadfunction(bytecode);
 		state->call(0, 0);
 	}
 	catch (ArgException &e) {

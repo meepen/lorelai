@@ -3,7 +3,8 @@
 
 #include "scope.hpp"
 #include "statements.hpp"
-#include "expressions.hpp"
+#include "bcexpressions.hpp"
+#include "node.hpp"
 #include "function.hpp"
 #include "bytecode.hpp"
 #include "prototype.hpp"
@@ -56,7 +57,7 @@ namespace lorelai {
 			using variablevisitor::visit;
 			using variablevisitor::postvisit;
 
-			bytecodegenerator(std::unordered_map<parser::node *, std::uint32_t> _protomap, variablevisitor &finder) : protomap(_protomap), funcptr(new function()), variablefinder(&finder) { }
+			bytecodegenerator() : funcptr(new function()) { }
 			~bytecodegenerator() {
 				for (auto &child : allocatedconsts) {
 					delete child;
@@ -69,7 +70,7 @@ namespace lorelai {
 			LORELAI_VISIT_FUNCTION(statements::assignmentstatement);
 
 			LORELAI_VISIT_FUNCTION(statements::functioncallstatement) {
-				runexpressionhandler(obj.callexpr, 0, 0);
+				runexpressionhandler(*obj.callexpr, 0, 0);
 				return false;
 			}
 
@@ -84,7 +85,7 @@ namespace lorelai {
 
 			LORELAI_VISIT_FUNCTION(statements::repeatstatement) {
 				_loopqueue data;
-				data.startinstr = funcptr->proto->instructions_size();
+				data.startinstr = funcptr->proto.instructions_size();
 
 				loopqueue.push_back(data);
 				return false;
@@ -101,75 +102,73 @@ namespace lorelai {
 
 			LORELAI_VISIT_FUNCTION(statements::localfunctionstatement) {
 				variablevisitor::visit(obj, container);
-				pushfunc();
 
 				return false;
 			}
 
 			LORELAI_POSTVISIT_FUNCTION(statements::localfunctionstatement) {
+				auto id = funcptr->protoid;
 				variablevisitor::postvisit(obj, container);
-				popfunc();
 
-				emit(prototype::OP_FNEW, funcptr->varlookup[obj.name], protomap[&obj]);
+				emit(prototype::OP_FNEW, funcptr->varlookup[obj.name], id);
 			}
 
 			LORELAI_VISIT_FUNCTION(statements::returnstatement);
 
+
+		public: // OVERRIDE
 			void onnewvariable(const variable &var) override {
-				if (isconstant(*findfullvar(var))) {
-					return;
+				if (var.argnum) {
+					funcptr->newargument(var.name, var.argnum.value());
 				}
-				funcptr->newstackvariable(var.name);
+				else {
+					funcptr->newstackvariable(var.name);
+				}
 			}
 
 			void onnewvariables(const std::vector<variable> &list) override {
 				std::vector<string> names;
 				for (auto &child : list) {
-					if (!isconstant(*findfullvar(child))) {
-						names.push_back(child.name);
-					}
+					names.push_back(child.name);
 				}
 				funcptr->newstackvariables(names);
 			}
+
 			void onfreevariable(const variable &var) override {
-				if (isconstant(*findfullvar(var))) {
-					return;
-				}
 				funcptr->freestackvariable(var.name);
 			}
 
-			variable *findfullvar(const variable &v) {
-				return variablefinder->scopes[v.scopeid]->find(v);
+			void onnewscope(bool isfunction) override {
+				variablevisitor::onnewscope(isfunction);
+				if (isfunction) {
+					pushfunc();
+				}
 			}
 
-			parser::node *findconstant(parser::node *_expr, string name) {
-				auto v = scopes[protomap[_expr]]->find(name);
-				if (!v) {
-					return nullptr;
+			void onfreescope(bool isfunction) override {
+				variablevisitor::onfreescope(isfunction);
+				if (isfunction) {
+					popfunc();
 				}
-
-				auto found = constantmap.find(*v);
-
-				if (found != constantmap.end()) {
-					return found->second;
-				}
-
-				return nullptr;
 			}
 
 		private:
 			void pushornil(std::vector<lorelai::parser::node *> &v, int index, std::uint32_t target);
 
 		public:
-			void runexpressionhandler(lorelai::parser::node *_expr, std::uint32_t target, std::uint32_t size) {
-				auto expr = trycollapse(_expr);
-				auto found = expressionmap.find(typeid(*expr));
+			void runexpressionhandler(const lorelai::parser::node &_expr, std::uint32_t target, std::uint32_t size) {
+				auto &expr = trycollapse(_expr);
+				auto found = expressionmap.find(typeid(expr));
 
 				if (found == expressionmap.end()) {
 					throw exception(string("Unsupported expression when generating: ") + gettypename(expr));
 				}
 
 				return found->second(*this, expr, target, size);
+			}
+
+			void runexpressionhandler(const lorelai::parser::node *_expr, std::uint32_t target, std::uint32_t size) {
+				return runexpressionhandler(*_expr, target, size);
 			}
 
 		public:
@@ -184,23 +183,13 @@ namespace lorelai {
 				}
 			}
 
-			bool isconstant(const variable &var) {
-				if (var.writes > 0) {
-					return false;
+			void setstackvar(std::uint32_t target, const string &name, const parser::node &obj) {
+				if (funcptr->hasvariable(name)) {
+					runexpressionhandler(obj, target, 1);
 				}
-				auto constant = true;
-				for (auto &ref : variablefinder->variablereferences[var]) {
-					auto fullref = variablefinder->scopes[ref.scopeid]->find(ref);
-					if (fullref->writes > 0) {
-						constant = false;
-						break;
-					}
-				}
-				
-				return constant;
 			}
 
-			parser::node *trycollapse(parser::node *);
+			const parser::node &trycollapse(const parser::node &);
 
 		public:
 			int add(string str) {
@@ -225,11 +214,8 @@ namespace lorelai {
 		public:
 			function *funcptr = nullptr;
 
-			std::unordered_map<parser::node *, std::uint32_t> protomap;
-			variablevisitor *variablefinder = nullptr;
-			std::unordered_map<variable, parser::node *> constantmap;
-			std::vector<parser::node *> allocatedconsts;
-			std::unordered_map<variable, parser::node *> initmap;
+			std::vector<const parser::node *> allocatedconsts;
+			std::unordered_map<variable, const parser::node *> initmap;
 		};
 	}
 }

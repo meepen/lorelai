@@ -229,11 +229,11 @@ state::_retdata luafunctionobject::call(softwarestate &state, int nargs) {
 	}
 }
 
-object luafunctionobject::create(softwarestate &state, prototype &proto) {
+object luafunctionobject::create(softwarestate &state, const prototype &proto) {
 	return *state.memory.allocate<luafunctionobject>(LUAFUNCTION, state, proto)->get<luafunctionobject>();
 }
 
-luafunctionobject::luafunctionobject(softwarestate &state, prototype &proto) {
+luafunctionobject::luafunctionobject(softwarestate &state, const prototype &proto) {
 	auto oob = proto.instructions_size();
 	size = oob + 1;
 	allocated = std::shared_ptr<instruction>(new instruction[size], std::default_delete<instruction[]>());

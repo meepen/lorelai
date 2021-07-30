@@ -49,7 +49,7 @@ namespace lorelai {
 		public:
 			virtual ~state() { }
 			virtual const char *backend() const = 0;
-			virtual void loadfunction(bytecode::prototype &code) = 0;
+			virtual void loadfunction(const bytecode::prototype &code) = 0;
 			virtual void loadnumber(number num) = 0;
 			virtual void loadstring(string str) = 0;
 

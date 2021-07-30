@@ -63,7 +63,7 @@ softwarestate::softwarestate() : stack(this) {
 	initlibs();
 }
 
-void softwarestate::loadfunction(bytecode::prototype &code) {
+void softwarestate::loadfunction(const bytecode::prototype &code) {
 	(stack.stacktop++)->set(luafunctionobject::create(*this, code));
 } 
 void softwarestate::loadnumber(number num) {

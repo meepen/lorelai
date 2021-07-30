@@ -6,9 +6,9 @@
 
 namespace lorelai {
 	namespace bytecode {
-		prototype *create(parser::chunk &chunk);
+		prototype create(parser::chunk &chunk);
 
-		static prototype *create(string code, bool expect_eof = true) {
+		static prototype create(string code, bool expect_eof = true) {
 			parser::chunk mainchunk(code, expect_eof);
 			return create(mainchunk);
 		}

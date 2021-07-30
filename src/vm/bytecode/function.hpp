@@ -4,6 +4,7 @@
 #include "bytecode.hpp"
 #include "types.hpp"
 #include "stack.hpp"
+#include "scope.hpp"
 #include <memory>
 #include <vector>
 
@@ -13,24 +14,19 @@ namespace lorelai {
 		public:
 			function(function *_parent = nullptr) : parent(_parent) {
 				if (parent) {
-					proto = parent->proto;
-					protoid = parent->proto->protos.size();
-					parent->proto->protos.emplace_back();
-				}
-				else {
-					proto = new bytecode::prototype();
+					protoid = parent->proto.protos.size();
+					parent->proto.protos.emplace_back();
 				}
 			}
-			~function() { }
-
-			bytecode::prototype * release() {
+			~function() {
 				if (parent) {
-					throw;
+					parent->proto.protos[protoid] = finalize();
 				}
-				auto r = proto;
-				r->stacksize = maxsize;
-				proto = nullptr;
-				return r;
+			}
+
+			bytecode::prototype finalize() {
+				proto.stacksize = maxsize;
+				return proto;
 			}
 
 			int add(string str) {
@@ -39,8 +35,8 @@ namespace lorelai {
 					return found->second;
 				}
 
-				auto ret = strings[str] = getproto()->strings.size();
-				getproto()->strings.emplace_back(str);
+				auto ret = strings[str] = proto.strings.size();
+				proto.strings.emplace_back(str);
 
 				return ret;
 			}
@@ -51,10 +47,15 @@ namespace lorelai {
 					return found->second;
 				}
 
-				auto ret = numbers[num] = getproto()->numbers.size();
-				getproto()->numbers.emplace_back(num);
+				auto ret = numbers[num] = proto.numbers.size();
+				proto.numbers.emplace_back(num);
 
 				return ret;
+			}
+
+			void newargument(const string &name, std::uint32_t position) {
+				varlookup[name] = position;
+				maxsize = argcount = std::max(position, argcount) + 1;
 			}
 
 			void newstackvariable(const string &name) {
@@ -77,18 +78,10 @@ namespace lorelai {
 				return varlookup.find(name) != varlookup.end();
 			}
 
-		bytecode::prototype *getproto() {
-			if (protoid) {
-				return &proto->protos[protoid.value()];
-			}
-			else {
-				return proto;
-			}
-		}
-
 		public:
-			bytecode::prototype *proto;
-			optional<std::uint32_t> protoid;
+			bytecode::prototype proto;
+			std::uint32_t argcount = 0;
+			std::uint32_t protoid;
 			std::unordered_map<string, int> strings;
 			std::unordered_map<number, int> numbers;
 			std::unordered_map<string, std::uint32_t> varlookup;

@@ -19,7 +19,13 @@ namespace lorelai {
 		public:
 			variable() { }
 
-			variable(std::uint32_t _scopeid, string _name, std::uint32_t _version) :
+			variable(std::uint32_t _scopeid, const string &_name, std::uint32_t _version, std::uint32_t _argnum) :
+				version(_version), scopeid(_scopeid), name(_name), argnum(_argnum)
+			{
+
+			}
+
+			variable(std::uint32_t _scopeid, const string &_name, std::uint32_t _version) :
 				version(_version), scopeid(_scopeid), name(_name)
 			{
 
@@ -35,6 +41,7 @@ namespace lorelai {
 
 			std::uint32_t accesses = 0;
 			std::uint32_t writes = 0;
+			optional<std::uint32_t> argnum { };
 		};
 	}
 }
@@ -52,15 +59,22 @@ namespace lorelai {
 	namespace bytecode {
 		class scope {
 			friend class variablevisitor;
-		public:
-			using variablecontainer = std::shared_ptr<variable>;
-			scope(std::uint32_t _id, std::shared_ptr<scope> _parent = nullptr) : id(_id), parent(_parent) { }
-
-			variable &newvariable(string name) {
-				variable v(id, name, versionof(name) + 1);
+			variable &createvariable(const variable &v) {
 				shadowmap[v.name] = v.version;
 				variables.push_back(v);
 				return variables.back();
+			}
+		public:
+			using variablecontainer = std::shared_ptr<variable>;
+			scope(std::uint32_t _id) : id(_id) { }
+			scope(std::uint32_t _id, size_t _parent) : id(_id), parent(_parent) { }
+
+			variable &newvariable(const string &name, std::uint32_t argnum) {
+				return createvariable(variable(id, name, versionof(name) + 1, argnum));
+			}
+
+			variable &newvariable(const string &name) {
+				return createvariable(variable(id, name, versionof(name) + 1));
 			}
 
 			std::uint32_t versionof(string name) {
@@ -71,7 +85,7 @@ namespace lorelai {
 				return 0;
 			}
 
-			variable *find(string name, bool recursive = true, optional<int> version = { }) {
+			variable *find(string name, optional<int> version = { }) {
 				auto it = variables.rbegin();
 				while (it != variables.rend()) {
 					if (it->name == name) {
@@ -80,10 +94,6 @@ namespace lorelai {
 						}
 					}
 					it++;
-				}
-
-				if (recursive && parent) {
-					return parent->find(name, true);
 				}
 
 				return nullptr;
@@ -101,38 +111,19 @@ namespace lorelai {
 
 		public:
 			std::vector<variable> variables;
-			std::shared_ptr<scope> parent;
 			std::unordered_map<string, std::uint32_t> shadowmap;
 			std::uint32_t id;
+			optional<size_t> parent { };
 		};
 
 #define LORELAI_SCOPE_VISIT_MACRO(n) LORELAI_VISIT_FUNCTION(n) { setnodescope(container); return false; }
 
-		class scopevisitorbase : public parser::visitor {
+		class scopevisitor : public parser::visitor {
 		public:
-			scopevisitorbase() {
-				scopes.push_back(curscope);
-			}
-			LORELAI_VISIT_NAME_MACRO(LORELAI_SCOPE_VISIT_MACRO)
-
-		protected:
-			void setnodescope(parser::node *node) {
-				scopemap[node] = curscope;
-			}
-
-		public:
-			std::shared_ptr<scope> curscope = std::make_shared<scope>(0);
-			std::unordered_map<parser::node *, std::shared_ptr<scope>> scopemap;
-			std::vector<std::shared_ptr<scope>> scopes;
-		};
-
-		class scopevisitor : public scopevisitorbase {
-		public:
-			using scopevisitorbase::visit;
-			using scopevisitorbase::postvisit;
+			using parser::visitor::visit;
+			using parser::visitor::postvisit;
 
 			LORELAI_VISIT_FUNCTION(statements::fornumstatement) {
-				setnodescope(container);
 				newscope();
 				return false;
 			}
@@ -141,7 +132,6 @@ namespace lorelai {
 			}
 
 			LORELAI_VISIT_FUNCTION(statements::forinstatement) {
-				setnodescope(container);
 				newscope();
 				return false;
 			}
@@ -150,7 +140,6 @@ namespace lorelai {
 			}
 
 			LORELAI_VISIT_FUNCTION(statements::whilestatement) {
-				setnodescope(container);
 				newscope();
 				return false;
 			}
@@ -159,7 +148,6 @@ namespace lorelai {
 			}
 
 			LORELAI_VISIT_FUNCTION(statements::dostatement) {
-				setnodescope(container);
 				newscope();
 				return false;
 			}
@@ -168,37 +156,32 @@ namespace lorelai {
 			}
 
 			LORELAI_VISIT_FUNCTION(statements::functionstatement) {
-				setnodescope(container);
-				newscope();
+				newscope(true);
 				return false;
 			}
 			LORELAI_POSTVISIT_FUNCTION(statements::functionstatement) {
-				freescope();
+				freescope(true);
 			}
 
 			LORELAI_VISIT_FUNCTION(statements::localfunctionstatement) {
-				newscope();
-				setnodescope(container);
+				newscope(true);
 				return false;
 			}
 			LORELAI_POSTVISIT_FUNCTION(statements::localfunctionstatement) {
-				freescope();
+				freescope(true);
 			}
 
 			LORELAI_VISIT_FUNCTION(statements::ifstatement) {
-				setnodescope(container);
 				newscope();
 				return false;
 			}
 			LORELAI_VISIT_FUNCTION(statements::elseifstatement) {
 				freescope();
-				setnodescope(container);
 				newscope();
 				return false;
 			}
 			LORELAI_VISIT_FUNCTION(statements::elsestatement) {
 				freescope();
-				setnodescope(container);
 				newscope();
 				return false;
 			}
@@ -207,26 +190,51 @@ namespace lorelai {
 			}
 
 		public:
-			virtual void onfreescope() { }
-			virtual void onnewscope() { }
+			virtual void onfreescope(bool isfunction) { }
+			virtual void onnewscope(bool isfunction) { }
 
 		private:
-			std::shared_ptr<scope> &newscope() {
-				curscope = std::make_shared<scope>(scopes.size(), curscope);
-				scopes.push_back(curscope);
-				onnewscope();
-				return curscope;
+			void newscope(bool isfunction = false) {
+				auto parent = getscope().id;
+				activescopes.emplace_back(scopelist.size());
+				scopelist.emplace_back(scopelist.size(), parent);
+				onnewscope(isfunction);
 			}
 
-			std::shared_ptr<scope> &freescope() {
-				if (!curscope) {
-					throw;
+			void freescope(bool isfunction = false) {
+				onfreescope(isfunction);
+				activescopes.pop_back();
+			}
+
+		protected:
+			scope &getscope() {
+				return scopelist[activescopes.back()];
+			}
+
+			variable *findvariable(const string &name) {
+				variable *v = nullptr;
+				for (size_t i = activescopes.size(); i > 0; i--) {
+					auto &scope = scopelist[activescopes[i - 1]];
+					if ((v = scope.find(name))) {
+						break;
+					}
 				}
 
-				onfreescope();
-				curscope = curscope->parent;
-				return curscope;
+				return v;
 			}
+
+			variable *findvariable(const parser::node *obj) {
+				if (auto name = dynamic_cast<const parser::expressions::nameexpression *>(obj)) {
+					return findvariable(name->name);
+				}
+
+				return nullptr;
+			}
+
+		public:
+			std::vector<scope> scopelist { { 0 } };
+		private:
+			std::vector<size_t> activescopes { 0 };
 		};
 
 		class variablevisitor : public scopevisitor {
@@ -264,55 +272,36 @@ namespace lorelai {
 			using scopevisitor::visit;
 			using scopevisitor::postvisit;
 
-			LORELAI_VISIT_FUNCTION(statements::localassignmentstatement) {
-				scopevisitor::visit(obj, container);
-				return false;
-			}
-
 			// postvisit since left side variables don't exist to right side expressions yet
 			LORELAI_POSTVISIT_FUNCTION(statements::localassignmentstatement) {
-				createvariable(obj.left);
-
-				for (size_t i = 0; i < std::min(obj.left.size(), obj.right.size()); i++) {
-					constantconfirmer confirmer;
-					obj.right[i]->accept(confirmer, obj.right[i]);
-					if (confirmer.found) {
-						findandaddwrite(obj.left[i]);
-					}
-					else {
-						auto var = curscope->find(obj.left[i]);
-						auto &refs = variablereferences[*var];
-						for (auto &name : confirmer.names) {
-							auto refvar = curscope->find(name);
-							if (!refvar) {
-								var->writes++;
-								continue;
-							}
-
-							if (refvar->writes > 0) {
-								var->writes++;
-							}
-							else {
-								refs.push_back(*refvar);
-							}
-						}
-						if (confirmer.found) {
-							var->writes++;
-						}
-					}
+				for (size_t i = 0; i < obj.left.size(); i++) {
+					createvariable(obj.left[i]);
 				}
 			}
 
 			LORELAI_VISIT_FUNCTION(statements::localfunctionstatement) {
-				createvariable(obj.name).writes++;
+				createvariable(obj.name);
 				scopevisitor::visit(obj, container);
+
+				return false;
+			}
+
+			LORELAI_VISIT_FUNCTION(funcbody) {
+				scopevisitor::visit(obj, container);
+				std::uint32_t paramnum = 1;
+
+				for (auto &param : obj.params) {
+					createvariable(param, paramnum++);
+				}
 
 				return false;
 			}
 
 			LORELAI_VISIT_FUNCTION(statements::assignmentstatement) {
 				for (auto &child : obj.left) {
-					findandaddwrite(child);
+					if (auto referenced = findvariable(child)) {
+						referenced->writes++;
+					}
 				}
 
 				return false;
@@ -342,14 +331,17 @@ namespace lorelai {
 
 			LORELAI_VISIT_FUNCTION(expressions::indexexpression) {
 				scopevisitor::visit(obj, container);
-
-				findandaddwrite(obj.prefix);
+				
+				if (auto referenced = findvariable(obj.prefix)) {
+					referenced->writes++;
+				}
+				
 
 				return false;
 			}
 
 			LORELAI_VISIT_FUNCTION(expressions::nameexpression) {
-				auto var = curscope->find(obj.name, true);
+				auto var = findvariable(obj.name);
 				if (var) {
 					var->accesses++;
 				}
@@ -362,79 +354,44 @@ namespace lorelai {
 			virtual void onnewvariables(const std::vector<variable> &) { }
 			virtual void onfreevariable(const variable &) { }
 
-			void onfreescope() override {
-				for (auto &child : curscope->variables) {
+			void onfreescope(bool isfunction) override {
+				for (auto &child : getscope().variables) {
 					onfreevariable(child);
 				}
 			}
 
 		private:
-			void createvariable(const std::vector<string> &names) {
-				std::vector<variable> newvars;
-				for (auto &name : names) {
-					auto &v = curscope->newvariable(name);
-
-					if (v.version > 1) { // variable is now shadowed
-						for (auto &child : curscope->variables) {
-							if (child.version == v.version - 1) {
-								onfreevariable(child);
-								break;
-							}
-						}
-					}
-
-					newvars.push_back(v);
-				}
-
-				onnewvariables(newvars);
-			}
-
-			variable &createvariable(string name) {
-				auto &v = curscope->newvariable(name);
-
+			void variablecreated(const variable &v) {
 				if (v.version > 1) { // variable is now shadowed
-					for (auto &child : curscope->variables) {
+					for (auto &child : getscope().variables) {
 						if (child.version == v.version - 1) {
 							onfreevariable(child);
 							break;
 						}
 					}
 				}
-				
 				onnewvariable(v);
+			}
+
+			variable &createvariable(const string &name) {
+				auto &v = getscope().newvariable(name);
+
+				variablecreated(v);
 
 				return v;
 			}
 
-			void findandaddwrite(parser::node *obj) {
-				if (auto name = dynamic_cast<parser::expressions::nameexpression *>(obj)) {
-					auto var = curscope->find(name->name);
-					if (var) {
-						var->writes++;
-					}
-				}
-			}
-			void findandaddwrite(string &name) {
-				auto var = curscope->find(name);
-				if (var) {
-					var->writes++;
-				}
+			variable &createvariable(const string &name, std::uint32_t argnum) {
+				auto &v = getscope().newvariable(name, argnum);
+
+				variablecreated(v);
+
+				return v;
 			}
 
 		public:
 			std::unordered_map<variable, std::vector<variable>> variablereferences;
 		};
-
-		struct _scopemap {
-			decltype(variablevisitor::scopemap) nodemap;
-			std::vector<std::shared_ptr<scope>> scopes;
-		};
-
-		static _scopemap generatescopemap(parser::node *container) {
-			variablevisitor visitor;
-			container->accept(visitor, container);
-			return { visitor.scopemap, visitor.scopes };
-		}
 	}
 }
 

@@ -21,17 +21,11 @@ namespace lorelai {
 			string tostring() override;
 
 			std::vector<node **> getchildren() override {
-				std::vector<node **> children;
-				for (auto &param : params) {
-					children.push_back(&param);
-				}
-				children.push_back(&block);
-
-				return children;
+				return { &block };
 			}
 
 		public:
-			std::vector<node *> params;
+			std::vector<string> params;
 			node *block;
 			optional<string> method_name { };
 		};

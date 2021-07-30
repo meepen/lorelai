@@ -1,5 +1,6 @@
-#include "expressions.hpp"
+#include "bcexpressions.hpp"
 #include "generator.hpp"
+#include "bcconstants.hpp"
 #include "parser/expressions.hpp"
 
 using namespace lorelai;
@@ -7,8 +8,8 @@ using namespace lorelai::parser;
 using namespace lorelai::parser;
 using namespace lorelai::bytecode;
 
-#define GENERATEFUNC(t) static void generate_##t(bytecodegenerator &gen, parser::node *_expr, std::uint32_t target, std::uint32_t size)
-#define INIT(t) expressions::t &expr = dynamic_cast<expressions::t &>(*_expr)
+#define GENERATEFUNC(t) static void generate_##t(bytecodegenerator &gen, const parser::node &_expr, std::uint32_t target, std::uint32_t size)
+#define INIT(t) auto &expr = dynamic_cast<const expressions::t &>(_expr)
 
 GENERATEFUNC(numberexpression) {
 	// when size = 0, no need to init
@@ -79,7 +80,7 @@ the ideal output would be
 
 class binopsimplifier {
 public:
-	binopsimplifier(bytecodegenerator &_gen, expressions::binopexpression &expr, std::uint32_t target, std::uint32_t size) : gen(_gen) {
+	binopsimplifier(bytecodegenerator &_gen, const expressions::binopexpression &expr, std::uint32_t target, std::uint32_t size) : gen(_gen) {
 		if (size == 0) {
 			auto find = binoplookup.find(expr.op);
 			if (find == binoplookup.end()) {
@@ -238,12 +239,8 @@ GENERATEFUNC(nameexpression) {
 	}
 
 	INIT(nameexpression);
-
 	if (gen.funcptr->hasvariable(expr.name)) {
 		gen.mov(target, gen.funcptr->varlookup[expr.name], 1);
-	}
-	else if (auto constant = gen.findconstant(_expr, expr.name)) {
-		gen.runexpressionhandler(constant, target, 1);
 	}
 	/*
 	else if(gen.funcptr->hasupvalue(expr.name)) {
@@ -340,9 +337,9 @@ static void populate_tablevalue(prototype::_tablevalue *val, bytecodegenerator &
 
 GENERATEFUNC(tableexpression) {
 	INIT(tableexpression);
-	auto bcid = gen.funcptr->proto->tables_size();
+	auto bcid = gen.funcptr->proto.tables_size();
 	gen.emit(prototype::OP_TABLE, target, bcid);
-	auto bcobj = gen.funcptr->proto->add_tables();
+	auto bcobj = gen.funcptr->proto.add_tables();
 	for (auto &hashpart : expr.hashpart) {
 		auto bckv = bcobj->add_hashpart();
 		populate_tablevalue(&bckv->key, gen, hashpart.first);
@@ -359,7 +356,8 @@ GENERATEFUNC(functionexpression) {
 		return;
 	}
 	INIT(functionexpression);
-	gen.emit(prototype::OP_FNEW, target, gen.protomap[_expr]);
+	throw;
+//	gen.emit(prototype::OP_FNEW, target, gen.protomap[&_expr]);
 }
 
 

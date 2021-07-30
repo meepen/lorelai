@@ -8,7 +8,7 @@ namespace lorelai {
 
     namespace bytecode {
         class bytecodegenerator;
-        parser::node *collapseconstant(bytecodegenerator &gen, parser::node &expr);
+        const parser::node *collapseconstant(bytecodegenerator &gen, const parser::node &expr);
     }
 }
 

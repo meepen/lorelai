@@ -451,10 +451,10 @@ namespace lorelai {
 		class luafunctionobject : public functionobject {
 			void fromtablevalue(object &out, const bytecode::prototype::_tablevalue &data);
 		public:
-			static object create(softwarestate &state, bytecode::prototype &proto);
+			static object create(softwarestate &state, const bytecode::prototype &proto);
 
 		public:
-			luafunctionobject(softwarestate &state, bytecode::prototype &proto);
+			luafunctionobject(softwarestate &state, const bytecode::prototype &proto);
 			luafunctionobject();
 
 		public:

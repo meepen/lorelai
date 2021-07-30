@@ -140,6 +140,19 @@ namespace lorelai {
 					return fields[3];
 				}
 
+				const std::uint32_t &op() const {
+					return fields[0];
+				}
+				const std::uint32_t &a() const {
+					return fields[1];
+				}
+				const std::uint32_t &b() const {
+					return fields[2];
+				}
+				const std::uint32_t &c() const {
+					return fields[3];
+				}
+
 				instruct &set_op(const _opcode &v) {
 					op() = static_cast<const std::uint32_t>(v);
 
@@ -186,6 +199,9 @@ namespace lorelai {
 				instruct *operator->() {
 					return this;
 				}
+				const instruct *operator->() const {
+					return this;
+				}
 
 				std::uint32_t fields[4];
 			};
@@ -214,6 +230,9 @@ namespace lorelai {
 
 			size_t instructions_size() const {
 				return instructions.size();
+			}
+			const instruct &instruction(size_t i) const {
+				return instructions[i];
 			}
 			instruct &instruction(size_t i) {
 				return instructions[i];
@@ -270,6 +289,9 @@ namespace lorelai {
 			prototype *add_protos() {
 				protos.emplace_back();
 				return &protos.back();
+			}
+			const prototype &proto(size_t i) const {
+				return protos[i];
 			}
 			prototype &proto(size_t i) {
 				return protos[i];

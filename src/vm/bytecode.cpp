@@ -14,37 +14,11 @@ using namespace lorelai::bytecode;
 	fn(lorelai::parser::statements::functionstatement)
 */
 
-
-class datagen : public variablevisitor {
-public:
-	using visitor::visit;
-	using visitor::postvisit;
-
-	LORELAI_VISIT_FUNCTION(funcbody) {
-		variablevisitor::visit(obj, container);
-		protomap[container] = idlist.back()++;
-
-		idlist.push_back(0);
-
-		return false;
-	}
-	LORELAI_POSTVISIT_FUNCTION(funcbody) {
-		variablevisitor::postvisit(obj, container);
-		idlist.pop_back();
-	}
-
-public:
-	std::vector<std::uint32_t> idlist { 0 };
-	std::unordered_map<node *, std::uint32_t> protomap;
-};
-
-prototype *lorelai::bytecode::create(chunk &data) {
+prototype lorelai::bytecode::create(chunk &data) {
 	node *n = &data;
-	datagen gen;
-	data.accept(gen, n);
 
-	bytecodegenerator generator(gen.protomap, gen);
+	bytecodegenerator generator;
 	data.accept(generator, n);
 
-	return generator.funcptr->release();
+	return generator.funcptr->finalize();
 }

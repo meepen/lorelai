@@ -5,7 +5,5 @@ using namespace lorelai;
 using namespace lorelai::vm;
 
 void state::loadfunction(const std::string &code) {
-	auto proto = bytecode::create(code);
-	loadfunction(*proto);
-	delete proto;
+	loadfunction(bytecode::create(code));
 }
